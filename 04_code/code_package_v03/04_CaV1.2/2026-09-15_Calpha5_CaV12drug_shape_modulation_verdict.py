@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Cα-5：CaV1.2 药物形状调制判决（预注册 v1.0，2026-09-15）
-纯阻断（只缩 G）vs 门控调制（改失活形状/CDI 快分量/状态偏好）
-判1 ε_x>max(Null-B p90,0.03) 否纯阻断 | 判2 κ*<0.10 且 ε_x1/ε_x>0.5 幅度型 | 判3 CDI 特判 | 判4 外部对拍
-用法: 正式跑  %runfile 本文件 --wdir
-      冒烟    python 本文件 --smoke
+Cα-5: CaV1.2 drug shape-modulation verdict (preregistration v1.0, 2026-09-15)
+Pure block (scales G only) vs gating modulation (changes inactivation shape / CDI fast component / state preference)
+crit-1 eps_x>max(Null-B p90,0.03) rejects pure block | crit-2 kappa*<0.10 and eps_x1/eps_x>0.5 amplitude type | crit-3 CDI special verdict | crit-4 external cross-check
+Usage: full run  %runfile this_file --wdir
+      smoke    python this_file --smoke
 """
 import os, sys, json, glob
 import numpy as np
@@ -18,35 +18,35 @@ OUTJ = os.path.join(ROOT, "α模型", "2026-09-15_Cα5_CaV12药物形状调制�
 OUTP = os.path.join(ROOT, "α模型", "2026-09-15_Cα5_CaV12药物形状调制判决.png")
 SMOKE = "--smoke" in sys.argv
 
-# ---- 协议 epoch（秒，10 kHz）----
-I73_WIN = (0.250, 0.275)   # −73 mV 段末（漏电流点1）
-I63_WIN = (0.350, 0.375)   # −63 mV 段末（漏电流点2）
-STEP = (0.3781, 0.4181)    # +17 mV/40 ms（名义 0 mV）
-RAMP = (0.6181, 0.7181)    # 斜坡 +47→−63
+# ---- protocol epochs (seconds, 10 kHz) ----
+I73_WIN = (0.250, 0.275)   # end of the -73 mV segment (leak point 1)
+I63_WIN = (0.350, 0.375)   # end of the -63 mV segment (leak point 2)
+STEP = (0.3781, 0.4181)    # +17 mV/40 ms (nominal 0 mV)
+RAMP = (0.6181, 0.7181)    # ramp +47 -> -63
 FS = 10000.0
-TMS40 = np.arange(400) * 0.1   # step 段 ms 轴
+TMS40 = np.arange(400) * 0.1   # ms axis of the step segment
 
 GROUPS = ["Verapamil_Ca2+_PT", "Verapamil_Ca2+_RT", "Methadone_Ca2+_PT",
           "Diltiazem_Ba2+_PT", "Buprenorphine_Ca2+_PT",
           "Norbuprenorphine_Ca2+_PT", "Norbuprenorphine_Ba2+_PT", "Naloxone_Ba2+_PT"]
-INACT_POOL = {"Verapamil_Ca2+_PT", "Verapamil_Ca2+_RT", "Diltiazem_Ba2+_PT"}   # 论文证失活态偏好
-OPEN_POOL = {"Norbuprenorphine_Ca2+_PT"}                                       # 论文证开放态偏好（Ca²⁺）
-# 判4 五行：行名 → (来源, 期望, 论文依据)
+INACT_POOL = {"Verapamil_Ca2+_PT", "Verapamil_Ca2+_RT", "Diltiazem_Ba2+_PT"}   # paper-evidenced inactivated-state preference
+OPEN_POOL = {"Norbuprenorphine_Ca2+_PT"}                                       # paper-evidenced open-state preference (Ca2+)
+# crit-4 five rows: row name -> (source, expectation, paper basis)
 J4_ROWS = {
     "vp-Ca-PT":   ("Verapamil_Ca2+_PT drugwin",  ">1.2",  "step0.9/ramp0.4=2.25×"),
     "vp-Ca-RT":   ("Verapamil_Ca2+_RT drugwin",  "eq",     "step1.5/ramp1.6≈0.94"),
-    "vp-Ba-PT":   ("Ba²⁺组 verapamil尾(100μM)", ">1.2",  "step1.5/ramp0.3=5×；尾实测残余 step 20-32%/ramp 2-4%"),
-    "norbu-Ca-PT": ("Norbuprenorphine_Ca2+_PT drugwin", "eq", "论文 step/ramp 无差"),
-    "dilt-Ba-PT": ("Diltiazem_Ba2+_PT drugwin", ">1.2",  "论文 Ba²⁺ ramp>step"),
+    "vp-Ba-PT":   ("Ba2+ group verapamil tail (100uM)", ">1.2",  "step1.5/ramp0.3=5x; measured tail residual step 20-32%/ramp 2-4%"),
+    "norbu-Ca-PT": ("Norbuprenorphine_Ca2+_PT drugwin", "eq", "paper: no step/ramp difference"),
+    "dilt-Ba-PT": ("Diltiazem_Ba2+_PT drugwin", ">1.2",  "paper: Ba2+ ramp>step"),
 }
-EPS_ABS = 0.03     # hERG 卡5 绝对线
-KAP_LINE = 0.10    # hERG 卡6 时间/幅度分界
-TAF_GRID = (4.0, 6.0, 8.0, 12.0, 16.0)   # Cα-3 原样
+EPS_ABS = 0.03     # hERG card-5 absolute line
+KAP_LINE = 0.10    # hERG card-6 time/amplitude boundary
+TAF_GRID = (4.0, 6.0, 8.0, 12.0, 16.0)   # as in Ca-3
 AICC_MARGIN = 10.0
 
-# ================= 波形级 =================
+# ================= waveform level =================
 def subtract_ipassive(t, i, v):
-    """论文法 Ipassive：两点 (−73,−63) 线性外推，逐点减。"""
+    """Paper-method Ipassive: linear extrapolation from two points (-73,-63), subtracted pointwise."""
     m73 = (t >= I73_WIN[0]) & (t < I73_WIN[1]); m63 = (t >= I63_WIN[0]) & (t < I63_WIN[1])
     if m73.sum() < 10 or m63.sum() < 10:
         return None
@@ -58,7 +58,7 @@ def subtract_ipassive(t, i, v):
     return i - (i73 + slope * (v - v73))
 
 def f_inact_seg(seg):
-    """Cα-1b 原样：f = 1 − 末10ms均值/峰。"""
+    """As in Ca-1b: f = 1 - (last-10ms mean)/peak."""
     pk = float(seg.min())
     if pk > -50:
         return None
@@ -71,7 +71,7 @@ def aicc(n, k, rss):
     return n * np.log(rss / n) + 2 * k + 2 * k * (k + 1) / (n - k - 1)
 
 def fit_grid(t, y):
-    """Cα-3 原样：H0 vs H1（τf 网格联合选型）。"""
+    """As in Ca-3: H0 vs H1 (tau_f grid joint selection)."""
     out = {"H0": None, "H1": None, "pick": None}
     try:
         p0, _ = curve_fit(h0, t, y, p0=[0.5, 0.5, 30.0],
@@ -105,7 +105,7 @@ def norm_wf(seg_mean):
     return seg_mean / abs(pk)
 
 def eps_kappa(wc, wd):
-    """ε_x（归一化 RMS 形状差）+ κ*（最优拉伸 warp）+ ε_x1（warp 后残差）。比较域 [0,26]ms。"""
+    """eps_x (normalized RMS shape difference) + kappa* (optimal-stretch warp) + eps_x1 (post-warp residual). Comparison domain [0,26]ms."""
     dom = TMS40 <= 26.0
     t = TMS40[dom]; a = wc[dom]; b = wd[dom]
     ex = float(np.sqrt(np.mean((a - b) ** 2)))
@@ -118,7 +118,7 @@ def eps_kappa(wc, wd):
             best = (r, float(kap))
     return {"eps_x": ex, "kappa": best[1], "eps_x1": best[0]}
 
-# ================= 文件级 =================
+# ================= file level =================
 def load_file(path):
     import pyabf
     a = pyabf.ABF(path)
@@ -142,7 +142,7 @@ def _logexp(s, A, tau, C):
     return np.log(np.maximum(A * np.exp(-s / tau) + C, 1.0))
 
 def segment_cell(x):
-    """x = ramp_pk 轨迹（负）。dev 法：锚 [8,45] 指数+平台 rundown 模型外推，持续负偏=抑制/正偏=易化。"""
+    """x = ramp_pk trajectory (negative). dev method: anchor [8,45] exponential+plateau rundown model extrapolated; sustained negative deviation = inhibition / positive = facilitation."""
     N = len(x)
     if N < 70:
         return {"flag": "N<70"}
@@ -162,7 +162,7 @@ def segment_cell(x):
     if len(sa) < 12:
         return {"flag": "anchor_short"}
     base = None
-    try:  # 指数+平台 rundown 模型（offset 自由，避免把减速弯曲误读为易化）
+    try:  # exponential+plateau rundown model (free offset, avoids misreading decelerating bend as facilitation)
         x8 = float(np.abs(x[8]))
         p_, _ = curve_fit(_logexp, sa, lx[sa], p0=[max(x8 - 0.3 * x8, 50), 60.0, max(0.3 * x8, 20)],
                           bounds=([1.0, 5.0, 1.0], [1e6, 2000.0, x8]), maxfev=20000)
@@ -188,8 +188,8 @@ def segment_cell(x):
         return {"flag": "no_drug_region", "tail": tail, "pseudo_ctrl": pc}
     if onset < 48:
         return {"flag": "ctrl_short", "onset": onset}
-    ctrl = (onset - 30, onset - 10)         # 对照窗 20（留 10 sweep 起效缓冲）
-    drug = (bend - 12, bend - 2)            # 药物窗 = 末 10（尾前）
+    ctrl = (onset - 30, onset - 10)         # control window 20 (leaving a 10-sweep onset buffer)
+    drug = (bend - 12, bend - 2)            # drug window = last 10 (before the tail)
     if drug[1] - drug[0] < 8 or drug[0] <= ctrl[1]:
         return {"flag": "drug_short", "onset": onset}
     dw = np.abs(x[drug[0]:drug[1]])
@@ -199,7 +199,7 @@ def segment_cell(x):
     return {"ctrl": ctrl, "drug": drug, "tail": tail, "facil": facil, "onset": onset}
 
 def cell_metrics(sw, seg):
-    """一细胞全部指标。"""
+    """All metrics for one cell."""
     x = np.array([r["ramp_pk"] for r in sw])
     out = {}
     c0, c1 = seg["ctrl"]; d0, d1 = seg["drug"]
@@ -214,7 +214,7 @@ def cell_metrics(sw, seg):
         return {"flag": "weak_effect", **out}
     if seg.get("facil") and out["b_ramp"] > -0.10:
         return {"flag": "weak_effect", **out}
-    # 形状（step 段平均波形）
+    # shape (mean waveform of the step segment)
     Wc = norm_wf(np.mean([r["step_seg"] for r in ctrl_sw], axis=0))
     Wd = norm_wf(np.mean([r["step_seg"] for r in drug_sw], axis=0))
     if Wc is None or Wd is None:
@@ -226,20 +226,20 @@ def cell_metrics(sw, seg):
     if len(fc) >= 10 and len(fd) >= 6:
         out["f_ctrl"] = float(np.median(fc)); out["f_drug"] = float(np.median(fd))
         out["df"] = out["f_drug"] - out["f_ctrl"]
-    # w_fast（Cα-3 拟合器，登记）
+    # w_fast (Ca-3 fitter, registry)
     gc = fit_grid(TMS40, Wc); gd = fit_grid(TMS40, Wd)
     if gc.get("H1"): out["w_ctrl"] = gc["H1"]["w"]; out["pick_ctrl"] = gc["pick"]
     if gd.get("H1"): out["w_drug"] = gd["H1"]["w"]; out["pick_drug"] = gd["pick"]
     if "w_ctrl" in out and "w_drug" in out:
         out["dw"] = out["w_drug"] - out["w_ctrl"]
-    # Null-A：对照窗劈半（奇偶）
+    # Null-A: control window split in halves (odd/even)
     e1 = [r["step_seg"] for k, r in enumerate(ctrl_sw) if k % 2 == 0]
     e2 = [r["step_seg"] for k, r in enumerate(ctrl_sw) if k % 2 == 1]
     if len(e1) >= 6 and len(e2) >= 6:
         Wa = norm_wf(np.mean(e1, axis=0)); Wb = norm_wf(np.mean(e2, axis=0))
         if Wa is not None and Wb is not None:
             out["nullA_eps"] = eps_kappa(Wa, Wb)["eps_x"]
-    # Null-B：对照段早 10 vs 末 10（间隔≥10）
+    # Null-B: first 10 vs last 10 of the control segment (gap >=10)
     on = seg["onset"]
     if on - 40 >= 6:
         eb = sw[on - 40:on - 30]; lb = sw[on - 20:on - 10]
@@ -251,13 +251,13 @@ def cell_metrics(sw, seg):
         fe = [f for f in fe if f is not None]; fl = [f for f in fl if f is not None]
         if len(fe) >= 6 and len(fl) >= 6:
             out["nullB_df"] = float(np.median(fl) - np.median(fe))
-    # 温度
+    # temperature
     out["T_med"] = float(np.median([r["T"] for r in sw]))
     out["n_sweeps"] = len(sw)
     return out
 
 def tail_metrics(sw, seg):
-    """verapamil 尾（100μM）相对对照窗（无药细胞用 pseudo_ctrl=(15,35)）的抑制（判4 vp-Ba-PT 行）。"""
+    """Inhibition of the verapamil tail (100uM) relative to the control window (drug-free cells use pseudo_ctrl=(15,35)); crit-4 row vp-Ba-PT."""
     if not seg.get("tail"):
         return None
     ctrl = seg.get("ctrl") or seg.get("pseudo_ctrl")
@@ -271,26 +271,26 @@ def tail_metrics(sw, seg):
     b_ramp = 1.0 - abs(np.median([r["ramp_pk"] for r in ts])) / abs(np.median([r["ramp_pk"] for r in cs]))
     return {"b_step": float(b_step), "b_ramp": float(b_ramp)}
 
-# ================= 冒烟 =================
+# ================= smoke =================
 def synth_step(shape_w=0.30, tf=8.0, ts=50.0, C=0.40, warp=0.0, morph=0.0, noise=0.01, rng=None):
     rng = rng or np.random.default_rng(0)
     t = TMS40 * (1.0 + warp)
     y = C + (1 - C) * ((1 - shape_w) * np.exp(-t / ts) + shape_w * np.exp(-t / tf))
-    if morph > 0:  # 向单指数慢形态混合（幅度型变形）
+    if morph > 0:  # blend toward the single-exponential slow morphology (amplitude-type warp)
         y2 = C + (1 - C) * np.exp(-t / ts)
         y = (1 - morph) * y + morph * y2
     y = y + rng.normal(0, noise, len(y))
-    return -y * 1000.0  # 负电流，pA 量级（norm_wf 门 −30）
+    return -y * 1000.0  # negative current, pA scale (norm_wf gate -30)
 
 def smoke():
     print("=" * 72, flush=True)
-    print(" [冒烟 Cα-5] S1 ε_x/κ* 回收 | S2 分段器 | S3 真实文件管线", flush=True)
+    print(" [smoke Ca-5] S1 eps_x/kappa* recovery | S2 segmenter | S3 real-file pipeline", flush=True)
     rng = np.random.default_rng(3)
     ok_all = True
-    # S1：ε_x 真值回收（无噪真值 × 噪声对估计，±25% / 零档 ≤0.03）；κ* 注入 0.10 回收
-    print(" S1 形状估计器回收：", flush=True)
+    # S1: eps_x truth recovery (noiseless truth vs noise-corrupted estimate, ±25% / zero band <=0.03); kappa* injected 0.10 recovery
+    print(" S1 shape-estimator recovery:", flush=True)
     ok1 = True
-    for morph, name in ((0.0, "零档"), (0.35, "中档"), (1.0, "高档")):
+    for morph, name in ((0.0, "zero"), (0.35, "mid"), (1.0, "high")):
         true_ex = eps_kappa(norm_wf(synth_step(morph=0.0, noise=0.0, rng=rng)),
                             norm_wf(synth_step(morph=morph, noise=0.0, rng=rng)))["eps_x"]
         ests = []
@@ -301,7 +301,7 @@ def smoke():
         med = float(np.median(ests))
         ok = (med <= 0.03) if true_ex < 0.02 else (0.75 * true_ex <= med <= 1.33 * true_ex)
         ok1 &= ok
-        print(f"   ε_x {name}: 真值 {true_ex:.3f} 估计中位 {med:.3f}（±25%/零档≤0.03）", "过" if ok else "挂", flush=True)
+        print(f"   eps_x {name}: truth {true_ex:.3f} estimate median {med:.3f} (±25%/zero band<=0.03)", "pass" if ok else "fail", flush=True)
     krs = []
     for _ in range(12):
         wc = norm_wf(synth_step(noise=0.008, rng=rng))
@@ -309,29 +309,29 @@ def smoke():
         krs.append(eps_kappa(wc, wd)["kappa"])
     okk = abs(float(np.median(krs)) - 0.10) <= 0.02
     ok1 &= okk
-    print(f"   κ* 注入0.10: 回收中位 {np.median(krs):+.3f}（|Δ|≤0.02）", "过" if okk else "挂", flush=True)
+    print(f"   kappa* injected 0.10: recovered median {np.median(krs):+.3f} (|d|<=0.02)", "pass" if okk else "fail", flush=True)
     ok_all &= ok1
-    # S2：分段器合成（rundown + 两药物平台 + 尾塌缩）
+    # S2: segmenter synthesis (rundown + two drug plateaus + tail collapse)
     N = 200
     x = -1500 * np.exp(-np.arange(N) / 60.0) - 600 + rng.normal(0, 12, N)
     tr0, tr1 = 90, 150
-    x[tr0:tr0 + 15] += np.linspace(0, 250, 15)     # 药物1 起效（|x| 降 250）
+    x[tr0:tr0 + 15] += np.linspace(0, 250, 15)     # drug 1 onset (|x| drops by 250)
     x[tr0 + 15:tr1] += 250
-    x[tr1:tr1 + 15] += np.linspace(0, 150, 15)     # 药物2 起效
+    x[tr1:tr1 + 15] += np.linspace(0, 150, 15)     # drug 2 onset
     x[tr1 + 15:] += 150
-    x[188:] = -40 + rng.normal(0, 6, 12)           # verapamil 尾
+    x[188:] = -40 + rng.normal(0, 6, 12)           # verapamil tail
     seg = segment_cell(x)
     ok2 = ("onset" in seg and tr0 <= seg["onset"] <= tr0 + 15 and seg.get("tail") == (188, N)
            and "drug" in seg and seg["drug"][1] in (186, 187))
-    print(f" S2 分段: onset={seg.get('onset')}（真{tr0}±3） tail={seg.get('tail')} drug={seg.get('drug')}",
-          "过" if ok2 else f"挂({seg})", flush=True)
-    x2 = -1500 * np.exp(-np.arange(N) / 60.0) - 600 + rng.normal(0, 12, N)  # 无药纯 rundown
+    print(f" S2 segmentation: onset={seg.get('onset')} (true {tr0}±3) tail={seg.get('tail')} drug={seg.get('drug')}",
+          "pass" if ok2 else f"fail({seg})", flush=True)
+    x2 = -1500 * np.exp(-np.arange(N) / 60.0) - 600 + rng.normal(0, 12, N)  # drug-free pure rundown
     x2[188:] = -40 + rng.normal(0, 6, 12)
     seg2 = segment_cell(x2)
     ok2b = seg2.get("flag") == "no_drug_region"
-    print(f" S2b 无药细胞: flag={seg2.get('flag')}（期望 no_drug_region）", "过" if ok2b else "挂", flush=True)
+    print(f" S2b drug-free cell: flag={seg2.get('flag')} (expected no_drug_region)", "pass" if ok2b else "fail", flush=True)
     ok_all &= ok2 and ok2b
-    # S3：真实文件三例跑通（不判）
+    # S3: three real files run through (no verdict)
     try:
         base = os.path.join(DATA, "Verapamil_Ca2+_PT")
         for fn in ["18821006.abf", "PT_18430001.abf", "ALR_19322000.abf"]:
@@ -340,24 +340,24 @@ def smoke():
             sg = segment_cell(xx)
             info = f"flag={sg.get('flag')}" if "ctrl" not in sg else f"ctrl={sg['ctrl']} drug={sg['drug']} tail={sg.get('tail')}"
             print(f" S3 {fn}: n={len(sw)} {info}", flush=True)
-        print(" S3 管线跑通 过", flush=True)
+        print(" S3 pipeline pass", flush=True)
     except Exception as e:
         ok_all = False
-        print(" S3 挂:", e, flush=True)
-    print(" 冒烟总判:", "全过 -> 可正式跑" if ok_all else "未全过 -> 不开正式跑", flush=True)
+        print(" S3 fail:", e, flush=True)
+    print(" smoke overall:", "all pass -> full run allowed" if ok_all else "not all pass -> full run forbidden", flush=True)
     return ok_all
 
-# ================= 正式 =================
+# ================= full run =================
 def main():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     print("=" * 78, flush=True)
-    print(" Cα-5：CaV1.2 药物形状调制判决（预注册 v1.0 正式跑）", flush=True)
+    print(" Ca-5: CaV1.2 drug shape-modulation verdict (preregistration v1.0 full run)", flush=True)
     print("=" * 78, flush=True)
-    cells = []   # 每有效药物细胞一条
-    flags = {}   # 剔除登记
-    tails_ba = []  # Ba²⁺ 组 verapamil 尾（判4 vp-Ba-PT 行）
+    cells = []   # one entry per valid drug cell
+    flags = {}   # exclusion registry
+    tails_ba = []  # Ba2+ group verapamil tails (crit-4 row vp-Ba-PT)
     for g in GROUPS:
         files = sorted(glob.glob(os.path.join(DATA, g, "*.abf")))
         n_ok = 0
@@ -373,7 +373,7 @@ def main():
             seg = segment_cell(x)
             if "ctrl" not in seg:
                 flags.setdefault(seg.get("flag", "?"), []).append(f"{g}/{fn}")
-                # 无药细胞也查尾（verapamil 尾行仍可用）
+                # drug-free cells are also checked for a tail (still usable for the verapamil-tail row)
                 tm = tail_metrics(sw, seg) if seg.get("tail") else None
                 if tm and "Ba2+" in g:
                     tm2 = dict(tm); tm2["group"] = g; tm2["file"] = fn; tails_ba.append(tm2)
@@ -390,24 +390,24 @@ def main():
             tm = tail_metrics(sw, seg)
             if tm and "Ba2+" in g:
                 tm2 = dict(tm); tm2["group"] = g; tm2["file"] = fn; tails_ba.append(tm2)
-        print(f"  [{g}] 文件 {len(files)} 有效药物细胞 {n_ok}", flush=True)
+        print(f"  [{g}] files {len(files)} valid drug cells {n_ok}", flush=True)
 
-    print("\n[剔除登记]", flush=True)
+    print("\n[exclusion registry]", flush=True)
     for k, v in sorted(flags.items()):
         print(f"  {k}: {len(v)}", flush=True)
 
-    # ---------- 判1 ----------
+    # ---------- crit-1 ----------
     ex = np.array([c["eps_x"] for c in cells])
     nB = np.array([c["nullB_eps"] for c in cells if "nullB_eps" in c])
     nA = np.array([c["nullA_eps"] for c in cells if "nullA_eps" in c])
     p90B = float(np.percentile(nB, 90)) if len(nB) else float("nan")
     line1 = max(p90B, EPS_ABS)
     j1 = bool(np.median(ex) > line1)
-    # ---------- 判2 ----------
+    # ---------- crit-2 ----------
     kap = np.array([c["kappa"] for c in cells])
     ratio = np.array([c["eps_x1"] / c["eps_x"] for c in cells if c["eps_x"] > 1e-9])
     j2_amp = bool(np.median(kap) < KAP_LINE and np.median(ratio) > 0.5)
-    # ---------- 判3 ----------
+    # ---------- crit-3 ----------
     df_in = np.array([c["df"] for c in cells if c["group"] in INACT_POOL and "df" in c])
     df_op = np.array([c["df"] for c in cells if c["group"] in OPEN_POOL and "df" in c])
     ndf = np.abs(np.array([c["nullB_df"] for c in cells if "nullB_df" in c]))
@@ -422,7 +422,7 @@ def main():
              "abs_med": float(np.median(np.abs(df_op))) if len(df_op) else None}
     j3 = bool(j3_in.get("p", 1) < 0.05 and j3_in.get("med", 0) > 0
               and (j3_op["abs_med"] is None or j3_op["abs_med"] < p90df))
-    # ---------- 判4 ----------
+    # ---------- crit-4 ----------
     rows = {}
     def row_ratio(ms):
         ms = list(ms)
@@ -459,7 +459,7 @@ def main():
                       for g in GROUPS},
     }
     print("\n" + "=" * 78, flush=True)
-    print(" 判词组件", flush=True)
+    print(" verdict components", flush=True)
     print(json.dumps(verdict, ensure_ascii=False, indent=2, default=str), flush=True)
 
     result = {"cells": [{k: v for k, v in c.items()} for c in cells],
@@ -468,7 +468,7 @@ def main():
     with open(OUTJ, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=1, default=str)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, axes = plt.subplots(1, 4, figsize=(19, 4.6))
     ax = axes[0]
     for g, mk in (("Verapamil_Ca2+_PT", "18821006.abf"),):
@@ -477,30 +477,30 @@ def main():
         sg = segment_cell(xx)
         ax.plot(xx, lw=1)
         if "ctrl" in sg:
-            ax.axvspan(sg["ctrl"][0], sg["ctrl"][1], color="g", alpha=0.2, label="对照窗")
-            ax.axvspan(sg["drug"][0], sg["drug"][1], color="r", alpha=0.2, label="药物窗")
-            if sg.get("tail"): ax.axvspan(sg["tail"][0], sg["tail"][1], color="k", alpha=0.2, label="verapamil尾")
-        ax.legend(fontsize=8); ax.set_title("分段示例 Verapamil/18821006")
+            ax.axvspan(sg["ctrl"][0], sg["ctrl"][1], color="g", alpha=0.2, label="control window")
+            ax.axvspan(sg["drug"][0], sg["drug"][1], color="r", alpha=0.2, label="drug window")
+            if sg.get("tail"): ax.axvspan(sg["tail"][0], sg["tail"][1], color="k", alpha=0.2, label="verapamil tail")
+        ax.legend(fontsize=8); ax.set_title("segmentation example Verapamil/18821006")
     ax = axes[1]
-    ax.hist(ex, bins=30, alpha=0.6, label=f"药物ε_x 中位{np.median(ex):.3f}")
+    ax.hist(ex, bins=30, alpha=0.6, label=f"drug eps_x median {np.median(ex):.3f}")
     if len(nB): ax.hist(nB, bins=30, alpha=0.6, label=f"Null-B p90={p90B:.3f}")
-    ax.axvline(EPS_ABS, color="k", ls="--", label="0.03 绝对线")
-    ax.legend(fontsize=8); ax.set_title("判1 形状变形 vs 双零分布")
+    ax.axvline(EPS_ABS, color="k", ls="--", label="0.03 absolute line")
+    ax.legend(fontsize=8); ax.set_title("crit-1 shape warp vs dual null distributions")
     ax = axes[2]
-    for arr, lab, c in ((df_in, f"失活态池 n={len(df_in)}", "tab:red"),
-                        (df_op, f"开放态池 n={len(df_op)}", "tab:blue")):
+    for arr, lab, c in ((df_in, f"inactivated pool n={len(df_in)}", "tab:red"),
+                        (df_op, f"open pool n={len(df_op)}", "tab:blue")):
         if len(arr): ax.hist(arr, bins=20, alpha=0.6, label=lab, color=c)
     ax.axvline(0, color="k", lw=0.8)
-    ax.legend(fontsize=8); ax.set_title("判3 Δf_inact（药物−对照）")
+    ax.legend(fontsize=8); ax.set_title("crit-3 Df_inact (drug - control)")
     ax = axes[3]
     names = list(detail4.keys()); meds = [detail4[k]["row"]["med"] if detail4[k]["row"] else np.nan for k in names]
     cols = ["tab:green" if detail4[k]["pass"] else ("tab:red" if detail4[k]["pass"] is False else "gray") for k in names]
     ax.bar(range(len(names)), meds, color=cols)
     ax.axhline(1.2, color="k", ls="--", lw=0.8); ax.axhline(0.8, color="k", ls=":", lw=0.8)
     ax.set_xticks(range(len(names))); ax.set_xticklabels(names, rotation=30, ha="right", fontsize=8)
-    ax.set_title(f"判4 b_ramp/b_step 对拍 {n_pass4}/5")
+    ax.set_title(f"crit-4 b_ramp/b_step cross-check {n_pass4}/5")
     fig.tight_layout(); fig.savefig(OUTP, dpi=140, bbox_inches="tight")
-    print(f"\n 结果落盘: {OUTJ}\n 图落盘: {OUTP}", flush=True)
+    print(f"\n results saved: {OUTJ}\n figure saved: {OUTP}", flush=True)
 
 if __name__ == "__main__":
     if SMOKE:

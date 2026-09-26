@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# 2026-09-16_Nα3_Nav15激活脚部可携带性判决.py
-# 预注册：结果\预注册_Nα3_Nav15激活脚部可携带性判决_2026-09-16.md（v1.0 + v1.1/v1.2，跑前钉死）
-# 用法：python 本脚本          —— 冒烟（S1/S1b/S2/S3/S3b）
-#       python 本脚本 formal   —— 正式跑（冒烟全过后才允许）
+# 2026-09-16_Nα3_Nav15 activation-foot portability verdict
+# Preregistration: 结果\预注册_Nα3_Nav15激活脚部可携带性判决_2026-09-16.md (v1.0 + v1.1/v1.2, pinned before the run)
+# Usage: python this_script          -- smoke (S1/S1b/S2/S3/S3b)
+#        python this_script formal   -- full run (allowed only after smoke fully passes)
 import json
 import os
 import re
@@ -25,10 +25,10 @@ OUTC = os.path.join(ROOT, "2026-09-16_Nα3_Nav15激活脚部可携带性判决_�
 OUTP = os.path.join(ROOT, "2026-09-16_Nα3_Nav15激活脚部可携带性判决.png")
 VERD = os.path.join(PROJ, "结果", "判词卡_Nα3_Nav15激活脚部可携带性判决_2026-09-16.md")
 
-# ---------------- 估计器常量（预注册 v1.2，钉死） ----------------
-CROSS_FRAC = 0.03        # 3% 峰值穿越（v1.3：2% 下弦点落噪声，S3 11/16；3% 全组统一口径）
-CHORD_MIN_SIG = 2.0      # 弦点下限 2σ_eff
-SKIP_MS = 1.0            # 弃测试窗前 1 ms
+# ---------------- estimator constants (preregistration v1.2, pinned) ----------------
+CROSS_FRAC = 0.03        # 3% peak crossing (v1.3: at 2% the chord foot lands in noise, S3 11/16; 3% unified for the whole cohort)
+CHORD_MIN_SIG = 2.0      # chord-point lower bound 2*sigma_eff
+SKIP_MS = 1.0            # discard the first 1 ms of the test window
 
 
 def mad_sig(x):
@@ -76,23 +76,23 @@ def lei_iv(cell, cp):
 
 
 def foot_fit(d):
-    """v1.2：2% 穿越 + 测地弦斜率 s_ref。返回 dict。"""
+    """v1.2: 2% crossing + geodesic chord slope s_ref. Returns dict."""
     V, I, se = d["V"], d["I"], d["sigma_eff"]
     ipeak = int(np.argmin(I))
     ipk = float(I[ipeak])
     thr = CROSS_FRAC * abs(ipk)
-    # 穿越：峰左侧第一对满足 |I_i| < thr <= |I_{i+1}| 的点
+    # Crossing: first pair left of the peak with |I_i| < thr <= |I_{i+1}|
     ia = None
     for i in range(ipeak - 1, -1, -1):
         if abs(I[i]) < thr <= abs(I[i + 1]) and I[i] < 0 and I[i + 1] < 0:
             ia = i
             break
     if ia is None:
-        return {"ok": False, "reason": "2% 穿越不可定位", "I_peak": ipk,
+        return {"ok": False, "reason": "2% crossing not localizable", "I_peak": ipk,
                 "V_at_peak": float(V[ipeak])}
     ib = ia + 1
     if abs(I[ia]) < CHORD_MIN_SIG * se or abs(I[ib]) < CHORD_MIN_SIG * se:
-        return {"ok": False, "reason": f"弦点低于 2σ_eff（{abs(I[ia]):.0f}/{abs(I[ib]):.0f} pA, "
+        return {"ok": False, "reason": f"chord point below 2*sigma_eff ({abs(I[ia]):.0f}/{abs(I[ib]):.0f} pA, "
                                        f"2σ={2 * se:.0f}）", "I_peak": ipk, "V_at_peak": float(V[ipeak])}
     ya, yb = np.log(abs(I[ia])), np.log(abs(I[ib]))
     vx = V[ia] + (np.log(thr) - ya) / (yb - ya) * (V[ib] - V[ia])
@@ -128,7 +128,7 @@ def erv_full(d):
         return {"E_rev": float(erv), "E_rev_fallback": erv_fb, "error": str(e)[:80]}
 
 
-# ---------------- 冒烟 ----------------
+# ---------------- smoke ----------------
 def synth_iv(vh=-40.0, k=6.0, erv=47.0, g=50.0, noise=10.0, rs_eff=0.0, seed=1, dv=5.0):
     rng = np.random.default_rng(seed)
     V = np.arange(-100.0, 80.1, dv)
@@ -142,14 +142,14 @@ def synth_iv(vh=-40.0, k=6.0, erv=47.0, g=50.0, noise=10.0, rs_eff=0.0, seed=1, 
 
 
 def s_analytic(vh, k, erv, g, v_cross, ipk):
-    """穿越点处解析局部斜率 3(1−m)/k（含驱动力修正项）。"""
+    """Analytic local slope at the crossing: 3(1-m)/k (with driving-force correction)."""
     m = 1.0 / (1.0 + np.exp(-(v_cross - vh) / k))
     return 3.0 * (1.0 - m) / k + 1.0 / abs(v_cross - erv)
 
 
 def smoke():
     print("=" * 72, flush=True)
-    print(" [冒烟] S1 回收 | S1b 网格退化 | S2 Rs 畸变 | S3/S3b 真实数据窗规则", flush=True)
+    print(" [smoke] S1 recovery | S1b grid degradation | S2 Rs distortion | S3/S3b real-data window rules", flush=True)
     print("=" * 72, flush=True)
     ok = True
     # S1
@@ -159,15 +159,15 @@ def smoke():
     e1 = abs(r["s_ref"] - sa) / sa
     s1 = e1 <= 0.15
     ok &= s1
-    print(f"  S1: s_ref={r['s_ref']:.4f} vs 解析 {sa:.4f}（误差 {e1 * 100:.1f}%，判线≤15%）"
-          f" 弦 {r['V_a']:.0f}..{r['V_b']:.0f} -> {'过' if s1 else '挂'}", flush=True)
-    # S1b：5→10 mV 网格退化
+    print(f"  S1: s_ref={r['s_ref']:.4f} vs analytic {sa:.4f} (error {e1 * 100:.1f}%, criterion<=15%)"
+          f" chord {r['V_a']:.0f}..{r['V_b']:.0f} -> {'pass' if s1 else 'fail'}", flush=True)
+    # S1b: 5->10 mV grid degradation
     d10, _ = synth_iv(dv=10.0)
     r10 = foot_fit(d10)
     deg = abs(r10["s_ref"] - r["s_ref"]) / r["s_ref"]
     s1b = deg < 0.05
     ok &= s1b
-    print(f"  S1b: 10 mV 网格 s_ref={r10['s_ref']:.4f}，退化 {deg * 100:.1f}%（判线<5%） -> {'过' if s1b else '挂'}", flush=True)
+    print(f"  S1b: 10 mV grid s_ref={r10['s_ref']:.4f}, degradation {deg * 100:.1f}% (criterion<5%) -> {'pass' if s1b else 'fail'}", flush=True)
     # S2
     d2, _ = synth_iv(rs_eff=3.2e-3)
     r2 = foot_fit(d2)
@@ -175,8 +175,8 @@ def smoke():
     e2 = abs(r2["s_ref"] - sa2) / sa2
     s2 = e2 <= 0.15
     ok &= s2
-    print(f"  S2: Rs=8MΩ·60%补偿 下 s_ref={r2['s_ref']:.4f} vs 解析 {sa2:.4f}"
-          f"（误差 {e2 * 100:.1f}%，判线≤15%） -> {'过' if s2 else '挂'}", flush=True)
+    print(f"  S2: under Rs=8MOhm·60% compensation s_ref={r2['s_ref']:.4f} vs analytic {sa2:.4f}"
+          f" (error {e2 * 100:.1f}%, criterion<=15%) -> {'pass' if s2 else 'fail'}", flush=True)
     # S3
     n_ok = n_tot = 0
     for f in bc2_files():
@@ -184,17 +184,17 @@ def smoke():
         n_ok += int(foot_fit(abf_iv(f))["ok"])
     s3 = n_ok >= 12
     ok &= s3
-    print(f"  S3: G1∪G2 可判 {n_ok}/{n_tot}（判线 ≥12） -> {'过' if s3 else '挂'}", flush=True)
+    print(f"  S3: G1+G2 judgeable {n_ok}/{n_tot} (criterion >=12) -> {'pass' if s3 else 'fail'}", flush=True)
     # S3b
     n_ok_b = sum(1 for c in ["220502_008_ch2", "220502_011_ch3", "220503_005_ch2"]
                  if (lambda dd: dd is not None and foot_fit(dd)["ok"])(lei_iv(c, "80")))
     s3b = n_ok_b >= 2
     ok &= s3b
-    print(f"  S3b: Lei 80CP 可判 {n_ok_b}/3（判线 ≥2） -> {'过' if s3b else '挂'}", flush=True)
+    print(f"  S3b: Lei 80CP judgeable {n_ok_b}/3 (criterion >=2) -> {'pass' if s3b else 'fail'}", flush=True)
     return ok
 
 
-# ---------------- 数据清单 ----------------
+# ---------------- data inventory ----------------
 def bc2_files():
     import glob
     return sorted(p for p in
@@ -231,14 +231,14 @@ def pool_stats(xs, es):
 def main():
     formal = len(sys.argv) > 1 and sys.argv[1] == "formal"
     if not smoke():
-        print("\n[冒烟未过] 正式跑禁止。", flush=True)
+        print("\n[smoke failed] full run forbidden.", flush=True)
         sys.exit(2)
     if not formal:
-        print("\n[冒烟全过] 加 formal 参数进入正式跑。", flush=True)
+        print("\n[smoke all pass] add the formal argument to enter the full run.", flush=True)
         return
 
     print("\n" + "=" * 72, flush=True)
-    print(" [正式跑] Nα-3 m∞ 脚部可携带性判决（s_ref 口径，预注册 v1.2）", flush=True)
+    print(" [full run] Na-3 m-inf foot portability verdict (s_ref metric, preregistration v1.2)", flush=True)
     print("=" * 72, flush=True)
 
     cells = []
@@ -250,8 +250,8 @@ def main():
         fu = erv_full(abf_iv(f))
         cells.append({"group": grp, "cell": cid, "src": "Tarasov", **fr, **fu})
         print(f"  [{grp}] {cid}: " + (f"s_ref={fr['s_ref']:.4f}±{fr['s_err']:.4f} "
-              f"弦{fr['V_a']:.0f}..{fr['V_b']:.0f} V_x={fr['V_cross']:.1f} k_eq={fr['k_equiv']:.1f}"
-              if fr["ok"] else f"不可判（{fr['reason']}）"), flush=True)
+              f"chord{fr['V_a']:.0f}..{fr['V_b']:.0f} V_x={fr['V_cross']:.1f} k_eq={fr['k_equiv']:.1f}"
+              if fr["ok"] else f"not judgeable ({fr['reason']})"), flush=True)
 
     import glob
     for f in sorted(glob.glob(os.path.join(DRYAD, "CHO deltaKPQ-NaV1.5 whole cell INa", "raw data files", "*.abf"))):
@@ -260,14 +260,14 @@ def main():
         cid = os.path.splitext(os.path.basename(f))[0]
         if not classify_iv(f):
             cells.append({"group": "G3_dKPQ", "cell": cid, "src": "Tarasov", "ok": False,
-                          "reason": "列车型（非 IV），机械排除"})
-            print(f"  [G3_dKPQ] {cid}: 列车型，排除", flush=True)
+                          "reason": "train-type (not IV), mechanically excluded"})
+            print(f"  [G3_dKPQ] {cid}: train-type, excluded", flush=True)
             continue
         fr = foot_fit(abf_iv(f))
         fu = erv_full(abf_iv(f))
         cells.append({"group": "G3_dKPQ", "cell": cid, "src": "Tarasov", **fr, **fu})
         print(f"  [G3_dKPQ] {cid}: " + (f"s_ref={fr['s_ref']:.4f}±{fr['s_err']:.4f}"
-              if fr["ok"] else f"不可判（{fr['reason']}）"), flush=True)
+              if fr["ok"] else f"not judgeable ({fr['reason']})"), flush=True)
 
     for f in sorted(glob.glob(os.path.join(DRYAD, "deltaKPQ myocytes whole-cell INa", "data files", "*.abf"))):
         if pyabf.ABF(f, loadData=False).protocol != "peak current" or not classify_iv(f):
@@ -275,11 +275,11 @@ def main():
         cid = os.path.splitext(os.path.basename(f))[0]
         fr = foot_fit(abf_iv(f))
         cells.append({"group": "G4_myo", "cell": cid, "src": "Tarasov", **fr})
-        print(f"  [G4_myo·敏感] {cid}: " + (f"s_ref={fr['s_ref']:.4f}±{fr['s_err']:.4f}"
-              if fr["ok"] else "不可判"), flush=True)
+        print(f"  [G4_myo·sens] {cid}: " + (f"s_ref={fr['s_ref']:.4f}+-{fr['s_err']:.4f}"
+              if fr["ok"] else "not judgeable"), flush=True)
 
     for cell in ["220502_008_ch2", "220502_011_ch3", "220503_005_ch2"]:
-        for cp, tag in [("80", "主判"), ("0", "敏感")]:
+        for cp, tag in [("80", "main"), ("0", "sens")]:
             d = lei_iv(cell, cp)
             if d is None:
                 continue
@@ -288,10 +288,10 @@ def main():
                    "Rs_Mohm": d["Rs_Mohm"], **fr}
             cells.append(row)
             print(f"  [Lei {cp}CP·{tag}] {cell}: " + (f"s_ref={fr['s_ref']:.4f}±{fr['s_err']:.4f} "
-                  f"弦{fr['V_a']:.0f}..{fr['V_b']:.0f}"
-                  if fr["ok"] else f"不可判（{fr['reason']}）"), flush=True)
+                  f"chord{fr['V_a']:.0f}..{fr['V_b']:.0f}"
+                  if fr["ok"] else f"not judgeable ({fr['reason']})"), flush=True)
 
-    # ---------------- 判词 ----------------
+    # ---------------- verdicts ----------------
     verdict = {}
     g12 = [c for c in cells if c["group"] in ("G1_WT", "G2_BC2") and c.get("ok")]
     ps = pool_stats([c["s_ref"] for c in g12], [c["s_err"] for c in g12])
@@ -300,9 +300,9 @@ def main():
     tag_diff = abs(med1 - med2) / ps["median"]
     j1 = ps["CV_pass"] and ps["Q_pass"] and tag_diff <= 0.15 and ps["n"] >= 12
     verdict["判1"] = {"通过": bool(j1), **ps, "G1中位": med1, "G2中位": med2, "标签差": float(tag_diff)}
-    print(f"\n[判1] G1∪G2 n={ps['n']}: s_ref 中位 {ps['median']:.4f}，CV={ps['CV']:.3f}（<0.3）"
+    print(f"\n[crit-1] G1+G2 n={ps['n']}: s_ref median {ps['median']:.4f}, CV={ps['CV']:.3f} (<0.3)"
           f" max/min={ps['max_min']:.2f}（<2.0） Q={ps['Q']:.1f}<χ²={ps['Qcrit']:.1f} "
-          f"BC2标签差 {tag_diff * 100:.1f}%（≤15%） -> {'过' if j1 else '挂'}", flush=True)
+          f"BC2 tag difference {tag_diff * 100:.1f}% (<=15%) -> {'pass' if j1 else 'fail'}", flush=True)
 
     g3 = [c for c in cells if c["group"] == "G3_dKPQ" and c.get("ok")]
     if len(g3) >= 3:
@@ -310,11 +310,11 @@ def main():
         d3 = abs(med3 - ps["median"]) / ps["median"]
         j2 = d3 <= 0.15
         verdict["判2"] = {"通过": bool(j2), "G3中位": med3, "G3_n": len(g3), "中位差": float(d3)}
-        print(f"[判2] G3 ΔKPQ n={len(g3)}: 中位 {med3:.4f} vs 池 {ps['median']:.4f}，"
-              f"差 {d3 * 100:.1f}%（≤15%） -> {'过' if j2 else '挂'}", flush=True)
+        print(f"[crit-2] G3 dKPQ n={len(g3)}: median {med3:.4f} vs pool {ps['median']:.4f},"
+              f"diff {d3 * 100:.1f}% (<=15%) -> {'pass' if j2 else 'fail'}", flush=True)
     else:
         verdict["判2"] = {"通过": False, "原因": f"G3 可判细胞不足（{len(g3)}）"}
-        print(f"[判2] G3 可判细胞不足（{len(g3)}） -> 挂", flush=True)
+        print(f"[crit-2] G3 judgeable cells insufficient ({len(g3)}) -> fail", flush=True)
 
     lei80 = [c for c in cells if c["group"] == "Lei_80CP" and c.get("ok")]
     if len(lei80) == 3:
@@ -322,11 +322,11 @@ def main():
         j3 = len(inside) == 3
         verdict["判3"] = {"通过": bool(j3), "区间": [ps["P10"], ps["P90"]],
                          "Lei_s": [c["s_ref"] for c in lei80], "落入数": len(inside)}
-        print(f"[判3] Lei 80CP s_ref={[round(c['s_ref'], 3) for c in lei80]} "
-              f"vs 池 [P10,P90]=[{ps['P10']:.3f},{ps['P90']:.3f}]，落入 {len(inside)}/3 -> {'过' if j3 else '挂'}", flush=True)
+        print(f"[crit-3] Lei 80CP s_ref={[round(c['s_ref'], 3) for c in lei80]} "
+              f"vs pool [P10,P90]=[{ps['P10']:.3f},{ps['P90']:.3f}], inside {len(inside)}/3 -> {'pass' if j3 else 'fail'}", flush=True)
     else:
         verdict["判3"] = {"通过": False, "原因": f"Lei 可判数不足（{len(lei80)}/3）"}
-        print(f"[判3] Lei 可判数不足（{len(lei80)}/3） -> 挂", flush=True)
+        print(f"[crit-3] Lei judgeable count insufficient ({len(lei80)}/3) -> fail", flush=True)
 
     dv = []
     for c in cells:
@@ -337,16 +337,16 @@ def main():
     dv_max = float(max(dv)) if dv else np.nan
     j4 = bool(dv_max <= 1.5)
     verdict["判4"] = {"通过": j4, "max_dV_mV": dv_max, "n_points": len(dv)}
-    print(f"[判4] 弦点 |ΔV| 最大 {dv_max:.3f} mV（n={len(dv)}，判线 ≤1.5） -> {'过' if j4 else '挂'}", flush=True)
+    print(f"[crit-4] chord-point |dV| max {dv_max:.3f} mV (n={len(dv)}, criterion <=1.5) -> {'pass' if j4 else 'fail'}", flush=True)
 
     j5 = bool(j1 and verdict["判2"]["通过"] and verdict["判3"]["通过"])
     verdict["判5"] = {"通过": j5, "s_ref_封卷候选": ps["median"] if j5 else None}
-    print(f"\n[判5·终局] 判1{'✓' if j1 else '✗'} 判2{'✓' if verdict['判2']['通过'] else '✗'} "
-          f"判3{'✓' if verdict['判3']['通过'] else '✗'} -> "
-          f"{'s_ref 可携带成立，封卷候选 ' + format(ps['median'], '.4f') + ' mV^-1' if j5 else '未成立，分项归因见判词卡'}",
+    print(f"\n[crit-5·final] crit1{'v' if j1 else 'x'} crit2{'v' if verdict['判2']['通过'] else 'x'} "
+          f"crit3{'v' if verdict['判3']['通过'] else 'x'} -> "
+          f"{'s_ref portability HOLDS, seal candidate ' + format(ps['median'], '.4f') + ' mV^-1' if j5 else 'NOT established; per-item attribution in the verdict card'}",
           flush=True)
 
-    # ---------------- 落盘 ----------------
+    # ---------------- save ----------------
     pd.DataFrame(cells).to_csv(OUTC, index=False, encoding="utf-8-sig")
     with open(OUTJ, "w", encoding="utf-8") as fh:
         json.dump({"cells": cells, "verdict": verdict}, fh, ensure_ascii=False, indent=2, default=str)
@@ -362,7 +362,7 @@ def main():
             ax.semilogy([c["V_a"], c["V_b"]], np.abs([c["I_a"], c["I_b"]]), "o-",
                         color=col, alpha=0.6, ms=4, lw=1.0)
     ax.axhline(0, color="k", lw=0.5)
-    ax.set_title("G1 WT（蓝）/ G2 BC2（青）2% 弦点")
+    ax.set_title("G1 WT (blue) / G2 BC2 (cyan) 2% chord points")
     ax.set_xlabel("V (mV)"); ax.set_ylabel("|I| (pA)"); ax.set_yscale("log")
     ax = axes[1]
     order = ["G1_WT", "G2_BC2", "G3_dKPQ", "G4_myo", "Lei_80CP", "Lei_0CP"]
@@ -373,7 +373,7 @@ def main():
         if xs:
             ax.hlines(np.median(xs), gi - 0.25, gi + 0.25, color=cols[gi], lw=2)
     ax.set_xticks(range(len(order))); ax.set_xticklabels(order, rotation=25)
-    ax.set_ylabel("s_ref (mV$^{-1}$)"); ax.set_title("s_ref 分组散布（横线=中位）")
+    ax.set_ylabel("s_ref (mV$^{-1}$)"); ax.set_title("s_ref scatter by group (bar = median)")
     ax.legend(fontsize=7)
     ax = axes[2]
     for c in cells:
@@ -385,39 +385,39 @@ def main():
         if c.get("ok") and c["group"] == "Lei_80CP":
             ax.errorbar(c["V_cross"], c["s_ref"], yerr=c["s_err"], fmt="ks--", ms=6, lw=1.3)
     ax.set_xlabel("V_cross (mV)"); ax.set_ylabel("s_ref (mV$^{-1}$)")
-    ax.set_title("s_ref vs 穿越电压（黑=Lei 80CP）")
+    ax.set_title("s_ref vs crossing voltage (black = Lei 80CP)")
     fig.tight_layout()
     fig.savefig(OUTP, dpi=150, bbox_inches="tight")
-    print(f"\n  结果落盘: {OUTJ}\n  逐细胞: {OUTC}\n  图: {OUTP}", flush=True)
+    print(f"\n  results saved: {OUTJ}\n  per-cell: {OUTC}\n  figure: {OUTP}", flush=True)
 
     lines = [
-        "# 判词卡 Nα-3：Nav1.5 激活脚部可携带性判决",
+        "# Verdict card Na-3: Nav1.5 activation-foot portability verdict",
         "",
-        "- 日期：2026-09-16　预注册 v1.0 + 修订 v1.1/v1.2（全部跑前钉死）",
-        f"- 可判细胞：G1 n={sum(1 for c in cells if c['group'] == 'G1_WT' and c.get('ok'))} / "
+        "- Date: 2026-09-16  Preregistration v1.0 + amendments v1.1/v1.2 (all pinned before the run)",
+        f"- Judgeable cells: G1 n={sum(1 for c in cells if c['group'] == 'G1_WT' and c.get('ok'))} / "
         f"G2 n={sum(1 for c in cells if c['group'] == 'G2_BC2' and c.get('ok'))} / "
         f"G3 n={len(g3)} / Lei80CP n={len(lei80)}",
         "",
-        "## 判词",
+        "## Verdicts",
         "",
-        f"- 判1（池内可携带）：{'**过**' if j1 else '**挂**'}——s_ref 中位 {ps['median']:.4f} mV⁻¹，"
+        f"- Crit-1 (within-pool portability): {'**PASS**' if j1 else '**FAIL**'} -- s_ref median {ps['median']:.4f} mV^-1,"
         f"CV={ps['CV']:.3f}、max/min={ps['max_min']:.2f}、Q={ps['Q']:.1f}（χ²₀.₉₅={ps['Qcrit']:.1f}）、"
-        f"BC2 标签差 {tag_diff * 100:.1f}%",
-        f"- 判2（跨构建体）：{'**过**' if verdict['判2']['通过'] else '**挂**'}——{json.dumps(verdict['判2'], ensure_ascii=False)}",
-        f"- 判3（跨实验室 Lei）：{'**过**' if verdict['判3']['通过'] else '**挂**'}——{json.dumps(verdict['判3'], ensure_ascii=False)}",
-        f"- 判4（Rs 免疫核算）：{'**过**' if j4 else '**挂**'}——弦点 |ΔV| 最大 {dv_max:.3f} mV（判线 1.5）",
+        f"BC2 tag difference {tag_diff * 100:.1f}%",
+        f"- Crit-2 (cross-construct): {'**PASS**' if verdict['判2']['通过'] else '**FAIL**'} -- {json.dumps(verdict['判2'], ensure_ascii=False)}",
+        f"- Crit-3 (cross-lab Lei): {'**PASS**' if verdict['判3']['通过'] else '**FAIL**'} -- {json.dumps(verdict['判3'], ensure_ascii=False)}",
+        f"- Crit-4 (Rs-immunity accounting): {'**PASS**' if j4 else '**FAIL**'} -- chord-point |dV| max {dv_max:.3f} mV (criterion 1.5)",
         "",
-        f"## 终局（判5）：{'**s_ref 可携带成立**；封卷候选 s_ref = ' + format(ps['median'], '.4f') + ' mV⁻¹（池化中位）' if j5 else '**未成立**——分项归因见上'}",
+        f"## Final (crit-5): {'**s_ref portability HOLDS**; seal candidate s_ref = ' + format(ps['median'], '.4f') + ' mV^-1 (pooled median)' if j5 else '**NOT established** -- per-item attribution above'}",
         "",
-        "## 不可判/排除登记",
+        "## Non-judgeable / exclusion registry",
         ""]
     for c in cells:
         if not c.get("ok"):
             lines.append(f"- {c['group']} {c['cell']}：{c.get('reason', '?')}")
-    lines += ["", "## 产物", f"- {os.path.basename(OUTJ)} / {os.path.basename(OUTC)} / {os.path.basename(OUTP)}（α模型\\）"]
+    lines += ["", "## Products", f"- {os.path.basename(OUTJ)} / {os.path.basename(OUTC)} / {os.path.basename(OUTP)} (α模型\\)"]
     with open(VERD, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines))
-    print(f"  判词卡: {VERD}", flush=True)
+    print(f"  verdict card: {VERD}", flush=True)
 
 
 if __name__ == "__main__":

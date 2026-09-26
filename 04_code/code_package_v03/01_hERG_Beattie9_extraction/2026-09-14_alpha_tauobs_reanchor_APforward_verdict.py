@@ -1,54 +1,54 @@
-# 2026-09-14_α模型_τobs换锚_AP前向判决.py
-# 【τ_obs 换锚·B2 退役 2026-09-14】本文件 = hss实测表重跑_AP前向判决.py 的唯一改动版：
-#   τ_h 复极段 B2 桥锚退役，换 τ_obs 封卷实测上界中位表（τobs判决_复极窗快弛豫封卷_结果.json，
-#   封卷 5/6 档，§13）：新增显式锚 -70: 7.0ms、-60: 7.0ms、-50: 8.9ms、-40: 14.4ms、
-#   -30: 14.4ms；原桥锚 -40: 23ms 让位；-20: 50ms 无实测覆盖，桥锚保留（登记）；0/+60: 1.5ms 不动。
-#   其余（m_ss/τ_m/h_ss/G 表、P1-P5、R1-R3、对照 C1/C2、评分口径）逐字不动。
-# 判线（跑前钉死，与 hss 实测表重跑版逐字相同，一字未动）：
-#   A1 复极回弹 >=80% 周期且峰比中位∈[0.3,3]；A2 hook DoE∈[0.3,3]；A3 间期累积方向；
-#   每细胞 A1/A2/A3 全过 -> 过；九细胞 >=7 -> AP 前向对 B2 退役稳健。
-# 意义：>=7 仍过 -> B2 桥无伤退役，τ_h 复极段实测化收口；掉 -> 照实登记，桥值回滚备案。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 单细胞 16713003 冒烟。
-# ---------- 以下为 hss 实测表重跑版文件头（历史声明，改动以本条为准） ----------
-# 2026-09-13_α模型_hss实测表重跑_AP前向判决.py
-# 【B1 退役·换表重跑 2026-09-13 深夜】本文件 = AP前向判决.py 的唯一改动版：
-#   h_ss B1 段（-80..+30，12 档）锚换实测剥离表（纯hssV剥离判决_结果.json，运行时
-#   加载），m_ss=y_ss/h_ss 同步重分裂；政策 P1-P5 与 sine 换表版逐字相同（见该文件头）。
-# 判线与 B1 版逐字相同（A1/A2/A3、九细胞>=7，一字未动）；对照 C1/C2 相同。
-# 意义：>=7 仍过 -> AP 前向对 B1 之死稳健；掉 -> 原 7/9 依赖错误假设，照实登记。
-# ---------- 以下为原 B1 版文件头（除 B1 条已作废外，其余声明仍然有效） ----------
-# 目的（AP clamp 决战，不是调参——与 sine 冒烟同一套四表、同一 G、同一 E_rev=-88.33，
-#   零调参前向打 AP 协议）：dm/dt=(m_ss-m)/τ_m, dh/dt=(h_ss-h)/τ_h, I=G·m·h·(V-E_rev)。
-#   V(t) 直接读 ap_protocol.mat（17 个去极化峰的数字化 AP 钳制波形，原样吃进）。
+# 2026-09-14_alpha_tauobs_reanchor_APforward_verdict.py
+# [tau_obs re-anchoring, B2 retirement 2026-09-14] This file = hss-measured-table-rerun AP-forward verdict with one change only:
+#   tau_h repolarisation-segment B2 bridge anchors retired, replaced by the tau_obs sealed measured upper-bound median table
+#   (2026-09-13_alpha_tauobs_verdict_repol_window_fast_relax_seal_结果.json, sealed 5/6 levels, section 13): new explicit
+#   anchors -70: 7.0 ms, -60: 7.0 ms, -50: 8.9 ms, -40: 14.4 ms, -30: 14.4 ms; the old bridge anchor -40: 23 ms yields;
+#   -20: 50 ms has no measured coverage, bridge anchor kept (registered); 0/+60: 1.5 ms unchanged. Everything else
+# Criteria (pinned before run, verbatim identical to the hss-measured-table rerun, not one character moved):
+#   A1 repolarisation rebound >= 80% of cycles and peak-ratio median in [0.3,3]; A2 hook DoE in [0.3,3]; A3 inter-beat
+#   accumulation direction; per cell A1/A2/A3 all pass -> pass; nine cells >= 7 -> AP forward robust to B2 retirement.
+# Meaning: still >= 7 -> the B2 bridge retires without damage, tau_h repolarisation segment closes on measurement;
+# Run: python this file (nine cells full); SMOKE=1 single-cell 16713003 smoke.
+# ---------- below: header of the hss-measured-table rerun version (historical declarations; this note governs the change) ----------
+# 2026-09-13_alpha model_hss measured-table rerun_AP forward adjudication.py
+# [B1 retirement, table-swap rerun, late 2026-09-13] This file = AP-forward verdict with one change only:
+#   h_ss B1 segment (-80..+30, 12 levels) anchors swapped to the measured strip table (loaded at runtime from
+#   2026-09-13_alpha_pure_hssV_strip_verdict_结果.json), m_ss = y_ss/h_ss re-split in sync; policies P1-P5 verbatim
+# Criteria verbatim identical to the B1 version (A1/A2/A3, nine cells >= 7, not one character moved); controls C1/C2 same.
+# Meaning: still >= 7 -> AP forward robust to the death of B1; a drop -> the original 7/9 relied on a wrong assumption,
+# ---------- below: original B1-version header (the B1 clause is void; all other declarations still in force) ----------
+# Purpose (AP-clamp decisive battle, not parameter tuning: the same four tables, same G, same E_rev = -88.33 as the
+#   sine smoke; zero-tuning forward against the AP protocol): dm/dt = (m_ss - m)/tau_m, dh/dt = (h_ss - h)/tau_h,
+#   I = G*m*h*(V - E_rev). V(t) read directly from ap_protocol.mat (digitised AP-clamp waveform with 17 depolarising
 #
-# 【协议结构（2026-09-13 程序化解析在案）】
-#   前置 -80x0.25s -> -120x0.05s 预脉冲 -> -80；0.57s 起 17 个去极化峰
-#   （峰 +8.8~+71.8mV，间期回 -80）；7.325s 尾部 -120x0.5s 反弹 hook；尾 -80x1.0s。
-#   全长 8.82s，88245 点 @DT=1e-4。
+# [Protocol structure (programmatically parsed 2026-09-13, on record)]
+#   lead-in -80 x0.25 s -> -120 x0.05 s prepulse -> -80; 17 depolarising peaks from 0.57 s
+#   (peaks +8.8~+71.8mV, inter-peak returns to -80); 7.325s tail -120x0.5s rebound hook; final -80x1.0s.
+#   total length 8.82s, 88245 points @DT=1e-4.
 #
-# 【实测形态依据（16713003 抽样，判线设计依据）】
-#   复极窗峰 0.09~2.05nA >> 平台窗 -0.001~0.335（hERG 复极回弹 signature）；
-#   间期 -80 窗电流 0.020 -> 0.189nA 跨周期累积（~8倍）；
-#   -120 hook 翻正幅度 ~1.2nA；噪声 std 0.0069nA（前置 -80 段）。
+# [Measured-shape basis (16713003 sampling, basis for criterion design)]
+#   repolarisation-window peaks 0.09~2.05 nA >> plateau window -0.001~0.335 (the hERG repolarisation-rebound signature);
+#   inter-beat -80 window current 0.020 -> 0.189 nA cross-cycle accumulation (~8x);
+#   -120 hook flipped amplitude ~1.2 nA; noise std 0.0069 nA (lead-in -80 segment).
 #
-# 判线（跑前声明）：
-#   A1 复极回弹自发（头号靶）：>=80% 周期（17个中>=14）模拟复极窗
-#      （峰后至 V<-40）出现电流峰（max > 平台窗均值+0.021=3x噪声），
-#      且这些周期 模拟复极峰/实测复极峰 的中位比 ∈ [0.3,3]（G 不确定度）；
-#   A2 -120 hook 反弹幅度：DoE 反演 模拟/实测 ∈ [0.3,3]（同 sine S1 口径）；
-#   A3 间期累积方向：模拟间期 -80 窗电流 末1/3均值 > 首1/3均值（方向判，
-#      实测 0.020->0.189 约8倍）；
-#   每细胞 A1/A2/A3 全过 -> 该细胞过；九细胞过 >=7 -> α模型 AP 前向成立。
+# Criteria (declared pre-run):
+#   A1 spontaneous repolarisation rebound (top target): in >= 80% of cycles (>= 14 of 17) the simulated repolarisation
+#      window (after the peak until V < -40) shows a current peak (max > plateau-window mean + 0.021 = 3x noise),
+#      and across those cycles the median ratio simulated/measured repolarisation peak is in [0.3,3] (G uncertainty);
+#   A2 -120 hook rebound amplitude: DoE inversion simulated/measured in [0.3,3] (same convention as sine S1);
+#   A3 inter-beat accumulation direction: simulated inter-beat -80 window current, last-third mean > first-third mean
+#      (direction judgement; measured 0.020 -> 0.189, about 8x);
+#   per cell A1/A2/A3 all pass -> that cell passes; nine cells >= 7 pass -> alpha-model AP forward holds.
 #
-# 桥接声明（与 sine 冒烟同一套，一字未动）：
-#   B1【已作废·本版换实测表】h_ss(V<=-40)=1.0 物理声明；h40 回退链（失活协议直提 ->
-#      h_ss50 -> 默认0.0034；+40 端 R3 链本版保留 P4，16708060 停在 h50=0.0022 在案）。
-#   B2 τ_rec(V) 4点对数外推；B3 τ_m 锚/逻辑桥；B4 -40档y_ss伪影剔除；
-#   B5 单门 m 声明。R1 G 回退链同 sine（16704047 走 posthoc_G_inact=0.0718）。
-# 对照（跑前声明）：
-#   C1 DoE 反演 τ_r 误差 <15%；
-#   C2 合成全程（16713003 表）结构解析 17峰+hook 且 A1/A2/A3 可计算（管道不死锁）。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 单细胞 16713003 冒烟。
+# Bridge declarations (same set as the sine smoke, not one character moved):
+#   B1 [VOID, this version swaps in the measured table] h_ss(V <= -40) = 1.0 physical claim; h40 fallback chain
+#      (inactivation-protocol direct extraction -> h_ss50 -> default 0.0034; the +40-end R3 chain kept in this version
+#   B2 tau_rec(V) 4-point log extrapolation; B3 tau_m anchors/logic bridge; B4 -40-level y_ss artefact removal;
+#   B5 single-gate m claim. R1 G fallback chain same as sine (16704047 takes posthoc_G_inact = 0.0718).
+# Controls (declared pre-run):
+#   C1 DoE inversion tau_r error < 15%;
+#   C2 synthetic full run (16713003 tables): structure parsing finds 17 peaks + hook and A1/A2/A3 computable (pipeline
+# Run: python this file (nine cells full); SMOKE=1 single-cell 16713003 smoke.
 import os
 import json
 import numpy as np
@@ -68,7 +68,7 @@ CELLS = ["16713003"] if SMOKE else ["16704007", "16704047", "16707014", "1670801
 DT = 1e-4
 E_REV = -88.33
 DF_M120 = abs(-120.0 - E_REV)
-NOISE3 = 3 * 0.0069          # A1 峰门槛（16713003 前置段噪声，九细胞同口径）
+NOISE3 = 3 * 0.0069          # A1 peak threshold (16713003 lead-in segment noise, same convention for nine cells)
 
 F_AMP = os.path.join(HERE, "2026-09-13_α模型_幅度表提取_结果.json")
 F_HOOK = os.path.join(HERE, "2026-09-13_α模型_反弹hook_结果.json")
@@ -125,7 +125,7 @@ def doe_fit(t, y, tr_grid=TR_GRID, td_grid=TD_GRID):
 
 
 class Tab:
-    """对数-线性插值锚表（x 线性、y 对数，越界取端点）。与 sine 冒烟同一份。"""
+    """Log-linear interpolation anchor table (x linear, y log, endpoints out of range). Same copy as the sine smoke."""
     def __init__(self, anchors, log_y=True):
         self.xs = np.array(sorted(anchors), dtype=float)
         ys = np.array([anchors[x] for x in self.xs], dtype=float)
@@ -138,9 +138,9 @@ class Tab:
 
 
 def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
-    """与 sine 换表版同一份四表（sine_mea40 级无原料，其余逐字相同）。返回 dict。
-    换表版：h_ss B1 段（-80..+30）用实测剥离表；m_ss=y_ss/h_ss 同步重分裂。"""
-    # ---- h_ss 实测剥离表（P3：每细胞 qc 过 -> 每细胞值；否 -> 群体中位） ----
+    """Same four tables as the sine table-swap version (no raw material at sine_mea40 level; the rest verbatim). Returns dict.
+    Table-swap version: h_ss B1 segment (-80..+30) uses the measured strip table; m_ss = y_ss/h_ss re-split in sync."""
+    # ---- h_ss measured strip table (P3: per-cell qc pass -> per-cell value; else population median) ----
     hc = hss["cells"].get(cell, {}).get("curve", {})
     hB1, h_pop = {}, []
     for v in (-80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30):
@@ -150,7 +150,7 @@ def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
         else:
             hB1[v] = float(hss["gears"][str(v)]["med"])
             h_pop.append(v)
-    # ---- m_ss 锚（每细胞 y_ss，缺档用中位；换表重分裂 m_ss=y_ss/h_ss） ----
+    # ---- m_ss anchors (per-cell y_ss, missing levels use median; table-swap re-split m_ss = y_ss/h_ss) ----
     yss = {}
     for r in amp["rows"]:
         if r["v"] in (-70, -60, -50):
@@ -199,7 +199,7 @@ def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
             G = float(np.median(cands))
             gflag = "posthoc_G_degraded"
 
-    # ---- h_ss（B1 退役：实测剥离表；+40 端 R3 回退链保留，P4） ----
+    # ---- h_ss (B1 retired: measured strip table; +40-end R3 fallback chain kept, P4) ----
     h50 = None
     if ci.get("h_ss50") and ci["h_ss50"] > 0:
         h50 = float(ci["h_ss50"])
@@ -221,13 +221,13 @@ def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
         h40 = 0.0034
     h40 = float(np.clip(h40, 1e-4, 0.2))
     h_anchors = {-130: 1.0, -100: 1.0}                       # P1
-    h_anchors.update(hB1)                                    # B1 段实测（-80..+30）
-    h_anchors[40] = h40                                      # P4：+40 端 R3 链保留
+    h_anchors.update(hB1)                                    # B1-segment measured (-80..+30)
+    h_anchors[40] = h40                                      # P4: +40-end R3 chain kept
     h_anchors[50] = h50 if h50 else h40
     h_anchors[60] = h50 if h50 else h40
     h_ss = Tab(h_anchors, log_y=True)
 
-    # ---- τ_h（B2 退役：τ_obs 封卷实测上界中位表；-20 桥锚保留登记） ----
+    # ---- tau_h (B2 retired: tau_obs sealed measured upper-bound median table; -20 bridge anchor kept, registered) ----
     tr90 = ci.get("m90", {}).get("tau_r") if ci.get("m90", {}).get("valid") else None
     th_anchors = {-130: hs["-120"]["tr_med"], -120: hs["-120"]["tr_med"],
                   -110: hs["-110"]["tr_med"], -100: hs["-100"]["tr_med"],
@@ -261,7 +261,7 @@ def forward(V, tabs):
 
 
 def find_ap_structure(V):
-    """程序化解析 AP 结构：>0mV 去极化组、复极窗、平台窗、间期窗、-120 hook。"""
+    """Programmatically parse AP structure: >0 mV depolarised groups, repolarisation windows, plateau windows, inter-beat windows, -120 hook."""
     n = len(V)
     idx = np.where(V > 0)[0]
     grp = np.split(idx, np.where(np.diff(idx) > 100)[0] + 1) if len(idx) else []
@@ -282,7 +282,7 @@ def find_ap_structure(V):
     gh = np.split(h120, np.where(np.diff(h120) > 100)[0] + 1) if len(h120) else []
     hook = None
     for g in gh:
-        if len(g) * DT > 0.3:                      # 0.5s 尾 hook（不要 0.05s 预脉冲）
+        if len(g) * DT > 0.3:                      # 0.5 s tail hook (not the 0.05 s prepulse)
             hook = (int(g[0]), int(g[-1]) + 1)
     return dict(cycles=cycles, inters=inters, hook=hook)
 
@@ -293,7 +293,7 @@ def score_cell(cell, V, I, tabs):
     Isim = G * m * h * (V - E_REV)
     st = find_ap_structure(V)
     out = dict(G=G, h40=tabs["h40"], gflag=tabs["gflag"])
-    # ---- A1 复极回弹 ----
+    # ---- A1 repolarization rebound ----
     ratios, npeak = [], 0
     for cyc in st["cycles"]:
         a, b = cyc["repol"]
@@ -326,7 +326,7 @@ def score_cell(cell, V, I, tabs):
             out["hook_meaA"] = rm["A"] if rm else np.nan
             out["A2"] = bool(rs and rm and rm["A"] > 0
                              and 0.3 <= rs["A"] / rm["A"] <= 3.0)
-    # ---- A3 间期累积方向 ----
+    # ---- A3 inter-beat accumulation direction ----
     if len(st["inters"]) >= 3:
         k = max(1, len(st["inters"]) // 3)
         first = np.concatenate([Isim[a:b] for a, b in st["inters"][:k]])
@@ -343,12 +343,12 @@ def score_cell(cell, V, I, tabs):
 def main():
     rng = np.random.default_rng(5)
     print("=" * 84)
-    print(" α模型 AP 前向判决·τ_obs 换锚重跑（B2 退役）"
-          + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 判线: A1 复极回弹>=80%周期且峰比中位∈[0.3,3] | A2 hook DoE∈[0.3,3] | A3 累积方向"
-          "（与 hss 实测表重跑版逐字相同）")
-    print(" 改动: 仅 τ_h 复极段 -70..-30 换 τ_obs 实测上界中位 7.0/7.0/8.9/14.4/14.4ms")
-    print(" 纪律: 与 sine 换表版同一套四表同一 G 同一 E_rev，零调参")
+    print(" alpha model AP forward verdict - tau_obs re-anchoring rerun (B2 retired)"
+          + (" (smoke 16713003)" if SMOKE else " (nine cells full)"))
+    print(" criteria: A1 repolarisation rebound >=80% cycles and peak-ratio median in [0.3,3] | A2 hook DoE in [0.3,3] | A3 accumulation direction"
+          " (verbatim identical to the hss-measured-table rerun)")
+    print(" change: only tau_h repolarisation segment -70..-30 swapped to tau_obs measured upper-bound medians 7.0/7.0/8.9/14.4/14.4 ms")
+    print(" discipline: same four tables, same G, same E_rev as the sine table-swap version; zero tuning")
     print("=" * 84, flush=True)
 
     amp = json.load(open(F_AMP, encoding="utf-8"))
@@ -356,27 +356,27 @@ def main():
     inact = json.load(open(F_INACT, encoding="utf-8"))
     hss = json.load(open(F_HSS, encoding="utf-8"))
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     t_c = np.arange(int(0.4 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) \
         + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τ_r: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> "
-          f"{'过' if c1 else '不过'}", flush=True)
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f} ms (truth 3.5) -> "
+          f"{'pass' if c1 else 'fail'}", flush=True)
     V0 = load_mat("ap_protocol.mat", "16713003", "ap")[0]
     st0 = find_ap_structure(V0)
     ok_c2 = len(st0["cycles"]) >= 14 and st0["hook"] is not None
-    print(f"  C2 AP 结构解析: 去极化峰 {len(st0['cycles'])} 个, 间期窗 {len(st0['inters'])}, "
-          f"hook {'有' if st0['hook'] else '无'} -> {'过' if ok_c2 else '不过'}", flush=True)
+    print(f"  C2 AP structure parsing: depolarising peaks {len(st0['cycles'])}, inter-beat windows {len(st0['inters'])}, "
+          f"hook {'yes' if st0['hook'] else 'no'} -> {'pass' if ok_c2 else 'fail'}", flush=True)
     if not (c1 and ok_c2):
-        print("  对照未归位 -> 停。", flush=True)
+        print("  controls not seated -> halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls seated.", flush=True)
 
-    # ---------- 真实数据 ----------
-    print("\n[真实数据]", flush=True)
+    # ---------- real data ----------
+    print("\n[real data]", flush=True)
     res = {}
     for c in CELLS:
         V, I = load_mat("ap_protocol.mat", c, "ap")
@@ -388,35 +388,35 @@ def main():
         fl = (f"  [{r['gflag']}]" if r.get("gflag") else "") + \
              (f"  [hss_pop{r['h_pop']}]" if r["h_pop"] else "")
         print(f"  {c}: G={r['G']:.4f} h40={r['h40']:.4f} | "
-              f"A1{'✓' if r.get('A1') else '×'} 峰{r.get('repol_npeak')}/{r.get('repol_ncy')}"
-              f" 比中位{r.get('repol_ratio_med', np.nan):.2f} | "
-              f"A2{'✓' if r.get('A2') else '×'} hook 模拟{r.get('hook_simA', np.nan):.2f}"
-              f"/实测{r.get('hook_meaA', np.nan):.2f} | "
-              f"A3{'✓' if r.get('A3') else '×'} 间期{r.get('inter_first', np.nan):.4f}"
+              f"A1{'v' if r.get('A1') else 'x'} peaks {r.get('repol_npeak')}/{r.get('repol_ncy')}"
+              f" ratio med {r.get('repol_ratio_med', np.nan):.2f} | "
+              f"A2{'v' if r.get('A2') else 'x'} hook sim {r.get('hook_simA', np.nan):.2f}"
+              f"/meas {r.get('hook_meaA', np.nan):.2f} | "
+              f"A3{'v' if r.get('A3') else 'x'} inter {r.get('inter_first', np.nan):.4f}"
               f"->{r.get('inter_last', np.nan):.4f} -> "
-              f"{'过' if r['pass'] else '不过'}{fl}", flush=True)
+              f"{'pass' if r['pass'] else 'fail'}{fl}", flush=True)
 
     npass = sum(1 for r in res.values() if r["pass"])
     print("\n" + "-" * 84, flush=True)
-    print(f" 九细胞 AP τ_obs 换锚重跑: {npass}/{len(res)} 过（判线 >=7 对 B2 退役稳健）", flush=True)
-    print(" 总判词：", "AP 前向对 B2 退役稳健（τ_obs 实测锚，判线未动）——B2 桥退役收口"
+    print(f" nine-cell AP tau_obs re-anchoring rerun: {npass}/{len(res)} pass (criterion >=7, robust to B2 retirement)", flush=True)
+    print(" overall verdict:", "AP forward robust to B2 retirement (tau_obs measured anchors, criteria unmoved) - B2 bridge retirement closed"
           if npass >= (1 if SMOKE else 7)
-          else "换锚后未过判线——B2 桥值有载，照实登记并回滚备案，明细见上", flush=True)
+          else "criteria failed after re-anchoring - the B2 bridge value carried load; registered as-is with rollback on file, details above", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     nfig = len(res)
     fig, axes = plt.subplots(nfig, 1, figsize=(15, 3.0 * nfig), squeeze=False)
     for ax, (c, r) in zip(axes[:, 0], res.items()):
         V, I = load_mat("ap_protocol.mat", c, "ap")
         tt = np.arange(len(V)) * DT
         if I is not None:
-            ax.plot(tt, I, lw=0.3, color="0.6", label="实测")
-        ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="模拟")
+            ax.plot(tt, I, lw=0.3, color="0.6", label="measured")
+        ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="simulated")
         if r["_struct"]["hook"]:
             a, b = r["_struct"]["hook"]
             ax.axvspan(a * DT, b * DT, color="tab:blue", alpha=0.08)
-        ax.set_title(f"{c}  A1{'过' if r.get('A1') else '未'} A2{'过' if r.get('A2') else '未'} "
-                     f"A3{'过' if r.get('A3') else '未'}  复极峰比中位 "
+        ax.set_title(f"{c}  A1{'pass' if r.get('A1') else 'fail'} A2{'pass' if r.get('A2') else 'fail'} "
+                     f"A3{'pass' if r.get('A3') else 'fail'}  repol peak-ratio median "
                      f"{r.get('repol_ratio_med', np.nan):.2f}", fontsize=9)
         ax.set_xlabel("t (s)")
         ax.set_ylabel("I (nA)")
@@ -425,16 +425,16 @@ def main():
     fpng = os.path.join(HERE, "2026-09-14_α模型_τobs换锚_AP前向判决.png")
     fig.savefig(fpng, dpi=120, bbox_inches="tight")
 
-    out = dict(note="B2 退役 τ_obs 换锚重跑：τ_h(-70/-60/-50/-40/-30)=实测上界中位 "
-                    "7.0/7.0/8.9/14.4/14.4ms；-20 桥锚 50ms 保留登记；"
-                    "判线与 hss 实测表重跑版逐字相同",
+    out = dict(note="B2 retirement tau_obs re-anchoring rerun: tau_h(-70/-60/-50/-40/-30) = measured upper-bound medians "
+                    "7.0/7.0/8.9/14.4/14.4 ms; -20 bridge anchor 50 ms kept, registered; "
+                    "criteria verbatim identical to the hss-measured-table rerun",
                cells={c: {k: v for k, v in r.items() if not k.startswith("_")}
                       for c, r in res.items()}, npass=npass)
     fjson = os.path.join(HERE, "2026-09-14_α模型_τobs换锚_AP前向判决_结果.json")
     with open(fjson, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1, default=float)
-    print(f"\n  图落盘: {fpng}", flush=True)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"\n  figure saved: {fpng}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-# lei211_TAUH_群体表.py
-# τ_rec(V) 群体登记：sinactiv 负档族(-140..-20) DoE，向量化预计算 pinv
-# 输出 lei211_tauh_表.json：{V: median_tau_r_seconds}
+# lei211_TAUH_population_table.py
+# tau_rec(V) population registration: sinactiv negative-level family (-140..-20) DoE, vectorised pinv precomputation
+# output lei211_tauh_表.json: {V: median_tau_r_seconds}
 import os, json
 import numpy as np
 
@@ -13,7 +13,7 @@ BATCH = os.environ.get("BATCH", "herg25oc1")
 WELLS = [l.strip() for l in open(os.path.join(DATA, "qc", f"selected-{BATCH}.txt"), encoding="utf-8")
          if l.strip() and not l.startswith("#")]
 
-# 协议与段定位（一次）
+# protocol and segment localisation (once)
 d = np.genfromtxt(os.path.join(DATA, "protocol", "protocol-sinactiv.csv"),
                   delimiter=",", skip_header=1)
 V10 = d[:, 1:]
@@ -28,7 +28,7 @@ for sw, V in enumerate(SIN_V):
             TEST_IDX[sw] = (a // 2, b // 2)
             break
 
-# DoE 网格 + pinv 预计算（窗长统一 150ms=750 点）
+# DoE grid + pinv precomputation (window unified 150 ms = 750 points)
 tt = np.arange(750) * DT_I
 GRID = []
 for tr in np.exp(np.linspace(np.log(0.001), np.log(0.08), 22)):
@@ -54,7 +54,7 @@ for w in WELLS:
         seg = In[a: a + 750, sw]
         if len(seg) < 750:
             continue
-        # σ：该扫描 -80 保持段
+        # sigma: -80 holding segment of that sweep
         sig = float(np.std(In[: int(0.09 / DT_I), sw]))
         best = None
         for gi, (tr, td) in enumerate(GRID):

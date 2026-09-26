@@ -1,43 +1,43 @@
-# 2026-09-13_α模型_激活envelope_τact封卷判决.py
-# 目的（缺口 3 主攻：τ_act(V) 就地封卷，D7 绕开方案）：
-#   activation_kinetics_1/2 是尾流包络协议：-120x2.5s 全恢复+全去激活复位
-#   （m≈0,h=1 干净初态）-> -120x0.05 -> -80x0.2 -> 测试脉冲（k1=0mV / k2=+40mV，
-#   Δt = 3/10/30/100/300/1000ms 六档递增）-> -120x2.5s（反弹 DoE：τr 3ms 恢复、
-#   τd 30ms 去激活，已封卷口径）-> 反弹幅度 A ∝ m(Δt)。包络 A(Δt) 即激活时程。
-#   优势：绕开 D7（不在 +40 稳态小电流里找 m 骑乘），反弹是大信号快结构，
-#   DoE 管道已封卷验证（16713003 冒烟：k2 单调包络，300/1000ms 点回收
-#   τr/τd=3.9/20.7、3.3/30.3 正中封卷值 3.04/30.3，内证自洽）。
+# 2026-09-13_alpha model_activation envelope_tau_act sealed adjudication.py
+# Purpose (gap 3 main target: seal tau_act(V) in place; the D7 workaround):
+#   activation_kinetics_1/2 is a tail-current envelope protocol: -120x2.5s full recovery +
+#   full deactivation reset (clean initial state m~0, h=1) -> -120x0.05 -> -80x0.2 ->
+#   test pulse (k1=0mV / k2=+40mV, dt = 3/10/30/100/300/1000ms, six ascending steps) ->
+#   -120x2.5s (rebound DoE: tau_r 3ms recovery, tau_d 30ms deactivation, sealed values) ->
+#   rebound amplitude A ~ m(dt). The envelope A(dt) is the activation time course.
+#   Advantage: bypasses D7 (no need to find m riding on the small +40 steady-state current);
+#   the rebound is a large, fast signal. The DoE pipeline is seal-validated (16713003 smoke:
 #
-# 【16713003 设计冒烟事实（判线设计依据）】
-#   k2(+40) 包络比 0.012/0.011/0.015/0.079/0.637/1.0，主上升 100-300ms，
-#     带 sigmoid 足（延迟）；A_max=3.71 vs G·DF 预测 4.15（89%）。
-#   k1(0) 前 5 档全在噪声地板（<=0.13nA，DoE 撞边作废），仅 1000ms 点 0.776 扎实
-#     -> 0mV 激活秒级慢，与登记梯子（0mV:2.0s）方向一致；A(V) 曲线浅系
-#     -90x60ms 复位残留 m≈0.43 地板效应（纠偏在案），两口径不矛盾。
+# [16713003 design smoke facts (basis for the criterion design)]
+#   k2(+40) envelope ratios 0.012/0.011/0.015/0.079/0.637/1.0, main rise at 100-300ms
+#     with a sigmoid foot (delay); A_max=3.71 vs G*DF prediction 4.15 (89%).
+#   k1(0): first 5 steps all on the noise floor (<=0.13nA, DoE hits edge and is void);
+#     only the 1000ms point 0.776 is solid -> 0mV activation is slow on the seconds scale,
+#     consistent with the registry ladder (0mV: 2.0s); the shallow A(V) curve is the floor
 #
-# 判线（跑前声明）：
-#   QC1（DoE 门）：进入包络拟合的点须 τr∈[1.5,8]ms 且 τd∈[12,80]ms（封卷值
-#     3.04/30.3 留裕量）且 A>=4σ_cell（σ_cell 取该细胞 -80x2.4s 基线段 std）；
-#     不满足的点剔除并计数。
-#   拟合形：A(Δt)=A_inf·(1-exp(-max(Δt-d,0)/τ))，网格 d∈{0,25,...,150}ms，
-#     τ 对数网格（k2: [0.02,1.5]s；k1: [0.2,8]s），A_inf 由线性最小二乘。
-#   QC2（A_inf 门）：A_inf_fit / (G·31.67) ∈ [0.5,2.0]（G 声明 ±30% + m_ss
-#     声明 + h 因子），越界细胞记旗 posthoc_ainf_out。
-#   k1 另做锚定拟合：A_inf 固定 = G·31.67（m_ss(0)=1 声明），单参数 τ_anch。
-#   单点锚定回退级（2026-09-13 跑前增补）：n_qc=1 时 τ_single = -Δt/ln(1-A/(G·DF))，
-#     仅当 0<A/(G·DF)<1；d=0 声明、延迟简并旗 single_pt_d0 在案；A/(G·DF)>=1
-#     说明 m_ss(0)<1 或 G 偏高，该点记旗 mss_lt1_candidate 不给出 τ。
-#   封卷判线（三档，跑前钉死）：
-#     τ_act(+40)：QC 全过细胞 >=7 且 τ 九细胞 CV<0.3 -> 【封卷】；
-#       QC<7 或 CV>=0.3 -> 【登记】（照实写数值不封）。
-#     τ_act(0)：每细胞最佳估计 = τ_anch（>=2点）优先、τ_single（1点）兜底；
-#       有效细胞 >=7 且 CV<0.3 -> 【半封卷】（锚定值入表，声明外推与单点简并）；
-#       否则 -> 【登记区间】（给 τ_free/τ_anch/τ_single 三列）。
-# 对照（跑前声明）：
-#   C1 DoE 反演 τr 3.5ms 误差<15%（管道）；
-#   C2 合成包络（d=50ms,τ=150ms,A_inf=3.7 + 16713003 实测基线噪声）回收
-#     τ 误差<20%、d 误差<50ms -> 不过则统计量作废停。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 单细胞 16713003 冒烟。
+# Criteria (declared before run):
+#   QC1 (DoE gate): points entering the envelope fit must have tau_r in [1.5,8]ms and
+#     tau_d in [12,80]ms (margin around sealed values 3.04/30.3) and A>=4*sigma_cell
+#     (sigma_cell = std of this cell's -80x2.4s baseline segment); failing points are excluded and counted.
+#   Fit form: A(dt)=A_inf*(1-exp(-max(dt-d,0)/tau)), grid d in {0,25,...,150}ms,
+#     tau log-grid (k2: [0.02,1.5]s; k1: [0.2,8]s), A_inf by linear least squares.
+#   QC2 (A_inf gate): A_inf_fit / (G*31.67) in [0.5,2.0] (G declared +/-30% + m_ss
+#     declaration + h factor); out-of-range cells are flagged posthoc_ainf_out.
+#   k1 additionally gets an anchored fit: A_inf fixed = G*31.67 (m_ss(0)=1 declaration),
+#     single parameter tau_anch. Single-point anchor fallback (added 2026-09-13 before run):
+#     when n_qc=1, tau_single = -dt/ln(1-A/(G*DF)), only if 0<A/(G*DF)<1; d=0 declared,
+#     delay-degeneracy flag single_pt_d0 on record; A/(G*DF)>=1 means m_ss(0)<1 or G biased
+#   Seal criteria (three tiers, fixed before run):
+#     tau_act(+40): cells passing all QC >=7 and nine-cell tau CV<0.3 -> [SEAL];
+#       QC<7 or CV>=0.3 -> [REGISTER] (report values as-is, no seal).
+#     tau_act(0): best per-cell estimate = tau_anch (>=2 points) preferred, tau_single (1 point) fallback;
+#       valid cells >=7 and CV<0.3 -> [HALF-SEAL] (anchored values enter the table, extrapolation
+#       and single-point degeneracy declared); otherwise -> [REGISTER-INTERVAL] (report tau_free/tau_anch/tau_single).
+# Controls (declared before run):
+#   C1 DoE inversion of tau_r 3.5ms, error<15% (pipeline);
+#   C2 synthetic envelope (d=50ms, tau=150ms, A_inf=3.7 + 16713003 measured baseline noise)
+#     recovers tau with error<20% and d with error<50ms -> otherwise the statistic is voided, halt.
+# Run: python this file (full nine-cell set); SMOKE=1 for the 16713003 single-cell smoke test.
 import os
 import json
 import numpy as np
@@ -64,7 +64,7 @@ F_INACT = os.path.join(HERE, "2026-09-13_α模型_失活门_失活协议封卷�
 TR_GRID = np.exp(np.linspace(np.log(0.001), np.log(0.060), 25))
 TD_GRID = np.exp(np.linspace(np.log(0.008), np.log(2.000), 30))
 SEP_MIN = 1.5
-D_GRID = np.arange(0, 0.1501, 0.025)          # 延迟网格 s
+D_GRID = np.arange(0, 0.1501, 0.025)          # delay grid, s
 TAU_GRID_K2 = np.exp(np.linspace(np.log(0.02), np.log(1.5), 40))
 TAU_GRID_K1 = np.exp(np.linspace(np.log(0.2), np.log(8.0), 40))
 TR_OK = (0.0015, 0.008)
@@ -105,12 +105,12 @@ def segments(V):
 
 
 def envelope(cell, proto, vtest):
-    """抽包络：每周期 测试脉冲(vtest) -> -120 反弹 DoE。返回 (dt列表, 拟合点列表, σ)。"""
+    """Extract the envelope: each period test pulse (vtest) -> -120 rebound DoE. Returns (dt list, fit points, sigma)."""
     V, I = load_mat(f"{proto}_protocol.mat", cell, proto)
     if I is None:
         return None
     info = segments(V)
-    # σ_cell：首个 -80x2.4s 长基线段
+    # sigma_cell: first -80x2.4s long baseline segment
     sigma = None
     for v, s0, n in info:
         if abs(v + 80) < 2 and n * DT > 2.0:
@@ -121,7 +121,7 @@ def envelope(cell, proto, vtest):
         if abs(v - vtest) < 2 and i + 1 < len(info) and abs(info[i + 1][0] + 120) < 2 \
                 and info[i + 1][2] * DT > 2.0:
             a = info[i + 1][1]
-            w = a + 3000                          # 反弹前 300ms（DoE 快结构）
+            w = a + 3000                          # 300ms before the rebound (DoE fast structure)
             t = np.arange(w - a) * DT
             r = doe_fit(t, -I[a:w])
             if r is None:
@@ -134,7 +134,7 @@ def envelope(cell, proto, vtest):
 
 
 def fit_env(dts, As, tau_grid, d_grid=D_GRID, ainf_fix=None):
-    """网格 (d,τ)，A_inf 线性 lstsq（或固定）。返回 best dict。"""
+    """Grid over (d, tau), A_inf by linear lstsq (or fixed). Returns best dict."""
     dts = np.asarray(dts, float)
     As = np.asarray(As, float)
     best = None
@@ -154,7 +154,7 @@ def fit_env(dts, As, tau_grid, d_grid=D_GRID, ainf_fix=None):
 
 
 def g_anchor(cell, hook, inact):
-    """G 回退链（与 sine 冒烟 R1 同口径）。"""
+    """G fallback chain (same convention as the sine smoke R1)."""
     for r in hook["A_rows"]:
         if r["cell"] == cell and r["v"] == -120 and r["valid"] and r["A"] > 0:
             return r["A"] / DF_M120, None
@@ -171,36 +171,36 @@ def g_anchor(cell, hook, inact):
 def main():
     rng = np.random.default_rng(7)
     print("=" * 86)
-    print(" α模型 激活 envelope τ_act 封卷判决" + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 判线: +40 QC>=7且CV<0.3 封卷 | 0mV free/anch 一致且 CV<0.3 半封卷，否则登记")
+    print(" alpha model activation envelope tau_act sealed adjudication" + (" (smoke 16713003)" if SMOKE else " (full nine-cell set)"))
+    print(" criteria: +40 QC>=7 and CV<0.3 -> SEAL | 0mV free/anch consistent and CV<0.3 -> HALF-SEAL, else REGISTER")
     print("=" * 86, flush=True)
 
     hook = json.load(open(F_HOOK, encoding="utf-8"))
     inact = json.load(open(F_INACT, encoding="utf-8"))
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     t_c = np.arange(int(0.3 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τr: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> {'过' if c1 else '不过'}",
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f}ms (true 3.5) -> {'pass' if c1 else 'fail'}",
           flush=True)
-    # C2 合成包络回收
+    # C2 synthetic envelope recovery
     dts_syn = np.array([0.003, 0.01, 0.03, 0.1, 0.3, 1.0])
     A_syn = 3.7 * (1 - np.exp(-np.maximum(dts_syn - 0.05, 0) / 0.15)) \
         + rng.normal(0, 0.04, len(dts_syn))
     f_syn = fit_env(dts_syn, A_syn, TAU_GRID_K2)
     c2 = bool(abs(f_syn["tau"] - 0.15) / 0.15 < 0.20 and abs(f_syn["d"] - 0.05) < 0.05)
-    print(f"  C2 合成包络回收: d={f_syn['d'] * 1e3:.0f}ms（真50） τ={f_syn['tau'] * 1e3:.0f}ms"
-          f"（真150） A_inf={f_syn['A_inf']:.2f}（真3.7）-> {'过' if c2 else '不过'}", flush=True)
+    print(f"  C2 synthetic envelope recovery: d={f_syn['d'] * 1e3:.0f}ms (true 50) tau={f_syn['tau'] * 1e3:.0f}ms"
+          f"(true 150) A_inf={f_syn['A_inf']:.2f} (true 3.7) -> {'pass' if c2 else 'fail'}", flush=True)
     if not (c1 and c2):
-        print("  对照未归位 -> 统计量作废，停。", flush=True)
+        print("  controls not returned to baseline -> statistic voided, halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls returned to baseline.", flush=True)
 
-    # ---------- 真实数据 ----------
-    print("\n[真实数据]", flush=True)
+    # ---------- real data ----------
+    print("\n[real data]", flush=True)
     res = {}
     for c in CELLS:
         G, gflag = g_anchor(c, hook, inact)
@@ -226,7 +226,7 @@ def main():
                     rec["tau_anch"] = fa["tau"]
                     rec["d_anch"] = fa["d"]
             elif len(good) == 1 and G:
-                p = good[0]                               # 单点锚定回退级（跑前增补）
+                p = good[0]                               # single-point anchor fallback (added before run)
                 r_ = p["A"] / (G * DF_M120)
                 if 0 < r_ < 1:
                     rec["tau_single"] = float(-p["dt"] / np.log(1 - r_))
@@ -239,14 +239,14 @@ def main():
         print(f"  {c}: G={G:.4f}" +
               (f" | +40: QC {k2.get('n_qc', 0)}/{k2.get('n', 0)} "
                f"τ={k2.get('tau', np.nan) * 1e3:.0f}ms d={k2.get('d', np.nan) * 1e3:.0f}ms "
-               f"A_inf={k2.get('A_inf', np.nan):.2f}(比{k2.get('ainf_ratio', np.nan):.2f})"
-               if k2.get("n") else " | +40: 无数据") +
+               f"A_inf={k2.get('A_inf', np.nan):.2f}(ratio {k2.get('ainf_ratio', np.nan):.2f})"
+               if k2.get("n") else " | +40: no data") +
               (f" | 0mV: QC {k1.get('n_qc', 0)}/{k1.get('n', 0)} "
                f"τf={k1.get('tau', np.nan):.2f}s τa={k1.get('tau_anch', np.nan):.2f}s "
                f"τs={k1.get('tau_single', np.nan):.2f}s"
-               if k1.get("n") else " | 0mV: 无数据"), flush=True)
+               if k1.get("n") else " | 0mV: no data"), flush=True)
 
-    # ---------- 封卷判决 ----------
+    # ---------- sealed adjudication ----------
     print("\n" + "-" * 86, flush=True)
     taus40 = [res[c]["k2_+40"]["tau"] for c in res
               if res[c]["k2_+40"].get("qc2") and res[c]["k2_+40"].get("n_qc", 0) >= 2]
@@ -256,9 +256,9 @@ def main():
     else:
         cv40 = np.nan
     seal40 = bool(n40 >= (1 if SMOKE else 7) and np.isfinite(cv40) and cv40 < 0.3)
-    print(f"  τ_act(+40): QC2 过 {n40}/{len(res)}，τ 中位 "
+    print(f"  tau_act(+40): QC2 passed {n40}/{len(res)}, tau median "
           f"{np.median(taus40) * 1e3 if taus40 else np.nan:.0f}ms，CV={cv40:.3f} -> "
-          f"{'【封卷】' if seal40 else '【登记】'}", flush=True)
+          f"{'[SEAL]' if seal40 else '[REGISTER]'}", flush=True)
 
     taf, taa = [], []
     best0 = {}
@@ -267,7 +267,7 @@ def main():
         if k1.get("tau") and k1.get("tau_anch"):
             taf.append(k1["tau"])
             taa.append(k1["tau_anch"])
-        est = k1.get("tau_anch", k1.get("tau_single"))   # τ_anch 优先，τ_single 兜底
+        est = k1.get("tau_anch", k1.get("tau_single"))   # tau_anch preferred, tau_single fallback
         if est:
             best0[c] = est
     n0 = len(best0)
@@ -278,17 +278,17 @@ def main():
         cv0 = np.nan
     ratio01 = float(np.median(np.array(taf) / np.array(taa))) if len(taf) >= 2 else np.nan
     seal0 = bool(n0 >= (1 if SMOKE else 7) and np.isfinite(cv0) and cv0 < 0.3)
-    print(f"  τ_act(0mV): 有效估计 {n0}/{len(res)}（τ_anch 优先 τ_single 兜底），"
-          f"中位 {np.median(v0) if v0 else np.nan:.2f}s，CV={cv0:.3f}"
-          f"（free/anch 比 {ratio01:.2f} 参考）-> "
-          f"{'【半封卷】' if seal0 else '【登记区间】'}", flush=True)
+    print(f"  tau_act(0mV): valid estimates {n0}/{len(res)} (tau_anch preferred, tau_single fallback), "
+          f"median {np.median(v0) if v0 else np.nan:.2f}s, CV={cv0:.3f}"
+          f"(free/anch ratio {ratio01:.2f}, reference) -> "
+          f"{'[HALF-SEAL]' if seal0 else '[REGISTER-INTERVAL]'}", flush=True)
 
     verdict = []
-    verdict.append("τ_act(+40) " + ("封卷" if seal40 else "登记"))
-    verdict.append("τ_act(0mV) " + ("半封卷" if seal0 else "登记区间"))
-    print(" 总判词：", "；".join(verdict), flush=True)
+    verdict.append("tau_act(+40) " + ("SEAL" if seal40 else "REGISTER"))
+    verdict.append("tau_act(0mV) " + ("HALF-SEAL" if seal0 else "REGISTER-INTERVAL"))
+    print(" overall verdict:", "; ".join(verdict), flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     nfig = len(res)
     fig, axes = plt.subplots(nfig, 2, figsize=(13, 2.6 * nfig), squeeze=False)
     for row, c in enumerate(res):
@@ -303,20 +303,20 @@ def main():
             As = [p["A"] for p in e["pts"]]
             qc = [p["qc"] for p in e["pts"]]
             ax.scatter([d for d, q in zip(dts, qc) if q],
-                       [a for a, q in zip(As, qc) if q], c="tab:blue", s=40, label="QC过")
+                       [a for a, q in zip(As, qc) if q], c="tab:blue", s=40, label="QC pass")
             ax.scatter([d for d, q in zip(dts, qc) if not q],
                        [a for a, q in zip(As, qc) if not q], c="0.7", s=30, marker="x",
-                       label="QC剔")
+                       label="QC excluded")
             rec = res[c][tag]
             if rec.get("tau"):
                 dd = np.linspace(0, 1.0, 200)
                 ax.plot(dd * 1e3, rec["A_inf"] * (1 - np.exp(
                     -np.maximum(dd - rec["d"], 0) / rec["tau"])), "tab:red",
-                    lw=1.2, label=f"拟合 τ={rec['tau'] * 1e3:.0f}ms d={rec['d'] * 1e3:.0f}ms")
+                    lw=1.2, label=f"fit tau={rec['tau'] * 1e3:.0f}ms d={rec['d'] * 1e3:.0f}ms")
             ax.set_xscale("log")
             ax.set_title(f"{c} {tag}", fontsize=9)
             ax.set_xlabel("Δt (ms)")
-            ax.set_ylabel("反弹 A (nA)")
+            ax.set_ylabel("rebound A (nA)")
             ax.legend(fontsize=7)
     fig.tight_layout()
     fpng = os.path.join(HERE, "2026-09-13_α模型_激活envelope_τact封卷判决.png")
@@ -328,8 +328,8 @@ def main():
             np.median(taus40)) if taus40 else None, seal0=seal0, cv0=cv0,
             tau0_best=best0, tau0_med=float(np.median(v0)) if v0 else None,
             ratio_free_anch=ratio01), f, ensure_ascii=False, indent=1, default=float)
-    print(f"\n  图落盘: {fpng}", flush=True)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"\n  figure saved: {fpng}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

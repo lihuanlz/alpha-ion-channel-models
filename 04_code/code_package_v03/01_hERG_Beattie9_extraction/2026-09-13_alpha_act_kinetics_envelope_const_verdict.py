@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_α模型_激活动力学_包络常数判决.py
-# 目的：扩展 α 模型第二块——激活动力学的模态结构与跨细胞恒定性。
-#   方法（包络法 + α 方法论：直提、跨细胞 CV）：
-#     activation_kinetics_1（0 mV）/ _2（+40 mV）：−120×50ms 全恢复预脉冲
-#     -> 测试电压 × 变时长 T -> −120×2.5s 反弹尾；反弹幅度 A(T) ∝ m(T)。
-#     v3（冒烟暴露：包络形状不是单指数——初段滞后+跨 30ms~1s 多尺度爬升）：
-#       改双分量上升 A(T)=A_max − a1·e^(−T/τ1) − a2·e^(−T/τ2)（τ2≥3τ1，2D 网格
-#       确定性 + 线性幅度），提取激活模态结构（τ1,τ2）——这是正压段模态的首次直接测量，
-#       与去活阶梯外推的对照本身是判决材料。
-#       +40 档 A_max 钉全激活锚（deactivation +50→−120 hook 幅度，脚本内自提）；
-#       0mV 档锚不可用（m_ss(0)<m_ss(+50)），A_max 自由，顶边则弃并登记。
-#   剔除在案：readme 明示 16708016/16708060/16704007 activation_kinetics 过减漏（6/9 入判）。
-#   判词（预注册，跑前钉死）：
-#     每电压每 τ：有效 n≥4 且 CV<0.3 判恒定；两 τ 全恒定 => "激活模态=离散常数"；
-#     仅其一 => 分级入表；全不 => 另开新卡。τ_act(0)vs(+40) 比较仅登记。
-#   QC：A_max>5σ 且 RMS<max(2σ,3%A_max) 且 τ 不顶边 且 点≥5 且 跨≥1 个数量级。
-#   对照（噪声自校准，判线不动）：每细胞静默残差块自助 MC 实测 σ_A（低 SNR 端
-#         A=0.6nA），对照运行点取全细胞 σ_A 中位（旧版挂列表首细胞=任意；
-#         更早的固定 σ=0.04 经 CR 证明 15% 判线信息论不可达）。噪声离群细胞
-#         (>2x中位) 打印在案，判词时单独登记。
-#         C1 双分量(τ1=30ms,τ2=400ms 等权)×20，两 τ 反演误差中位各<15%；
-#         C2 单分量(τ=100ms)不得虚报第二分量（小组分 |a|<8%A_max 或顶边）。
-# 运行：python 本文件（全量六细胞）；SMOKE=1 单细胞 16713003 冒烟。
+# 2026-09-13_alpha model_activation kinetics_envelope constancy adjudication.py
+# Purpose: extend the alpha model's second block - the modal structure of activation
+#   kinetics and its cross-cell constancy.
+#   Method (envelope method + alpha methodology: direct extraction, cross-cell CV):
+#     activation_kinetics_1 (0 mV) / _2 (+40 mV): -120x50ms full-recovery pre-pulse
+#     -> test voltage x variable duration T -> -120x2.5s rebound tail; rebound amplitude A(T) ~ m(T).
+#     v3 (smoke finding: the envelope is not mono-exponential - initial lag plus multi-scale
+#       rise across 30ms~1s): switch to a two-component rise A(T)=A_max - a1*e^(-T/tau1) - a2*e^(-T/tau2)
+#       (tau2>=3*tau1, deterministic 2D grid + linear amplitudes), extracting the activation modal
+#   +40 step: A_max pinned to the full-activation anchor (deactivation +50->-120 hook amplitude, self-extracted in-script);
+#   0mV step: anchor unusable (m_ss(0)<m_ss(+50)); A_max free; if it hits the top edge, discard and register.
+#   Excluded on record: readme states 16708016/16708060/16704007 activation_kinetics over-leak (6/9 entered the adjudication).
+#   Verdict (pre-registered, fixed before run):
+#     each voltage each tau: valid n>=4 and CV<0.3 -> constant; both taus constant => "activation mode = discrete constants";
+#     only one => graded entry into table; neither => open a new card. tau_act(0) vs (+40) comparison is register-only.
+#   QC: A_max>5*sigma and RMS<max(2*sigma, 3% of A_max) and tau not at grid edge and points>=5 and span >=1 decade.
+#   Controls (noise self-calibrated, criteria unchanged): per-cell silent-residual block-bootstrap MC measures sigma_A (low-SNR end
+#         A=0.6nA); control operating point = all-cell median sigma_A (old version hung on the first listed cell = arbitrary;
+#         even earlier fixed sigma=0.04 was proven via CR to make the 15% criterion information-theoretically unreachable).
+#         Noise-outlier cells (>2x median) printed on record, registered separately at verdict time.
+#         C1 two-component (tau1=30ms, tau2=400ms equal weight) x20: both tau inversion error medians <15%;
+#         C2 single-component (tau=100ms) must not hallucinate a second component (small |a|<8%A_max or at grid edge).
+# Run: python this file (full six-cell set); SMOKE=1 for the 16713003 single-cell smoke test.
 import os
 import json
 import numpy as np
@@ -37,7 +37,7 @@ matplotlib.rcParams["axes.unicode_minus"] = False
 DATA = "D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/wA1/代码A1_16704007_流程固定重标卡_2026-09-11"
 HERE = os.path.dirname(os.path.abspath(__file__))
 SMOKE = os.environ.get("SMOKE", "0") == "1"
-EXCLUDE = {"16708016", "16708060", "16704007"}          # readme 过减漏在案
+EXCLUDE = {"16708016", "16708060", "16704007"}          # readme over-leak on record
 CELLS = ["16713003"] if SMOKE else [c for c in
         ["16704007", "16704047", "16707014", "16708016", "16708060",
          "16708118", "16713003", "16713110", "16715049"] if c not in EXCLUDE]
@@ -110,7 +110,7 @@ def doe_fit(t, y):
 
 
 def quiet_residuals(V, I):
-    """静默段残差池（−80/−120 稳态段，去段首 0.1s，线性去趋势）——噪声标定用"""
+    """Silent-segment residual pool (-80/-120 steady-state segments, first 0.1s dropped, linearly detrended) - for noise calibration"""
     edges = np.where(np.diff(V) != 0)[0] + 1
     pool = []
     for s in np.split(np.arange(len(V)), edges):
@@ -126,8 +126,9 @@ def quiet_residuals(V, I):
 
 
 def calibrate_sigma_A(V, I, rng, nrep=40):
-    """包络点噪声 σ_A 自校准：块自助重排真实静默残差（保 ACF），在低 SNR 端
-    （A=0.6 nA）测 doe_fit 幅度提取噪声。对照噪声以此实测值为准，不用拍脑袋常数。"""
+    """Self-calibration of envelope-point noise sigma_A: block-bootstrap reshuffling of real silent
+    residuals (ACF preserved) measures the doe_fit amplitude-extraction noise at the low-SNR end
+    (A=0.6 nA). The control noise uses this measured value, not a hand-waved constant."""
     res = quiet_residuals(V, I)
     if res is None or len(res) < 20000:
         return None
@@ -144,7 +145,7 @@ def calibrate_sigma_A(V, I, rng, nrep=40):
 
 
 def anchor_amp(cell):
-    """全激活锚：deactivation 首个 +50→−120 尾的 DoE 幅度（内向翻正）"""
+    """Full-activation anchor: DoE amplitude of the first deactivation +50->-120 tail (inward flipped positive)"""
     V, I = load_mat("deactivation_protocol.mat", cell, "deactivation")
     if I is None:
         return None
@@ -190,19 +191,20 @@ def rebound_amp(I, tail_start, sigma):
 
 
 def env2_fit(T, A, anchor=None):
-    """A(T)=A_max − a1 e^{−T/τ1} − a2 e^{−T/τ2}，物理约束 a1+a2=A_max（m(0)=0：
-    −120×50ms 全恢复预脉冲后通道全闭，包络必过原点）=> A=A_max(1−e2)−a1(e1−e2)。
-    该约束打掉 A_max↔(a2,τ2) 简并（τ2 在 1s 最长脉冲内不封顶，A_max 主要靠
-    原点约束确定）。τ2≥3τ1；anchor 时 A_max 钉锚（只剩 a1+两 τ 三个自由量）。
-    变量投影：τ 连续优化（网格多初值 + least_squares），幅度线性 lstsq。"""
+    """A(T)=A_max - a1 e^{-T/tau1} - a2 e^{-T/tau2}, with the physical constraint a1+a2=A_max (m(0)=0:
+    after the -120x50ms full-recovery pre-pulse all channels are closed, so the envelope must pass
+    through the origin) => A=A_max(1-e2)-a1(e1-e2). This constraint kills the A_max<->(a2,tau2)
+    degeneracy (tau2 does not saturate within the longest 1s pulse; A_max is determined mainly by
+    the origin constraint). tau2>=3*tau1; with anchor, A_max is pinned (only a1 + two taus free).
+    Variable projection: tau optimized continuously (grid multi-start + least_squares), amplitudes by linear lstsq."""
     T = np.asarray(T, float); A = np.asarray(A, float)
     lo, hi = float(np.log(TAU_GRID[0])), float(np.log(TAU_GRID[-1]))
     LG3 = float(np.log(3.0))
 
     def lin(t1, t2):
         e1 = np.exp(-T / t1); e2 = np.exp(-T / t2)
-        d = e1 - e2                      # a1 的基：A = A_max(1−e2) − a1·d
-        b = 1.0 - e2                     # A_max 的基
+        d = e1 - e2                      # basis for a1: A = A_max(1-e2) - a1*d
+        b = 1.0 - e2                     # basis for A_max
         if anchor is None:
             X = np.column_stack([b, -d]); Y = A
         else:
@@ -215,7 +217,7 @@ def env2_fit(T, A, anchor=None):
 
     def resid(p):
         u1, u2 = p
-        pen = max(0.0, u1 + LG3 - u2)              # τ2≥3τ1 软约束
+        pen = max(0.0, u1 + LG3 - u2)              # soft constraint tau2>=3*tau1
         _, r = lin(np.exp(u1), np.exp(u2))
         return np.concatenate([r, [20.0 * scale * pen]])
 
@@ -243,7 +245,7 @@ def env2_fit(T, A, anchor=None):
         if best is None or sse < best[0]:
             best = (sse, float(np.exp(u1)), float(np.exp(u2)), sol, r)
     if best is None:
-        # 连续优化全部滑进罚区 -> 退回满足 τ2≥3τ1 的网格最优点（保底非 None）
+        # continuous optimization slid entirely into the penalty zone -> fall back to the best grid point satisfying tau2>=3*tau1 (guaranteed non-None)
         _, tg1, tg2 = cand[0]
         sol, r = lin(tg1, tg2)
         best = (float(r @ r), tg1, tg2, sol, r)
@@ -261,32 +263,32 @@ def env2_fit(T, A, anchor=None):
 def main():
     rng = np.random.default_rng(11)
     print("=" * 78)
-    print(" 激活动力学包络常数判决 v3（双分量上升）" + ("（冒烟）" if SMOKE else "（六细胞全量）"))
-    print(f" 判线: 每电压每 τ n≥4 且 CV<{CV_PASS} 恒定")
+    print(" activation kinetics envelope constancy adjudication v3 (two-component rise)" + (" (smoke)" if SMOKE else " (full six-cell set)"))
+    print(f" criteria: each voltage each tau n>=4 and CV<{CV_PASS} -> constant")
     print("=" * 78, flush=True)
 
-    # ---------- 噪声自校准（全细胞标定；对照取中位运行点，判线不动） ----------
-    print("\n[噪声自校准]", flush=True)
+    # ---------- noise self-calibration (all cells; control takes the median operating point, criteria unchanged) ----------
+    print("\n[noise self-calibration]", flush=True)
     sig_map = {}
     for cell in CELLS:
         Vc, Ic = load_mat(PROTOS[0][0], cell, PROTOS[0][1])
         if Ic is None:
-            print(f"  细胞 {cell}: 文件缺失，跳过标定", flush=True)
+            print(f"  cell {cell}: file missing, skipping calibration", flush=True)
             continue
         sA = calibrate_sigma_A(Vc, Ic, rng)
         if sA is not None:
             sig_map[cell] = sA
-            print(f"  细胞 {cell}: σ_A = {sA:.4f} nA", flush=True)
+            print(f"  cell {cell}: sigma_A = {sA:.4f} nA", flush=True)
     if not sig_map:
-        print("  全部标定失败 -> 对照无噪声锚，停。")
+        print("  all calibrations failed -> controls have no noise anchor, halt.")
         return
     sigA = float(np.median(list(sig_map.values())))
     noisy = [c for c, s in sig_map.items() if s > 2.0 * sigA]
-    print(f"  对照运行点 σ_A(中位) = {sigA:.4f} nA（n={len(sig_map)}）"
-          + (f"；噪声离群(>2x中位)登记: {', '.join(noisy)}" if noisy else ""), flush=True)
+    print(f"  control operating point sigma_A(median) = {sigA:.4f} nA (n={len(sig_map)})"
+          + (f"; noise outliers (>2x median) registered: {', '.join(noisy)}" if noisy else ""), flush=True)
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     T_c = np.array([0.003, 0.01, 0.03, 0.1, 0.3, 1.0])
     A0c = 4.0
     e1s, e2s = [], []
@@ -297,8 +299,8 @@ def main():
         got = sorted([r1["tau1"], r1["tau2"]])
         e1s.append(abs(got[0] - 0.030) / 0.030)
         e2s.append(abs(got[1] - 0.400) / 0.400)
-    print(f"  C1 双分量(30ms,400ms)×20: τ1 误差中位 {np.median(e1s)*100:.1f}%  "
-          f"τ2 {np.median(e2s)*100:.1f}%（判线各<15%）", flush=True)
+    print(f"  C1 two-component (30ms,400ms) x20: tau1 error median {np.median(e1s)*100:.1f}%  "
+          f"tau2 {np.median(e2s)*100:.1f}% (criterion <15% each)", flush=True)
     collapse_ok = 0
     for rep in range(20):
         A_c2 = A0c - A0c * np.exp(-T_c / 0.100) + rng.normal(0, sigA, len(T_c))
@@ -306,23 +308,23 @@ def main():
         small = min(abs(r2["a1"]), abs(r2["a2"]))
         if small < 0.08 * r2["A_max"] or r2["edge"]:
             collapse_ok += 1
-    print(f"  C2 单分量(100ms)×20: 正确塌缩 {collapse_ok}/20（判线 ≥16）", flush=True)
+    print(f"  C2 single-component (100ms) x20: correct collapse {collapse_ok}/20 (criterion >=16)", flush=True)
     if np.median(e1s) > 0.15 or np.median(e2s) > 0.15 or collapse_ok < 16:
-        print("  对照未归位 -> 统计量作废，停。")
+        print("  controls not returned to baseline -> statistic voided, halt.")
         return
-    print("  对照过。", flush=True)
+    print("  controls passed.", flush=True)
 
-    # ---------- 真实数据 ----------
+    # ---------- real data ----------
     rows = []
     tr_register = []
     for cell in CELLS:
         anch = anchor_amp(cell)
-        print(f"  细胞 {cell}: 全激活锚 A_anchor={anch:.2f}nA" if anch else
-              f"  细胞 {cell}: 锚提取失败", flush=True)
+        print(f"  cell {cell}: full-activation anchor A_anchor={anch:.2f}nA" if anch else
+              f"  cell {cell}: anchor extraction failed", flush=True)
         for proto, tag, vtest in PROTOS:
             V, I = load_mat(proto, cell, tag)
             if I is None:
-                print(f"  细胞 {cell} {tag}: 文件缺失")
+                print(f"  cell {cell} {tag}: file missing")
                 continue
             sigma = quiet_sigma(V, I)
             T, A, trs = [], [], []
@@ -334,11 +336,11 @@ def main():
             order = np.argsort(T)
             T = [T[i] for i in order]; A = [A[i] for i in order]
             if len(T) < 5:
-                print(f"  细胞 {cell} @{vtest}mV: 脉冲点不足（{len(T)}）", flush=True)
+                print(f"  cell {cell} @{vtest}mV: insufficient pulse points ({len(T)})", flush=True)
                 continue
             use_anchor = anch if vtest == 40 else None
             r = env2_fit(np.array(T), np.array(A), anchor=use_anchor)
-            mode = "锚定" if use_anchor else "自由"
+            mode = "anchored" if use_anchor else "free"
             span = max(T) / max(min(T), 1e-9)
             valid = bool(abs(r["A_max"]) > AMP_QC * sigma
                          and r["rms"] < max(2 * sigma, 0.03 * abs(r["A_max"]))
@@ -347,19 +349,19 @@ def main():
                              mode=mode, **r))
             if trs:
                 tr_register.append(dict(cell=cell, v=vtest, tau_r_med=float(np.median(trs))))
-            print(f"  细胞 {cell} @{vtest}mV [{mode}]: τ1={r['tau1']*1000:.1f}ms "
+            print(f"  cell {cell} @{vtest}mV [{mode}]: tau1={r['tau1']*1000:.1f}ms "
                   f"τ2={r['tau2']*1000:.0f}ms A_max={r['A_max']:.2f} "
-                  f"a1={r['a1']:.2f} a2={r['a2']:.2f} {'过' if valid else '弃'}", flush=True)
+                  f"a1={r['a1']:.2f} a2={r['a2']:.2f} {'pass' if valid else 'drop'}", flush=True)
 
-    # ---------- 恒定性 ----------
+    # ---------- constancy ----------
     print("\n" + "-" * 78)
-    print("[恒定性] 激活模态跨细胞（仅 QC 有效）")
+    print("[constancy] activation modes across cells (QC-valid only)")
     summ = {}
     verdicts = []
     for vv in (0, 40):
         rs = [r for r in rows if r["v"] == vv and r["valid"]]
         if len(rs) < 4:
-            print(f"  {vv:>4}mV: 有效 n={len(rs)}<4，数据不足")
+            print(f"  {vv:>4}mV: valid n={len(rs)}<4, insufficient data")
             continue
         t1 = np.array([r["tau1"] for r in rs]); t2 = np.array([r["tau2"] for r in rs])
         cv1 = float(t1.std(ddof=1) / t1.mean()); cv2 = float(t2.std(ddof=1) / t2.mean())
@@ -368,25 +370,25 @@ def main():
         summ[vv] = dict(n=len(rs), t1_med=float(np.median(t1)), cv1=cv1,
                         t2_med=float(np.median(t2)), cv2=cv2, ok=ok)
         print(f"  {vv:>4}mV: n={len(rs)}  τ1 {np.median(t1)*1000:.1f}ms CV {cv1:.2f} | "
-              f"τ2 {np.median(t2)*1000:.0f}ms CV {cv2:.2f}  {'恒定' if ok else '不恒定'}")
+              f"tau2 {np.median(t2)*1000:.0f}ms CV {cv2:.2f}  {'constant' if ok else 'not constant'}")
     if tr_register:
         trv = np.array([r["tau_r_med"] for r in tr_register])
-        print(f"[登记] 尾 DoE τ_r(−120) 中位 {np.median(trv)*1000:.2f}ms（hook 值 3.04ms，互查）")
+        print(f"[register] tail DoE tau_r(-120) median {np.median(trv)*1000:.2f}ms (hook value 3.04ms, cross-check)")
 
-    # ---------- 总判词 ----------
+    # ---------- overall verdict ----------
     print("\n" + "=" * 78)
-    print(" 总判词：")
-    print(f"  恒定电压档 {sum(verdicts)}/{len(summ)}")
+    print(" overall verdict:")
+    print(f"  constant voltage steps {sum(verdicts)}/{len(summ)}")
     if len(summ) == 2 and all(verdicts):
-        final = "激活模态=离散常数（0/+40 两档双 τ 全过）-> 第二块入表，可进失活块"
+        final = "activation mode = discrete constants (both taus pass at 0/+40) -> second block enters the table, proceed to the inactivation block"
     elif any(verdicts):
-        final = "部分档位恒定：恒定档入表，其余登记（扩展模型分段可行）"
+        final = "constant at some steps: constant steps enter the table, the rest registered (piecewise extension of the model is feasible)"
     else:
-        final = "激活模态非离散常数（或数据不足）-> 第二块前提不成立，另开新卡"
+        final = "activation mode is not discrete constants (or insufficient data) -> second-block premise fails, open a new card"
     print("  " + final)
     print("=" * 78)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     ncell = len(CELLS)
     fig, axes = plt.subplots(ncell, 2, figsize=(11, 2.0 * ncell), squeeze=False)
     for i, cell in enumerate(CELLS):
@@ -400,13 +402,13 @@ def main():
             tt = np.exp(np.linspace(np.log(min(T) * 0.8), np.log(max(T) * 1.2), 200))
             ax.plot(tt * 1000, r["A_max"] - r["a1"] * np.exp(-tt / r["tau1"])
                     - r["a2"] * np.exp(-tt / r["tau2"]), "-", lw=1.3, color="crimson")
-            if r["mode"] == "锚定":
+            if r["mode"] == "anchored":
                 ax.axhline(r["A_max"], lw=0.8, ls="--", color="navy", alpha=0.6)
             ax.set_xscale("log")
             ax.set_title(f"{cell[-4:]} @{vv}mV [{r['mode']}] τ1={r['tau1']*1000:.0f} τ2={r['tau2']*1000:.0f}ms "
-                         f"{'过' if r['valid'] else '弃'}", fontsize=8)
-            ax.set_xlabel("脉冲时长 ms"); ax.grid(alpha=0.3, which="both")
-    fig.suptitle("激活包络双分量拟合 A(T)=A_max−a1e^{−T/τ1}−a2e^{−T/τ2}", fontweight="bold")
+                         f"{'pass' if r['valid'] else 'drop'}", fontsize=8)
+            ax.set_xlabel("pulse duration ms"); ax.grid(alpha=0.3, which="both")
+    fig.suptitle("activation envelope two-component fit A(T)=A_max-a1e^{-T/tau1}-a2e^{-T/tau2}", fontweight="bold")
     fig.tight_layout(rect=[0, 0, 1, 0.985])
     fp = os.path.join(HERE, f"2026-09-13_α模型_激活包络{'_冒烟' if SMOKE else ''}.png")
     fig.savefig(fp, dpi=120, bbox_inches="tight")
@@ -418,8 +420,8 @@ def main():
                tr_register=tr_register, fig=fp)
     fj = os.path.join(HERE, f"2026-09-13_α模型_激活包络{'_冒烟' if SMOKE else ''}_结果.json")
     json.dump(out, open(fj, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
-    print(f"\n  图落盘: {fp}")
-    print(f"  结果落盘: {fj}")
+    print(f"\n  figure saved: {fp}")
+    print(f"  results saved: {fj}")
 
 
 if __name__ == "__main__":

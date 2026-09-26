@@ -1,31 +1,31 @@
-# 2026-09-14_α模型_数据侧遗留_尖刺剔除与基线偏移复核.py
-# 目的（收官文档 §9 待办第 4 条，数据侧两件一次做；不改模型、不改判线）：
-#   件A 16707014 AP 尖刺重评（D4 在案）+ 全群体实测峰审计：
-#     014 的 AP 记录有 ±8-9nA 单样本脉冲尖刺（阶跃沿容性+振铃，D4 家族），
-#     复极窗评分取 max(I) -> 实测分母可能虚高 -> A1 峰比 0.21 定量低估在案。
-#     【冒烟定型 2026-09-14】初版"迹线去尖刺"自残：真实复极峰起始沿（快升+过冲）
-#       被边际误判，003 峰比 1.50->2.27 移动 51%。且冒烟发现群体性问题：003 等
-#       细胞的实测峰本身含尖刺成分（单样本过冲 0.4-1.3nA 骑在真实峰上），封卷
-#       评分的 raw max 口径被尖刺系统性抬高分母。故改为【评分侧稳健峰估计】：
-#       实测复极峰 = max( med5(I) )（5 点居中滚动中位）——单样本脉冲在中位下
-#       消失，持续峰（>=5 点宽）峰值保留；模拟侧与判线逐字不动。
-#     【判线·跑前钉死】
-#       A-主：014 的 A1 峰比（稳健口径）进入 [0.3,3] 且 A2/A3 保持 -> 014 尖刺
-#         解释坐实；
-#       A-审计（群体）：逐细胞报 峰比raw -> 峰比稳健；|移动|>15% 的细胞登记
-#         "实测峰含尖刺成分"；pass 状态翻转的细胞单独登记（封卷口径重评）；
-#       A-否：014 峰比移动 <15% -> 尖刺非主因，014 败例为模型侧，照实登记。
-#     参考列（不立判）：k3 整流级联前向下的稳健峰比（B6 若封卷此为相关口径）。
-#   件B 16708060/16708016 基线偏移复核（"过减漏"在案）：
-#     九细胞 × 五协议，收集全部 -80/-90mV 恒定段（>=0.2s，跳前 0.1s）合并估计
-#     DC 偏移与 σ；无合格段的协议记"无覆盖"。
-#     【判线·跑前钉死】060 或 016 的任一协议 |偏移| > 3× 群体 MAD -> 该细胞
-#       该协议基线偏移坐实（点名，量级照实登记，重减留正式组装后）；否则
-#       "过减漏"在静默段不可见，登记维持。
-# 对照（跑前声明）：C1 DoE 反演 τr 误差<15%；C2 AP 结构解析 17 峰+hook；
-#   C3 稳健峰估计自洽：合成 持续峰（宽 5ms）+ 单样本尖刺 ±8nA -> 稳健峰回收
-#     持续峰误差 <5%，且尖刺贡献 <10%。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 前向仅 16713003（基线检查照旧全量）。
+# 2026-09-14_alpha_data_side_spike_baseline_recheck.py
+# Purpose (closing-document section 9 todo item 4; both data-side items done at once; model and criteria untouched):
+#   item A: 16707014 AP spike re-evaluation (D4 on record) + population-wide measured-peak audit:
+#     014's AP recording carries +/-8-9 nA single-sample impulse spikes (step-edge capacitive + ringing, D4 family);
+#     repolarisation-window scoring takes max(I) -> the measured denominator may be inflated -> A1 peak ratio 0.21
+#     [Smoke-fixing 2026-09-14] the initial "trace de-spiking" was self-mutilating: the true repolarisation-peak onset
+#       edge (fast rise + overshoot) was misjudged as an artefact, moving 003's peak ratio 1.50->2.27 (51%). Smoke also
+#       revealed a population-wide issue: the measured peaks of 003 and other cells themselves contain spike components
+#       (single-sample overshoots of 0.4-1.3 nA riding on true peaks), so the raw-max scoring convention systematically
+#       inflates denominators. Hence the switch to [scoring-side robust peak estimation]: measured repolarisation peak =
+#       max(med5(I)) (5-point centred rolling median): single-sample impulses vanish under the median, sustained peaks
+#     [Criteria, pinned before run]
+#       A-main: 014's A1 peak ratio (robust convention) enters [0.3,3] and A2/A3 hold -> the 014 spike explanation
+#         is confirmed;
+#       A-audit (population): per-cell report raw ratio -> robust ratio; cells with |shift| > 15% registered as
+#         "measured peak contains spike component"; cells whose pass state flips registered separately (SEAL-convention
+#       A-reject: 014's peak-ratio shift < 15% -> spikes not the main cause; 014's failure is model-side, registered as-is.
+#     reference column (no verdict): robust peak ratio under the k3 rectified-cascade forward (relevant if B6 seals).
+#   item B: 16708060/16708016 baseline-offset recheck ("over-subtraction leak" on record):
+#     nine cells x five protocols; collect all -80/-90 mV constant segments (>= 0.2 s, skipping the first 0.1 s)
+#     and jointly estimate DC offset and sigma; protocols without a qualifying segment are marked "no coverage".
+#     [Criterion, pinned before run] if any protocol of 060 or 016 has |offset| > 3x population MAD -> that cell's
+#       baseline offset in that protocol is confirmed (named, magnitude registered as-is, re-subtraction deferred to
+#       after formal assembly); otherwise the "over-subtraction leak" is invisible in silent segments, registration stands.
+# Controls (declared pre-run): C1 DoE inversion tau_r error < 15%; C2 AP structure parsing 17 peaks + hook;
+#   C3 robust-peak self-consistency: synthetic sustained peak (5 ms wide) + single-sample spikes +/-8 nA -> sustained
+#     peak recovered with error < 5% and spike contribution < 10%.
+# Run: python this file (nine cells full); SMOKE=1 forward on 16713003 only (baseline check still full).
 import os
 import json
 import numpy as np
@@ -111,11 +111,11 @@ def doe_fit(t, y, tr_grid=TR_GRID, td_grid=TD_GRID):
 
 
 def med5(I):
-    """5 点居中滚动中位（端点边缘填充）。稳健峰估计的原料。"""
+    """5-point centred rolling median (edge-padded endpoints). Raw material for robust peak estimation."""
     return np.median(sliding_window_view(np.pad(I, 2, mode="edge"), 5), axis=1)
 
 
-# ================= 前向管道（hss实测表重跑版，逐字复制） =================
+# ================= forward pipeline (hss-measured-table rerun version, copied verbatim) =================
 
 class Tab:
     def __init__(self, anchors, log_y=True):
@@ -248,7 +248,7 @@ def forward_single(V, tabs):
 
 
 def forward_k3r(V, tabs):
-    """B6 整流三级级联（参考列，与 B6 判决脚本同一份）。"""
+    """B6 rectified three-stage cascade (reference column, same copy as the B6 verdict script)."""
     v = V.astype(float)
     ms = np.exp(np.interp(v, tabs["m_ss"].xs, tabs["m_ss"].ly))
     tc = np.exp(np.interp(v, tabs["tau_c"].xs, tabs["tau_c"].ly))
@@ -305,7 +305,7 @@ def find_ap_structure(V):
 
 
 def score_ap(V, I_mea, Isim, st, robust=False):
-    """与封卷版逐字；robust=True 时实测峰用 max(med5(I))（唯一改动点，跑前声明）。"""
+    """Verbatim to the sealed version; when robust=True the measured peak uses max(med5(I)) (the only change, declared pre-run)."""
     Ipk = med5(I_mea) if robust else I_mea
     out = {}
     ratios, npeak = [], 0
@@ -350,45 +350,45 @@ def score_ap(V, I_mea, Isim, st, robust=False):
 def main():
     rng = np.random.default_rng(23)
     print("=" * 88)
-    print(" α模型 数据侧遗留复核：014 尖刺稳健峰重评 + 060/016 基线偏移"
-          + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 判线: A-主 014稳健峰比入[0.3,3]且A2/A3保持 | A-审计 逐细胞raw->稳健 | "
-          "B 偏移>3×群体MAD")
+    print(" alpha model data-side leftovers recheck: 014 spike robust-peak re-evaluation + 060/016 baseline offset"
+          + (" (smoke 16713003)" if SMOKE else " (nine cells full)"))
+    print(" criteria: A-main 014 robust peak ratio in [0.3,3] with A2/A3 holding | A-audit per-cell raw->robust | "
+          "B offset > 3x population MAD")
     print("=" * 88, flush=True)
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     t_c = np.arange(int(0.4 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) \
         + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τ_r: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> "
-          f"{'过' if c1 else '不过'}", flush=True)
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f} ms (truth 3.5) -> "
+          f"{'pass' if c1 else 'fail'}", flush=True)
     V0a = load_mat("ap_protocol.mat", "16713003", "ap")[0]
     st0a = find_ap_structure(V0a)
     c2 = bool(len(st0a["cycles"]) >= 14 and st0a["hook"] is not None)
-    print(f"  C2 AP 结构: 峰 {len(st0a['cycles'])} hook {'有' if st0a['hook'] else '无'} -> "
-          f"{'过' if c2 else '不过'}", flush=True)
-    # C3 稳健峰估计自洽：持续峰（5ms 宽，高 1.0）+ 单样本尖刺 ±8
+    print(f"  C2 AP structure: peaks {len(st0a['cycles'])} hook {'yes' if st0a['hook'] else 'no'} -> "
+          f"{'pass' if c2 else 'fail'}", flush=True)
+    # C3 robust-peak self-consistency: sustained peak (5 ms wide, height 1.0) + single-sample spikes +/-8
     tt = np.arange(2000) * DT
-    peak = np.exp(-((tt - 0.100) / 0.0025) ** 2)          # 宽 5ms 持续峰
+    peak = np.exp(-((tt - 0.100) / 0.0025) ** 2)          # sustained peak 5 ms wide
     Isyn = peak + rng.normal(0, 0.01, len(tt))
     Isyn[600] += 8.0
     Isyn[1200] -= 8.0
     est = float(np.max(med5(Isyn)))
     raw_est = float(np.max(Isyn))
     c3 = bool(abs(est - 1.0) / 1.0 < 0.05 and abs(raw_est - 8.0) < 1.0)
-    print(f"  C3 稳健峰: 持续峰真值1.0 估计 {est:.3f}（误差<5%），"
-          f"raw max={raw_est:.2f}（被尖刺主导，证明需要稳健口径）-> "
-          f"{'过' if c3 else '不过'}", flush=True)
+    print(f"  C3 robust peak: sustained-peak truth 1.0, estimate {est:.3f} (error <5%), "
+          f"raw max={raw_est:.2f} (dominated by spikes, proving the robust convention is needed) -> "
+          f"{'pass' if c3 else 'fail'}", flush=True)
     if not (c1 and c2 and c3):
-        print("  对照未归位 -> 停。", flush=True)
+        print("  controls not seated -> halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls seated.", flush=True)
 
-    # ---------- 件A：稳健峰重评 ----------
-    print("\n[件A AP 稳健峰重评]（单门管道逐字；k3 参考列）", flush=True)
+    # ---------- item A: robust-peak re-evaluation ----------
+    print("\n[item A AP robust-peak re-evaluation] (single-gate pipeline verbatim; k3 reference column)", flush=True)
     amp = json.load(open(F_AMP, encoding="utf-8"))
     hook = json.load(open(F_HOOK, encoding="utf-8"))
     inact = json.load(open(F_INACT, encoding="utf-8"))
@@ -416,11 +416,11 @@ def main():
         res[c] = row
         k3txt = ""
         if "k3_robust" in row:
-            k3txt = f" | k3参考 稳健比 {row['k3_robust']['repol_ratio_med']:.2f}"
-        print(f"  {c}: 峰比 raw {raw['repol_ratio_med']:.2f} -> 稳健 "
+            k3txt = f" | k3 reference robust ratio {row['k3_robust']['repol_ratio_med']:.2f}"
+        print(f"  {c}: peak ratio raw {raw['repol_ratio_med']:.2f} -> robust "
               f"{rob['repol_ratio_med']:.2f} | A1 {'✓' if rob['A1'] else '×'}"
               f" A2 {'✓' if rob.get('A2') else '×'} A3 {'✓' if rob.get('A3') else '×'}"
-              f" -> {'过' if rob['pass'] else '不过'}{k3txt}", flush=True)
+              f" -> {'pass' if rob['pass'] else 'fail'}{k3txt}", flush=True)
 
     print("\n" + "-" * 88, flush=True)
     a_verdict = []
@@ -431,28 +431,28 @@ def main():
         main_ok = bool(r14["robust"]["A1"] and r14["robust"].get("A2")
                        and r14["robust"].get("A3"))
         a_verdict.append(
-            f"A-主: 014 峰比 raw {r14['raw']['repol_ratio_med']:.2f} -> 稳健 "
-            f"{r14['robust']['repol_ratio_med']:.2f}（移动 {move * 100:.0f}%）"
-            f" A1/A2/A3 {'全过 -> 尖刺解释坐实' if main_ok else '未全过'}")
+            f"A-main: 014 peak ratio raw {r14['raw']['repol_ratio_med']:.2f} -> robust "
+            f"{r14['robust']['repol_ratio_med']:.2f} (shift {move * 100:.0f}%)"
+            f" A1/A2/A3 {'all pass -> spike explanation confirmed' if main_ok else 'not all pass'}")
         if not main_ok:
-            a_verdict.append("A-否: 014 稳健口径仍未过 -> 尖刺非（唯一）主因，"
-                             "模型侧缺口照实登记")
+            a_verdict.append("A-reject: 014 still fails under the robust convention -> spikes not the (sole) main cause; "
+                             "model-side gap registered as-is")
         for c, r in res.items():
             mv = abs(r["robust"]["repol_ratio_med"] - r["raw"]["repol_ratio_med"]) \
                 / max(abs(r["raw"]["repol_ratio_med"]), 1e-9)
             flip = r["robust"]["pass"] != r["raw"]["pass"]
             if mv > 0.15 or flip:
                 a_verdict.append(
-                    f"A-审计: {c} 峰比 {r['raw']['repol_ratio_med']:.2f} -> "
+                    f"A-audit: {c} peak ratio {r['raw']['repol_ratio_med']:.2f} -> "
                     f"{r['robust']['repol_ratio_med']:.2f}（{mv * 100:.0f}%"
-                    f"{'，pass 翻转' if flip else ''}）登记：实测峰含尖刺成分")
+                    f"{', pass flipped' if flip else ''}) registered: measured peak contains spike component")
     npass_rob = sum(1 for r in res.values() if r["robust"]["pass"])
-    a_verdict.append(f"AP（稳健峰口径，单门）: {npass_rob}/{len(res)} 过")
+    a_verdict.append(f"AP (robust-peak convention, single gate): {npass_rob}/{len(res)} pass")
     for line in a_verdict:
         print(" ", line, flush=True)
 
-    # ---------- 件B：基线偏移复核 ----------
-    print("\n[件B 060/016 基线偏移复核]（-80/-90 恒定段 >=0.2s，跳前 0.1s）", flush=True)
+    # ---------- item B: baseline-offset recheck ----------
+    print("\n[item B 060/016 baseline-offset recheck] (-80/-90 constant segments >=0.2 s, skipping first 0.1 s)", flush=True)
     protos = [("sine_wave", "sine_wave"), ("ap", "ap"), ("inactivation", "inactivation"),
               ("activation_kinetics_1", "activation_kinetics_1"),
               ("activation_kinetics_2", "activation_kinetics_2")]
@@ -473,46 +473,46 @@ def main():
                 row[proto] = dict(offset=float(np.mean(d)), sigma=float(np.std(d)),
                                   n=int(len(d)))
             else:
-                row[proto] = dict(offset=None, note="无覆盖")
+                row[proto] = dict(offset=None, note="no coverage")
         btab[c] = row
     offs = [abs(d["offset"]) for c in btab.values() for d in c.values()
             if d.get("offset") is not None]
     mad_pop = float(np.median(np.abs(np.array(offs) - np.median(offs)))) * 1.4826
-    print(f"  群体 |偏移| 中位 {np.median(offs):.4f} nA，MAD {mad_pop:.4f} nA"
-          f"（判线 3×MAD={3 * mad_pop:.4f}）", flush=True)
+    print(f"  population |offset| median {np.median(offs):.4f} nA, MAD {mad_pop:.4f} nA"
+          f" (criterion 3xMAD={3 * mad_pop:.4f})", flush=True)
     b_flag = {}
     for c in CELLS_ALL:
         parts, fl = [], []
         for p, d in btab[c].items():
             if d.get("offset") is None:
-                parts.append(f"{p}:无覆盖")
+                parts.append(f"{p}:no-coverage")
             else:
                 outl = abs(d["offset"]) > 3 * mad_pop
                 parts.append(f"{p}:{d['offset']:+.4f}{'*' if outl else ''}")
                 if outl:
                     fl.append(p)
         b_flag[c] = fl
-        mark = "  <== 离群" if fl and c in ("16708060", "16708016") else \
-               ("  （离群）" if fl else "")
+        mark = "  <== outlier" if fl and c in ("16708060", "16708016") else \
+               ("  (outlier)" if fl else "")
         print(f"  {c}: {' '.join(parts)}{mark}", flush=True)
     tgt = {c: b_flag[c] for c in ("16708060", "16708016")}
     if any(tgt.values()):
-        print(f"  件B判词: " + "；".join(f"{c} 在 {v} 偏移离群坐实" for c, v in tgt.items() if v)
-              + "（减法参数问题，量级见上，重减留正式组装后）", flush=True)
+        print(f"  item-B verdict: " + "; ".join(f"{c} at {v} offset outlier confirmed" for c, v in tgt.items() if v)
+              + " (subtraction-parameter issue, magnitudes above; re-subtraction deferred to after formal assembly)", flush=True)
     else:
-        print("  件B判词: 060/016 未见 >3×MAD 静默段偏移——过减漏在基线口径不可见，登记维持",
+        print("  item-B verdict: no >3xMAD silent-segment offset seen in 060/016 - over-subtraction leak invisible in the baseline convention, registration stands",
               flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     cells_fig = CELLS_FWD if SMOKE else ["16707014", "16704047", "16713003", "16708016"]
     nfig = len(cells_fig)
     fig, axes = plt.subplots(nfig, 1, figsize=(15, 3.0 * nfig), squeeze=False)
     for ax, c in zip(axes[:, 0], cells_fig):
         V, I = load_mat("ap_protocol.mat", c, "ap")
         tt = np.arange(len(V)) * DT
-        ax.plot(tt, I, lw=0.3, color="0.6", label="实测 raw")
-        ax.plot(tt, med5(I), lw=0.4, color="tab:red", alpha=0.8, label="med5（稳健峰原料）")
-        ax.set_title(f"{c}  AP 稳健峰口径", fontsize=9)
+        ax.plot(tt, I, lw=0.3, color="0.6", label="measured raw")
+        ax.plot(tt, med5(I), lw=0.4, color="tab:red", alpha=0.8, label="med5 (robust-peak raw material)")
+        ax.set_title(f"{c}  AP robust-peak convention", fontsize=9)
         ax.set_xlabel("t (s)")
         ax.set_ylabel("I (nA)")
         ax.legend(fontsize=7, loc="upper right")
@@ -520,7 +520,7 @@ def main():
     fpng = os.path.join(HERE, "2026-09-14_α模型_数据侧遗留_尖刺剔除与基线偏移复核.png")
     fig.savefig(fpng, dpi=120, bbox_inches="tight")
 
-    out = dict(note="§9待办4 数据侧复核：评分侧稳健峰 max(med5(I))；单门管道逐字；k3 参考列",
+    out = dict(note="section-9 todo-4 data-side recheck: scoring-side robust peak max(med5(I)); single-gate pipeline verbatim; k3 reference column",
                ap={c: r for c, r in res.items()},
                ap_verdict=a_verdict, npass_robust=npass_rob,
                baseline={c: btab[c] for c in CELLS_ALL},
@@ -528,8 +528,8 @@ def main():
     fjson = os.path.join(HERE, "2026-09-14_α模型_数据侧遗留_尖刺剔除与基线偏移复核_结果.json")
     with open(fjson, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1, default=float)
-    print(f"\n  图落盘: {fpng}", flush=True)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"\n  figure saved: {fpng}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

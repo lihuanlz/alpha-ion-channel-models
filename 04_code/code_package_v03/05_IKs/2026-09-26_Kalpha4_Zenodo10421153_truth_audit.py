@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Kα-4: Zenodo 10421153 (Fedida 2024 JGP 原作者工作簿) 真值对拍
-# 对象: 我方 Kα2 数字化表 (τact Fig3B, Δt Fig3C) + WT G-V 池锚
-# 输出: 对拍CSV + 三联图PNG + 判词JSON
+# Kα-4: Zenodo 10421153 (Fedida 2024 JGP original-author workbooks) ground-truth cross-check
+# Objects: our Kα2 digitized tables (tau_act Fig3B, Dt Fig3C) + WT G-V pool anchors
+# Output: cross-check CSV + triptych PNG + verdict JSON
 import sys, json
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.executable).parent.parent.parent))
@@ -16,12 +16,12 @@ ARC = BASE / r"_归档\α模型"
 RES = BASE / r"_归档\结果"
 RES.mkdir(exist_ok=True)
 
-# ---- 1. 原作者真值表 ----
+# ---- 1. original-author ground-truth tables ----
 wb = openpyxl.load_workbook(ZEN / "Scheme 1 time constant and deltat_240116.xlsx", read_only=True)
 ws = wb["Extended tau to +180 mV Fig.3B"]
 tau_true = {}
 for row in ws.iter_rows(values_only=True):
-    # 行内扫描 (电压, τ) 相邻数值对, 跳过前置空列/模型列(τ>20 s 视为模型值丢弃)
+    # scan each row for adjacent (voltage, tau) numeric pairs; skip leading empty/model columns (tau>20 s treated as model values, discarded)
     nums = []
     for v in row:
         try:
@@ -48,7 +48,7 @@ for row in ws2.iter_rows(values_only=True):
 wb.close()
 print(f"truth: tau {len(tau_true)} pts, dt {len(dt_true)} pts, gv {len(gv_true)} pts")
 
-# ---- 2. 我方数字化表 ----
+# ---- 2. our digitized tables ----
 tau_ours = {}
 for ln in open(ARC / "2026-09-15_Kα2_Fedida2024_Fig3B_wtEQ_数字化.csv", encoding="utf-8-sig"):
     p = ln.strip().split(",")
@@ -56,7 +56,7 @@ for ln in open(ARC / "2026-09-15_Kα2_Fedida2024_Fig3B_wtEQ_数字化.csv", enco
         tau_ours[int(p[0])] = float(p[1])
 dt_ours = {int(k): v for k, v in json.load(open(ARC / "2026-09-15_Kα2_Δt登记.json", encoding="utf-8"))["dt_full_read"].items()}
 
-# ---- 3. 对拍 ----
+# ---- 3. cross-check ----
 rows = []
 for v in sorted(tau_ours):
     if v in tau_true:
@@ -70,7 +70,7 @@ for v in sorted(dt_ours):
         dt_rows.append(("delta_t", v, dt_ours[v], dt_true[v], err * 1000))  # ms
 dt_errs = np.array([r[4] for r in dt_rows])
 
-# G-V: Boltzmann 拟合作者 EQ 均值
+# G-V: Boltzmann fit of the authors' EQ means
 Vv = np.array(sorted(gv_true)); Gg = np.array([gv_true[v] for v in Vv])
 from scipy.optimize import curve_fit
 def boltz(V, Vh, k): return 1.0 / (1.0 + np.exp(-(V - Vh) / k))
@@ -79,11 +79,11 @@ Vh_auth, k_auth = popt
 print(f"author EQ G-V (10 s): V1/2={Vh_auth:.1f} mV, k={k_auth:.1f} mV")
 
 ours_pool = {"Kα1 WT池(Chan 8226585)": (25.05, 22.6), "Kα药跨批参照": (32.12, 19.05)}
-lit = {"Fedida psQ+E1 (Table 1, 5 s 等时)": (4.2, None),
+lit = {"Fedida psQ+E1 (Table 1, 5 s isochronal)": (4.2, None),
        "Fedida psQQ*+E1 (Table 1)": (23.5, None),
        "Fedida EQ*QQ*Q*+E1 (Table 1)": (32.8, None)}
 
-# ---- 4. 落 CSV ----
+# ---- 4. write CSV ----
 import csv
 out_csv = RES / "对拍_Kα4_Zenodo10421153_真值表_2026-09-26.csv"
 with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
@@ -96,7 +96,7 @@ with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
     for nm, (vh, k) in {**ours_pool, **lit}.items():
         w.writerow([nm, vh, k if k else "", "sealed/Table1"])
 
-# ---- 5. 图 ----
+# ---- 5. figure ----
 fig = plt.figure(figsize=(13.2, 4.2))
 axa = fig.add_subplot(131); axb = fig.add_subplot(132); axc = fig.add_subplot(133)
 tv = sorted(tau_true)

@@ -1,6 +1,6 @@
-# lei211_TAUH_逐孔.py
-# 与 lei211_TAUH_群体表.py 同一 DoE 逻辑，但输出逐孔 τ_rec 值（供跨批合并）
-# 用法: BATCH=<batch> python lei211_TAUH_逐孔.py
+# lei211_TAUH_per_well.py
+# Same DoE logic as lei211_TAUH_population_table.py, but outputs per-well tau_rec values (for cross-batch merging)
+# usage: BATCH=<batch> python lei211_TAUH_per_well.py
 import os, json
 import numpy as np
 

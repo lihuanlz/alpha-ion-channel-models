@@ -1,10 +1,10 @@
-# lei211_J5_AP前向.py
-# 判线来源：预注册判决卡 §2-J5（冻结版）+ §1-补丁（AP 再漏减窗 0.065-0.085s）
-# 模型：dm/dt=(m_ss-m)/τ_m, dh/dt=(h_ss-h)/τ_h(V), I=G·m·h·(V-E_rev)，零调参
-# 表源：m_ss/h_ss = 本批群体中位表（J1/J2 结果文件）；τ_h(V) = sinactiv 全负档 DoE（本脚本内登记）
-#       τ_m = 432ms 平铺（大补跳 τ2 登记值）；G = |A(-140)|/(0.9*|−140−E_rev|)；E_rev 逐细胞 J4
-# 判线：每细胞每协议 A1(复极回弹>=80%周期且峰比∈[0.3,3]) + A2(RMS比∈[0.3,3]) 全过；
-#       A3 频率方向跨协议判；三协议 633 试验通过率 Wilson 下界>=0.6 -> 封卷
+# lei211_J5_AP_forward.py
+# criteria source: pre-registered verdict card section 2-J5 (frozen) + section 1 patch (AP re-leak-correction window 0.065-0.085 s)
+# model: dm/dt = (m_ss - m)/tau_m, dh/dt = (h_ss - h)/tau_h(V), I = G*m*h*(V - E_rev), zero tuning
+# table sources: m_ss/h_ss = this batch's population median tables (J1/J2 result files); tau_h(V) = sinactiv all-negative-level
+#       tau_m = 432 ms flat (big-step tau2 registered value); G = |A(-140)|/(0.9*|-140 - E_rev|); E_rev per cell J4
+# criteria: per cell per protocol A1 (repolarisation rebound >= 80% cycles and peak ratio in [0.3,3]) + A2 (RMS ratio in [0.3,3])
+#       A3 frequency direction judged across protocols; three-protocol 633-trial pass-rate Wilson lower bound >= 0.6 -> SEAL
 import os, json
 import numpy as np
 import matplotlib
@@ -27,9 +27,9 @@ if SMOKE:
 SIN_V = [-140, -120, -100, -80, -60, -40, -20, 0, 20, 40]
 ACT_V = [-50, -35, -20, -5, 10, 25, 40]
 DT_I = 2e-4
-TAU_M = 0.432  # s，大补跳 τ2 登记值平铺
+TAU_M = 0.432  # s, big-step tau2 registered value, flat
 
-# ---------- 群体中位表 ----------
+# ---------- population median tables ----------
 J12 = json.load(open(os.path.join(ROOT, f"lei211_J1J2_结果_{BATCH}.json"), encoding="utf-8"))["cells"]
 H_TAB = np.full(len(SIN_V), np.nan)
 for i in range(len(SIN_V)):
@@ -41,7 +41,7 @@ for i in range(len(ACT_V)):
     vals = [c["J2"]["m"][i] for c in J12.values() if c["J2"] and c["J2"]["ok_m"][i]]
     if len(vals) >= 3:
         M_TAB[i] = float(np.median(vals))
-# 空缺填补：h_ss(-80) 用 -100 与 -60 线性插值
+# gap filling: h_ss(-80) linearly interpolated from -100 and -60
 HV = np.array(SIN_V, float)
 ok = np.isfinite(H_TAB)
 H_FILL = np.interp(HV, HV[ok], H_TAB[ok])
@@ -73,7 +73,7 @@ def load_current(proto, well):
 
 
 def releak_ap(i, v, t):
-    """AP 官方再漏减窗 0.065-0.085s"""
+    """AP official re-leak-correction window 0.065-0.085 s"""
     v0 = v[0]
     mask = (t >= 0.065) & (t <= 0.085)
     mv = np.mean(v[mask] - v0)
@@ -103,7 +103,7 @@ def fit_doe(tt, y, sig):
     return float(tr), float(td)
 
 
-# ---------- τ_h(V) 群体表（lei211_tauh_表.json，log 线性插值，+40 锚 90ms 登记） ----------
+# ---------- tau_h(V) population table (lei211_tauh_表.json, log-linear interpolation, +40 anchor 90 ms registered) ----------
 _TAUR = json.load(open(os.path.join(ROOT, f"lei211_tauh_表_{BATCH}.json"), encoding="utf-8"))
 _TH_X = np.array([float(k) for k in _TAUR.keys()] + [40.0])
 _TH_Y = np.array([_TAUR[k]["median"] for k in _TAUR.keys()] + [0.090])
@@ -115,7 +115,7 @@ def tau_h_arr(v):
     return np.interp(v, _TH_X, _TH_Y, left=_TH_Y[0], right=_TH_Y[-1])
 
 
-# ---------- 每协议缓存：电压轴 + m_ss/h_ss/τ_h 数组（与细胞无关） ----------
+# ---------- per-protocol cache: voltage axis + m_ss/h_ss/tau_h arrays (cell-independent) ----------
 _PROTO_CACHE = {}
 
 
@@ -124,7 +124,7 @@ def proto_arrays(proto):
         return _PROTO_CACHE[proto]
     t_v, Vp = load_protocol(proto)
     v = Vp[:, 0]
-    mss = np.array([m_ss(x) for x in v[::50]])  # 降采样查表后插值加速
+    mss = np.array([m_ss(x) for x in v[::50]])  # downsampled table lookup then interpolation for speed
     hss = np.array([h_ss(x) for x in v[::50]])
     th = tau_h_arr(v[::50])
     vv = v[::50]
@@ -170,12 +170,12 @@ def forward(proto, well):
 
 
 def judge_cycle(res):
-    """A1/A2 判决（修：复极窗起点=电压峰+5ms 避电容伪影；σ 取峰间 -80 静默段）"""
+    """A1/A2 verdict (fix: repolarisation window starts at voltage peak +5 ms to avoid capacitive artefacts; sigma from the -80 silent segment between peaks)"""
     v, Id, Is = res["v"], res["Idata"], res["Isim"]
     above = v > -20
     rises = np.where(np.diff(above.astype(int)) == 1)[0]
     n_cyc = len(rises)
-    # σ：最后两个峰之间的 -80 段（无则全首 0.05s 外的前 10% 分位段）
+    # sigma: -80 segment between the last two peaks (else the first-10%-quantile segment outside the first 0.05 s)
     if n_cyc >= 2:
         a_q, b_q = rises[-2], rises[-1]
         quiet = Id[a_q + int(0.3 / 1e-4): b_q - int(0.05 / 1e-4)] if b_q - a_q > int(0.4 / 1e-4) else Id[:500]
@@ -185,12 +185,12 @@ def judge_cycle(res):
     cyc_hit = 0
     ratios = []
     for r in rises:
-        # 电压峰位置
+        # voltage peak position
         seg_v = v[r: r + int(0.15 / 1e-4)]
         if len(seg_v) < 50:
             continue
         pk_idx = r + int(np.argmax(seg_v))
-        start = pk_idx + int(0.005 / 1e-4)  # 峰+5ms
+        start = pk_idx + int(0.005 / 1e-4)  # peak +5 ms
         tail = np.where(v[start:] < -40)[0]
         if len(tail) == 0:
             continue
@@ -234,7 +234,7 @@ def main():
             if SMOKE:
                 res["proto"] = proto
                 out.setdefault("_plot", []).append(res)
-        # A3：0.5->2Hz 均值变化方向一致
+        # A3: 0.5 -> 2 Hz mean-change direction agreement
         if "ap05hz" in means and "ap2hz" in means:
             d_dir = np.sign(means["ap2hz"][0] - means["ap05hz"][0])
             s_dir = np.sign(means["ap2hz"][1] - means["ap05hz"][1])
@@ -251,8 +251,8 @@ def main():
         fig, axes = plt.subplots(3, 1, figsize=(12, 9))
         for ax, res in zip(axes, out["_plot"]):
             t = res["t"][: len(res["Idata"])]
-            ax.plot(t, res["Idata"], lw=0.5, color="0.6", label="数据(再漏减)")
-            ax.plot(t, res["Isim"], lw=0.7, color="C0", label="α前向(零调参)")
+            ax.plot(t, res["Idata"], lw=0.5, color="0.6", label="data (re-leak-corr)")
+            ax.plot(t, res["Isim"], lw=0.7, color="C0", label="alpha forward (zero tuning)")
             ax.set_title(f"A01 {res['proto']}  G={res['G']:.1f}nS")
             ax.legend(fontsize=8)
         fig.tight_layout()

@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-2026-09-16 · α模型 Stage B · B3 双α化宿主复验臂（24 药）
+2026-09-16 · alpha-model Stage B · B3 dual-alpha host recheck arm (24 drugs)
 ====================================================================================
-预注册：结果\\预注册_α模型_StageB_ORd宿主对拍_2026-09-14.md §11.9（v7）+ §11.10（v7.1），
-判线全部跑前钉死。本脚本 = B2 v6.1 药物模块（逐字）+ ORd 组装件 v1.1 宿主（Kr+Ks 双换芯）。
+Preregistration: 结果\预注册_α模型_StageB_ORd宿主对拍_2026-09-14.md section 11.9 (v7) + section 11.10 (v7.1),
+all criteria pinned before the run. This script = B2 v6.1 drug module (verbatim) + ORd assembly v1.1 host (Kr+Ks dual swap-in).
 
-宿主（v7 ①.1 钉死，不重标）：
-  IKr = α 四表乘积门（G_Kr 取组装件标定值冻结）；IKs = α 直提表（G_Ks 同冻结）；
-  INa/ICaL/INaL/Ito/IK1 = 官方。温度桥 Kr ÷4.138、Ks ÷3.952（Q10=2.5）。
-药物模块（v7 ①.4 = B2 逐字）：
-  hERG 动态结合 dD/dt = k_on·C·(1−h)·(1−D) − k_off·D（卡3 中位；k_off=k_on×IC50）；
-  其余通道静态 Hill：LateNa/PeakNa/IK1/CaL/Ito 走 fc 接口（=1/mult），
-  **IKs 乘子作用于 α-IKs 电导**（G_Ks_eff = G_Ks×mult_IKs，口径差异登记，v7 ①.4/③.4）。
+Host (pinned in v7 item 1.1, not recalibrated):
+  IKr = alpha four-table product gate (G_Kr frozen at the assembly calibrated value); IKs = alpha directly-extracted table (G_Ks likewise frozen);
+  INa/ICaL/INaL/Ito/IK1 = official. Temperature bridges Kr /4.138, Ks /3.952 (Q10=2.5).
+Drug module (v7 item 1.4 = B2 verbatim):
+  hERG dynamic binding dD/dt = k_on*C*(1-h)*(1-D) - k_off*D (card-3 medians; k_off=k_on x IC50);
+  other channels static Hill: LateNa/PeakNa/IK1/CaL/Ito via the fc interface (=1/mult),
+  **the IKs multiplier acts on the alpha-IKs conductance** (G_Ks_eff = G_Ks x mult_IKs; convention difference registered, v7 items 1.4/3.4).
 
-判线（v7 ② + v7.1，跑前钉死）：
-  C1 control APD90 与 B0 正式值 252.118ms 差 ≤2%（复跑确认，预期过；不过→宿主重建排查）；
-  C2 dofetilide 100×Cmax：APD90 延长 >40% 且 qNet 下降；C3 nifedipine 100×Cmax：APD90 缩短；
-  R1  ρ(B3,B2) ≥ 0.95（qNet_ratio 与 APD90_ratio 双口径，24 药逐药）；
-  R1b 逐药 |ΔqNet_ratio| 中位 ≤ 0.20（数值一致性，v7.1 D1）；
-  R2  |Δρ(V1)| ≤ 0.15（v7.1 D2 放宽）且 B3 V2 AUC ≥ 0.80；增量判 B3 vs B1 不劣；
-  R3  Kendall 逆序对 ≤ 2（v7.1 操作化钉死）；
-  登记：IKs 抑制强子集（IKsIC50>0 且 <10×Cmax）逐药核验（v7.1 D4，不设判线）；
-        ex-metoprolol V1（随判词卡 §七 A3 同口径，登记）；
-        末拍六电流积分（搭车回填组装判词卡二审 B1/B4：官方参考臂 2 拍 vs 主臂末拍）。
-56 态：0–48 ORd、49 qNet、50 m_Kr、51 h_Kr、52 D_Kr、53/54 未用、55 a_dyn_Ks。
+Criteria (v7 item 2 + v7.1, pinned before the run):
+  C1 control APD90 within 2% of the B0 formal value 252.118 ms (rerun confirmation, expected pass; fail -> host rebuild investigation);
+  C2 dofetilide 100xCmax: APD90 prolongation >40% and qNet decrease; C3 nifedipine 100xCmax: APD90 shortening;
+  R1  rho(B3,B2) >= 0.95 (qNet_ratio and APD90_ratio dual conventions, per drug over 24 drugs);
+  R1b per-drug |delta qNet_ratio| median <= 0.20 (numerical consistency, v7.1 D1);
+  R2  |delta rho(V1)| <= 0.15 (v7.1 D2 relaxation) and B3 V2 AUC >= 0.80; increment criterion B3 vs B1 not inferior;
+  R3  Kendall discordant pairs <= 2 (operationalized in v7.1);
+  registry: strong-IKs-suppression subset (IKsIC50>0 and <10xCmax) per-drug check (v7.1 D4, no criterion);
+        ex-metoprolol V1 (same convention as verdict card section 7 A3, registry);
+        last-beat six-current integrals (piggyback refill of assembly verdict card second-review B1/B4: official reference arm 2 beats vs main-arm last beat).
+56 states: 0-48 ORd, 49 qNet, 50 m_Kr, 51 h_Kr, 52 D_Kr, 53/54 unused, 55 a_dyn_Ks.
 
-环境变量：SMOKE=1 冒烟；NWORKERS（默认 1）；NBEATS_CTRL/NBEATS_DRUG。
-纪律：本侧 ast.parse + SMOKE=1 冒烟；正式跑用户 Spyder：
+Environment variables: SMOKE=1 smoke; NWORKERS (default 1); NBEATS_CTRL/NBEATS_DRUG.
+Discipline: this side runs ast.parse + SMOKE=1 smoke; the formal run is done by the user in Spyder:
   %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/2026-09-16_α模型_StageB_B3_双α化宿主复验_24药.py' --wdir
-输出：本脚本同目录 _结果.json/.csv/.png（冒烟带 _冒烟 后缀）+ StageB_B3稳态_CL1000.json。
+Output: _结果.json/.csv/.png next to this script (smoke carries the _冒烟 suffix) + StageB_B3稳态_CL1000.json.
 """
 
 import os
@@ -58,9 +58,9 @@ N_DRUG = int(os.environ.get("SMOKE_BEATS", "20")) if SMOKE else int(os.environ.g
 NWORKERS = int(os.environ.get("NWORKERS", "15"))
 CL = 1000.0
 DT_REC = 0.1
-B0_FORMAL_APD90 = 252.1181387725961   # B0 正式跑末拍（2026-09-14 在案）
+B0_FORMAL_APD90 = 252.1181387725961   # B0 formal-run last beat (on record 2026-09-14)
 
-# 温度桥（v7 ①.1：与组装件一致）
+# temperature bridges (v7 item 1.1: consistent with the assembly)
 QFAC_KR = 2.5 ** ((37.0 - 21.5) / 10.0)     # ÷4.138
 QFAC_KS = 2.5 ** 1.5                        # ÷3.952
 
@@ -69,7 +69,7 @@ NAO = 140.0
 PKNA = 0.01833
 BETA = 0.30
 
-# 24 药（卡4 §三，与 B1/B2 逐字相同）
+# 24 drugs (card-4 section 3, verbatim identical to B1/B2)
 DRUGS_HIGH = ["azimilide", "bepridil", "disopyramide", "dofetilide", "ibutilide", "sotalol", "vandetanib"]
 DRUGS_MID = ["astemizole", "chlorpromazine", "cisapride", "clarithromycin", "clozapine",
              "domperidone", "droperidol", "ondansetron", "pimozide", "risperidone", "terfenadine"]
@@ -77,7 +77,7 @@ DRUGS_LOW = ["diltiazem", "metoprolol", "mexiletine", "ranolazine", "tamoxifen",
 DRUGS_24 = DRUGS_HIGH + DRUGS_MID + DRUGS_LOW
 SMOKE_DRUGS = ["dofetilide", "cisapride", "verapamil"]
 
-# fc 通道（hERG 走动态结合、IKs 走 α 电导，均不在此列）：(名, IC50 列, h 列, pars 下标)
+# fc channels (hERG goes dynamic binding, IKs goes alpha conductance; neither listed here): (name, IC50 column, h column, pars index)
 CHANNELS_FC = [("LateNa", "Late_sodiumIC50", "Late_sodiumh", 2),
                ("PeakNa", "Peak_sodiumIC50", "Peak_sodiumh", 3),
                ("IK1", "IK1IC50", "IK1h", 5),
@@ -112,7 +112,7 @@ class Lut:
 
 
 # ----------------------------------------------------------------------------
-# 卡3 动态结合参数（与 B2 逐字同逻辑）
+# card-3 dynamic-binding parameters (same logic as B2, verbatim)
 # ----------------------------------------------------------------------------
 def ka3_params():
     d = json.load(open(KA3_JSON, encoding="utf-8"))
@@ -152,7 +152,7 @@ def ka3_params():
 
 
 # ----------------------------------------------------------------------------
-# α 表（组装件同构：hERG 四表 TAU_ARM=1；IKs Fedida 25 点）
+# alpha tables (same construction as the assembly: hERG four tables TAU_ARM=1; IKs Fedida 25 points)
 # ----------------------------------------------------------------------------
 def build_tabs_kr(eng):
     amp = json.load(open(eng.F_AMP, encoding="utf-8"))
@@ -183,10 +183,10 @@ def build_tabs_ks():
 
 
 # ----------------------------------------------------------------------------
-# B3 rhs：B0 移植件 + Kr/Ks 双换芯 + D 态（52）；官方 hERG/IKs 门冻结
+# B3 rhs: B0 port + Kr/Ks dual swap-in + D state (52); official hERG/IKs gates frozen
 # ----------------------------------------------------------------------------
 def build_b3(b0, P_d, tabs, G, kon_per_nM_s, koff_per_s, C_nM):
-    rhs0 = b0.build_model(P_d)          # P_d[1]=P_d[4]=inf 由调用方设
+    rhs0 = b0.build_model(P_d)          # P_d[1]=P_d[4]=inf set by the caller
     ko = P_d[b0.PARS_NAMES.index("ko")]
     rad, L = 0.0011, 0.01
     vcell = 1000 * 3.14 * rad * rad * L
@@ -200,9 +200,9 @@ def build_b3(b0, P_d, tabs, G, kon_per_nM_s, koff_per_s, C_nM):
         dy, cur = rhs0(t, y)
         v = y[0]
         dy_a = list(dy) + [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        for i in range(39, 49):           # 官方 hERG Markov 六态+结合态冻结
+        for i in range(39, 49):           # official hERG Markov six states + bound states frozen
             dy_a[i] = 0.0
-        dy_a[33] = 0.0                    # 官方 IKs 门（xs1/xs2）冻结
+        dy_a[33] = 0.0                    # official IKs gate (xs1/xs2) frozen
         dy_a[34] = 0.0
         m, h, D = y[50], y[51], y[52]
         ad = y[55]
@@ -238,7 +238,7 @@ def run_beats(b0, rhs, y0, nbeats, label="", keep_currents=False):
         sol = solve_ivp(f, (0.0, CL), y, method="LSODA", t_eval=t_rec,
                         rtol=1e-7, atol=1e-9)
         if not sol.success:
-            print(f"    {label} 拍 {b + 1}: LSODA 失败 {sol.message}", flush=True)
+            print(f"    {label} beat {b + 1}: LSODA failed {sol.message}", flush=True)
             break
         v = sol.y[0]
         y = sol.y[:, -1].copy()
@@ -253,8 +253,8 @@ def run_beats(b0, rhs, y0, nbeats, label="", keep_currents=False):
                 cur[:, k] = c7
             out["cur"] = cur
         if (b + 1) % 50 == 0 or b == 0:
-            print(f"    {label} 拍 {b + 1}/{nbeats}  APD90={apd[b]:7.2f}ms"
-                  f"  qNet={qnet[b]:.4f}  用时{time.time() - t0:.0f}s", flush=True)
+            print(f"    {label} beat {b + 1}/{nbeats}  APD90={apd[b]:7.2f}ms"
+                  f"  qNet={qnet[b]:.4f}  took {time.time() - t0:.0f}s", flush=True)
     out["y_end"] = y
     return apd, apa, qnet, out
 
@@ -300,7 +300,7 @@ def judge(results):
 
 
 def kendall_discordant(x, y):
-    """逆序对计数（v7.1 R3 操作化）。"""
+    """Discordant-pair count (v7.1 R3 operationalization)."""
     n, d = len(x), 0
     for i in range(n):
         for j in range(i + 1, n):
@@ -310,7 +310,7 @@ def kendall_discordant(x, y):
 
 
 # ----------------------------------------------------------------------------
-# 单药 worker（NWORKERS 并行；IKs 乘子作用于 α-IKs 电导，v7 ①.4）
+# single-drug worker (NWORKERS parallelism; the IKs multiplier acts on the alpha-IKs conductance, v7 item 1.4)
 # ----------------------------------------------------------------------------
 def one_drug(task):
     (drug, C_scale, G_Kr, G_Ks, ss_file) = task
@@ -321,8 +321,8 @@ def one_drug(task):
     C = float(row["therapeutic"]) * C_scale
     P_ctrl = b0.load_named_values(b0.PARS_FILE, b0.PARS_NAMES)
     P_d = list(P_ctrl)
-    P_d[1] = float("inf")                 # GKrfc -> 官方 GKr = 0（换芯）
-    P_d[4] = float("inf")                 # GKsfc -> 官方 GKs = 0（换芯）
+    P_d[1] = float("inf")                 # GKrfc -> official GKr = 0 (swap-in)
+    P_d[4] = float("inf")                 # GKsfc -> official GKs = 0 (swap-in)
     mults = {}
     for nm, cIC, ch, idx in CHANNELS_FC:
         IC50, h = float(row[cIC]), float(row[ch])
@@ -364,14 +364,14 @@ def main():
     t_start = time.time()
     tag = "_冒烟" if SMOKE else "_结果"
     print("=" * 76, flush=True)
-    print(" α模型 Stage B · B3 双α化宿主复验臂（α-Kr + α-Ks 宿主，24 药动态结合）", flush=True)
-    print(f" 模式: {'冒烟 SMOKE' if SMOKE else '正式'}  control {N_CTRL} 拍 + 药 {N_DRUG} 拍"
+    print(" alpha-model Stage B · B3 dual-alpha host recheck arm (alpha-Kr + alpha-Ks host, 24-drug dynamic binding)", flush=True)
+    print(f" mode: {'smoke SMOKE' if SMOKE else 'formal'}  control {N_CTRL} beats + drug {N_DRUG} beats"
           f"  NWORKERS={NWORKERS}", flush=True)
     print("=" * 76, flush=True)
 
     for f in (B0_SS, B2_JSON, ASM_JSON):
         if not os.path.exists(f):
-            raise RuntimeError(f"缺前置资产: {f}")
+            raise RuntimeError(f"missing prerequisite asset: {f}")
     b0 = load_mod("b0_engine", "2026-09-14_α模型_StageB_B0_ORd移植地基复核.py")
     P_ctrl = b0.load_named_values(b0.PARS_FILE, b0.PARS_NAMES)
     P_ctrl[1] = float("inf")
@@ -383,19 +383,19 @@ def main():
     G_Kr = float(asm["calibration"]["G_Kr"])
     G_Ks = float(asm["calibration"]["G_Ks"])
     assert abs(G_Kr / 0.32266 - 1) < 0.02 and abs(G_Ks / 0.004014 - 1) < 0.02, \
-        f"组装标定值漂移 G_Kr={G_Kr} G_Ks={G_Ks}（预期 0.32266/0.004014 锚，v7 ①.2）"
-    print(f"[宿主] 组装件标定冻结值 G_Kr={G_Kr:.5f}  G_Ks={G_Ks:.6f}（v7 ①.1 不重标）", flush=True)
+        f"assembly calibrated values drifted G_Kr={G_Kr} G_Ks={G_Ks} (expected anchors 0.32266/0.004014, v7 item 1.2)"
+    print(f"[host] assembly calibration frozen values G_Kr={G_Kr:.5f}  G_Ks={G_Ks:.6f} (v7 item 1.1, not recalibrated)", flush=True)
 
     eng = load_mod("alpha_engine", "2026-09-14_α模型_正式组装_前向引擎.py")
     tabs = {"Kr": build_tabs_kr(eng), "Ks": build_tabs_ks()}
     v0 = y_ss[0]
     y0 = list(y_ss) + [tabs["Kr"]["m_ss"](v0), tabs["Kr"]["h_ss"](v0), 0.0,
                        0.0, 0.0, (1.0 - BETA) * tabs["Ks"]["a_ss"](v0)]
-    print(f"[表] hERG四表(16713003, ÷{QFAC_KR:.3f}) + IKs Fedida25点(÷{QFAC_KS:.3f}) 装载；"
-          f"初值 m={y0[50]:.4f} h={y0[51]:.4f} a_dyn={y0[55]:.5f} @v={v0:.2f}mV", flush=True)
+    print(f"[tables] hERG four tables (16713003, /{QFAC_KR:.3f}) + IKs Fedida 25 points (/{QFAC_KS:.3f}) loaded; "
+          f"init m={y0[50]:.4f} h={y0[51]:.4f} a_dyn={y0[55]:.5f} @v={v0:.2f}mV", flush=True)
 
-    # ---------- control：稳态重建 + C1 + 落盘 B3 稳态 ----------
-    print(f"\n[control] 稳态重建 {N_CTRL} 拍（自 B0 稳态 + α 态初始化）...", flush=True)
+    # ---------- control: steady-state rebuild + C1 + save B3 steady state ----------
+    print(f"\n[control] steady-state rebuild {N_CTRL} beats (from B0 steady state + alpha-state init) ...", flush=True)
     G0 = {"Kr": G_Kr, "Ks": G_Ks}
     rhs_c = build_b3(b0, P_ctrl, tabs, G0, 0.0, 0.0, 0.0)
     apd_c, apa_c, qn_c, out_c = run_beats(b0, rhs_c, y0, N_CTRL, label="control",
@@ -404,35 +404,35 @@ def main():
     r_c, ok_c = steady_flag(apd_c)
     c1 = abs(APD_ctrl - B0_FORMAL_APD90) / B0_FORMAL_APD90
     C1 = bool(c1 <= 0.02)
-    print(f"  control 末拍 APD90={APD_ctrl:.3f}ms qNet={qNet_ctrl:.4f}  稳态极差={r_c:.3f}ms"
-          f"  C1 |Δ|={c1 * 100:.2f}% -> {'过（复跑确认）' if C1 else '不过——触发宿主重建排查，不下药物判词'}", flush=True)
+    print(f"  control last-beat APD90={APD_ctrl:.3f}ms qNet={qNet_ctrl:.4f}  steady range={r_c:.3f}ms"
+          f"  C1 |diff|={c1 * 100:.2f}% -> {'pass (rerun confirmed)' if C1 else 'fail - triggers host rebuild investigation; no drug verdicts issued'}", flush=True)
 
     ss_file = B3_SS if not SMOKE else B3_SS.replace(".json", "_冒烟.json")
     with open(ss_file, "w", encoding="utf-8") as fh:
-        json.dump({"meta": {"from": "B0稳态+α态初始化", "beats": N_CTRL,
+        json.dump({"meta": {"from": "B0 steady state + alpha-state init", "beats": N_CTRL,
                             "G_Kr": G_Kr, "G_Ks": G_Ks, "APD90": APD_ctrl,
                             "steady_range_ms": r_c, "C1_rel": c1, "smoke": SMOKE},
                    "states56": [float(x) for x in out_c["y_end"]]}, fh, ensure_ascii=False)
-    print(f"  B3 稳态落盘: {ss_file}", flush=True)
+    print(f"  B3 steady state saved: {ss_file}", flush=True)
 
-    # ---------- 末拍六电流积分（搭车：回填组装判词卡二审 B1/B4）----------
-    print("\n[积分登记] 官方参考臂 2 拍（自 B0 稳态）vs B3 主臂末拍 ...", flush=True)
+    # ---------- last-beat six-current integrals (piggyback: refill assembly verdict card second-review B1/B4) ----------
+    print("\n[integral registry] official reference arm 2 beats (from B0 steady state) vs B3 main-arm last beat ...", flush=True)
     P_ref = b0.load_named_values(b0.PARS_FILE, b0.PARS_NAMES)
     rhs_r0 = b0.build_model(P_ref)
     rhs_r = lambda t, y: rhs_r0(t, y)
-    apd_r, apa_r, qn_r, out_r = run_beats(b0, rhs_r, y_ss, 2, label="参考臂", keep_currents=True)
+    apd_r, apa_r, qn_r, out_r = run_beats(b0, rhs_r, y_ss, 2, label="ref-arm", keep_currents=True)
     integ = {}
     for i, nm in enumerate(("INa", "INaL", "Ito", "ICaL", "IKr", "IKs", "IK1")):
         q_ref = float(np.trapezoid(out_r["cur"][i], out_r["t"]))
         q_b3 = float(np.trapezoid(out_c["cur"][i], out_c["t"]))
         integ[nm] = {"q_ref_pAms": q_ref, "q_B3_pAms": q_b3,
                      "ratio": (q_b3 / q_ref if abs(q_ref) > 1e-12 else None)}
-    print(f"  IKr 电荷: 参考 {integ['IKr']['q_ref_pAms']:.2f} vs B3 {integ['IKr']['q_B3_pAms']:.2f}"
-          f" pA/pF·ms（比 {integ['IKr']['ratio']:.3f}）", flush=True)
-    print(f"  IKs 电荷: 参考 {integ['IKs']['q_ref_pAms']:.2f} vs B3 {integ['IKs']['q_B3_pAms']:.2f}"
-          f" pA/pF·ms（比 {integ['IKs']['ratio']:.3f}）", flush=True)
+    print(f"  IKr charge: ref {integ['IKr']['q_ref_pAms']:.2f} vs B3 {integ['IKr']['q_B3_pAms']:.2f}"
+          f" pA/pF*ms (ratio {integ['IKr']['ratio']:.3f})", flush=True)
+    print(f"  IKs charge: ref {integ['IKs']['q_ref_pAms']:.2f} vs B3 {integ['IKs']['q_B3_pAms']:.2f}"
+          f" pA/pF*ms (ratio {integ['IKs']['ratio']:.3f})", flush=True)
 
-    # ---------- C2 / C3 自检 ----------
+    # ---------- C2 / C3 self-checks ----------
     rows = load_cipa(CIPA_CSV)
     checks = {}
     for tagc, drugc in [("C2", "dofetilide"), ("C3", "nifedipine")]:
@@ -443,19 +443,19 @@ def main():
         checks[tagc] = {"drug": drugc, "C": "100xCmax", "APD90_ratio": r_apd,
                         "qNet_ratio": r_q, "pass": ok}
         print(f"  [{tagc}] {drugc} 100×Cmax: APD90 {r_apd:.3f}×  qNet {r_q:.3f}×  "
-              f"-> {'过' if ok else '不过'}", flush=True)
+              f"-> {'pass' if ok else 'fail'}", flush=True)
 
-    # ---------- 24 药 ----------
+    # ---------- 24 drugs ----------
     drug_list = SMOKE_DRUGS if SMOKE else DRUGS_24
     tasks = [(d, 1.0, G_Kr, G_Ks, ss_file) for d in drug_list]
-    print(f"\n[{len(tasks)}药] 每药 {N_DRUG} 拍，NWORKERS={NWORKERS}", flush=True)
+    print(f"\n[{len(tasks)} drugs] {N_DRUG} beats each, NWORKERS={NWORKERS}", flush=True)
     results = []
     if NWORKERS > 1 and len(tasks) > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(max_workers=NWORKERS) as ex:
             for rec in ex.map(one_drug, tasks):
                 results.append(rec)
-                print(f"  [完] {rec['drug']} APD90={rec['APD90_ms']:.2f}"
+                print(f"  [done] {rec['drug']} APD90={rec['APD90_ms']:.2f}"
                       f"  qNet={rec['qNet_uC_uF']:.4f}", flush=True)
     else:
         for i, tk in enumerate(tasks):
@@ -464,14 +464,14 @@ def main():
             results.append(rec)
             print(f"  [{i + 1}/{len(tasks)}] {rec['drug']:15s} CiPA={rec['CiPA']}"
                   f"  APD90={rec['APD90_ms']:8.2f}  qNet={rec['qNet_uC_uF']:.4f}"
-                  f"  稳态{rec['steady_range_ms']:.2f}{'✓' if rec['steady_ok'] else '×'}"
+                  f"  steady {rec['steady_range_ms']:.2f}{'v' if rec['steady_ok'] else 'x'}"
                   f"  {time.time() - t0:.0f}s", flush=True)
 
     for rec in results:
         rec["APD90_ratio"] = rec["APD90_ms"] / APD_ctrl if not math.isnan(rec["APD90_ms"]) else float("nan")
         rec["qNet_ratio"] = rec["qNet_uC_uF"] / qNet_ctrl if not math.isnan(rec["qNet_uC_uF"]) else float("nan")
 
-    # ---------- B2 对拍（R1/R1b/R2/R3）----------
+    # ---------- B2 comparison (R1/R1b/R2/R3) ----------
     from scipy.stats import spearmanr
     b2 = json.load(open(B2_JSON, encoding="utf-8"))
     b2dyn = {r["drug"]: r for r in b2["results"] if r["mode"] == "dyn"}
@@ -496,23 +496,23 @@ def main():
             b2_v1 = float(b2["verdicts"]["dyn"]["V1_rho_qNet"])
             R["R2_drho"] = abs(vd_b3["V1_rho_qNet"] - b2_v1)
             R["R2_pass"] = bool(R["R2_drho"] <= 0.15 and vd_b3["V2_pass"])
-    lab = "判线路径演练（冒烟，非判词）" if SMOKE else "判线"
+    lab = "criterion-path rehearsal (smoke, not a verdict)" if SMOKE else "criteria"
     print("\n" + "-" * 76, flush=True)
     if vd_b3:
         print(f" [B3·{lab}] V1 ρ={vd_b3['V1_rho_qNet']:.3f}(p={vd_b3['V1_p']:.2e})"
               f"  V2 AUC={vd_b3['V2_AUC_qNetSupp_hi_lo']:.3f}", flush=True)
     if R:
         print(f" [R1] ρ(B3,B2): qNet {R['R1_rho_qNet']:.3f} / APD90 {R['R1_rho_APD90']:.3f}"
-              f"（≥0.95）-> {'过' if R['R1_pass'] else '挂'}", flush=True)
-        print(f" [R1b] 逐药|ΔqNet_ratio|中位 {R['R1b_dev_median']:.3f}（≤0.20）-> "
-              f"{'过' if R['R1b_pass'] else '挂'}", flush=True)
-        print(f" [R3] Kendall 逆序对 {R['R3_kendall_discordant']}（≤2）-> "
-              f"{'过' if R['R3_pass'] else '挂'}", flush=True)
+              f"(>=0.95) -> {'pass' if R['R1_pass'] else 'fail'}", flush=True)
+        print(f" [R1b] per-drug |delta qNet_ratio| median {R['R1b_dev_median']:.3f} (<=0.20) -> "
+              f"{'pass' if R['R1b_pass'] else 'fail'}", flush=True)
+        print(f" [R3] Kendall discordant pairs {R['R3_kendall_discordant']} (<=2) -> "
+              f"{'pass' if R['R3_pass'] else 'fail'}", flush=True)
         if "R2_drho" in R:
-            print(f" [R2] |Δρ(V1)|={R['R2_drho']:.3f}（≤0.15）且 V2≥0.80 -> "
-                  f"{'过' if R['R2_pass'] else '挂'}", flush=True)
+            print(f" [R2] |delta rho(V1)|={R['R2_drho']:.3f} (<=0.15) and V2>=0.80 -> "
+                  f"{'pass' if R['R2_pass'] else 'fail'}", flush=True)
 
-    # ---------- 增量判 B3 vs B1 ----------
+    # ---------- increment criterion B3 vs B1 ----------
     incr = None
     if os.path.exists(B1_JSON) and vd_b3:
         b1v = json.load(open(B1_JSON, encoding="utf-8"))["verdict"]
@@ -520,11 +520,11 @@ def main():
                 "B3_V1_rho": vd_b3["V1_rho_qNet"], "B3_V2_AUC": vd_b3["V2_AUC_qNetSupp_hi_lo"]}
         incr["not_inferior"] = bool(vd_b3["V1_rho_qNet"] <= b1v["V1_rho_qNet"]
                                     and vd_b3["V2_AUC_qNetSupp_hi_lo"] >= b1v["V2_AUC_qNetSupp_hi_lo"])
-        print(f" [增量判] B3 vs B1: ρ {incr['B3_V1_rho']:.3f} vs {incr['B1_V1_rho']:.3f}；"
+        print(f" [increment] B3 vs B1: rho {incr['B3_V1_rho']:.3f} vs {incr['B1_V1_rho']:.3f}; "
               f"AUC {incr['B3_V2_AUC']:.3f} vs {incr['B1_V2_AUC']:.3f} -> "
-              f"{'不劣' if incr['not_inferior'] else '劣'}", flush=True)
+              f"{'not inferior' if incr['not_inferior'] else 'inferior'}", flush=True)
 
-    # ---------- 登记：IKs 抑制强子集（v7.1 D4）+ ex-metoprolol ----------
+    # ---------- registry: strong-IKs-suppression subset (v7.1 D4) + ex-metoprolol ----------
     iks_strong = []
     for rec in results:
         row = rows[rec["drug"]]
@@ -534,15 +534,15 @@ def main():
             iks_strong.append({"drug": rec["drug"], "IKsIC50_nM": IC50_ks, "Cmax_nM": C1x,
                                "mult_IKs": rec["mult_IKs"], "qNet_ratio": rec["qNet_ratio"],
                                "APD90_ratio": rec["APD90_ratio"]})
-    print(f" [登记] IKs 抑制强子集（IC50<10×Cmax）: "
-          f"{[d['drug'] for d in iks_strong] if iks_strong else '无'}", flush=True)
+    print(f" [registry] strong-IKs-suppression subset (IC50<10xCmax): "
+          f"{[d['drug'] for d in iks_strong] if iks_strong else 'none'}", flush=True)
     exmet = None
     if len(results) >= 5:
         sub = [r for r in results if r["drug"] != "metoprolol"]
         exmet = {"n": len(sub), "V1_rho": judge(sub)["V1_rho_qNet"]}
-        print(f" [登记] ex-metoprolol V1 ρ={exmet['V1_rho']:.3f}（n={exmet['n']}，跑后口径登记）", flush=True)
+        print(f" [registry] ex-metoprolol V1 rho={exmet['V1_rho']:.3f} (n={exmet['n']}, post-run convention registry)", flush=True)
 
-    # ---------- 落盘 ----------
+    # ---------- save ----------
     fjson = os.path.join(BASE, f"2026-09-16_α模型_StageB_B3_双α化宿主复验_24药{tag}.json")
     out = {"meta": {"smoke": SMOKE, "prereg": "v7 §11.9 + v7.1 §11.10",
                     "host": {"G_Kr": G_Kr, "G_Ks": G_Ks, "source": "ORd三通道α化组装_结果.json"},
@@ -573,9 +573,9 @@ def main():
                         b2r.get("qNet_ratio"), b2r.get("APD90_ratio"),
                         (r["qNet_ratio"] - b2r["qNet_ratio"]) if b2r else None,
                         r["steady_range_ms"], r["steady_ok"], r["EAD_or_fail"]])
-    print(f"\n 结果落盘: {fjson}\n 逐药CSV: {fcsv}", flush=True)
+    print(f"\n result saved: {fjson}\n per-drug CSV: {fcsv}", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     import matplotlib
     matplotlib.use("Agg")
     try:
@@ -588,7 +588,7 @@ def main():
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    ttl = f"B3 双α化宿主复验 · {'冒烟' if SMOKE else '24药'}"
+    ttl = f"B3 dual-alpha host recheck · {'smoke' if SMOKE else '24 drugs'}"
     if R:
         ttl += f" · R1 ρq={R['R1_rho_qNet']:.3f}{'✓' if R['R1_pass'] else '×'}"
     fig.suptitle(ttl, fontsize=13)
@@ -606,12 +606,12 @@ def main():
         lim = [min(q2v + q3v) * 0.95, max(q2v + q3v) * 1.05]
         ax.plot(lim, lim, "k--", lw=0.8)
         ax.set_xlabel("B2 qNet_ratio"); ax.set_ylabel("B3 qNet_ratio")
-        ax.set_title(f"R1: ρ={R['R1_rho_qNet']:.3f}（≥0.95 {'过' if R['R1_pass'] else '挂'}）"
+        ax.set_title(f"R1: rho={R['R1_rho_qNet']:.3f} (>=0.95 {'pass' if R['R1_pass'] else 'fail'})"
                      f"  R1b={R['R1b_dev_median']:.3f}")
         ax.legend(fontsize=8); ax.grid(alpha=0.3)
     else:
-        ax.text(0.5, 0.5, "冒烟药数<4\nR1/R1b 未演练", ha="center", va="center", fontsize=12)
-        ax.set_title("R1 qNet 对拍（正式跑启用）")
+        ax.text(0.5, 0.5, "smoke drug count <4\nR1/R1b not rehearsed", ha="center", va="center", fontsize=12)
+        ax.set_title("R1 qNet comparison (enabled in the formal run)")
 
     ax = axes[0, 1]
     if R and common:
@@ -624,11 +624,11 @@ def main():
         lim = [min(a2v + a3v) * 0.95, max(a2v + a3v) * 1.05]
         ax.plot(lim, lim, "k--", lw=0.8)
         ax.set_xlabel("B2 APD90_ratio"); ax.set_ylabel("B3 APD90_ratio")
-        ax.set_title(f"R1 APD90 口径: ρ={R['R1_rho_APD90']:.3f}  R3 逆序对={R['R3_kendall_discordant']}")
+        ax.set_title(f"R1 APD90 convention: rho={R['R1_rho_APD90']:.3f}  R3 discordant pairs={R['R3_kendall_discordant']}")
         ax.legend(fontsize=8); ax.grid(alpha=0.3)
     else:
-        ax.text(0.5, 0.5, "冒烟药数<4\nR1(APD90)/R3 未演练", ha="center", va="center", fontsize=12)
-        ax.set_title("R1 APD90 对拍（正式跑启用）")
+        ax.text(0.5, 0.5, "smoke drug count <4\nR1(APD90)/R3 not rehearsed", ha="center", va="center", fontsize=12)
+        ax.set_title("R1 APD90 comparison (enabled in the formal run)")
 
     ax = axes[1, 0]
     for r in results:
@@ -637,8 +637,8 @@ def main():
         ax.scatter(r["CiPA"] + (np.random.rand() - 0.5) * 0.15, r["qNet_ratio"],
                    c=c, s=42, marker=mk, zorder=3, alpha=0.85)
     ax.axhline(1.0, color="k", lw=0.7, ls="--")
-    ax.set_xticks([0, 1, 2]); ax.set_xticklabels(["低", "中", "高"])
-    ax.set_ylabel("B3 qNet_ratio"); ax.set_title("B3 风险分级散布（◆=IKs 抑制强子集）")
+    ax.set_xticks([0, 1, 2]); ax.set_xticklabels(["low", "intermediate", "high"])
+    ax.set_ylabel("B3 qNet_ratio"); ax.set_title("B3 risk-class spread (diamond = strong-IKs-suppression subset)")
     ax.grid(alpha=0.3)
 
     ax = axes[1, 1]
@@ -652,22 +652,22 @@ def main():
         lines.append(f"R1 {'✓' if R['R1_pass'] else '×'}  R1b {'✓' if R['R1b_pass'] else '×'}  "
                      f"R3 {'✓' if R['R3_pass'] else '×'}" + (f"  R2 {'✓' if R['R2_pass'] else '×'}" if "R2_pass" in R else ""))
     if incr:
-        lines.append(f"增量判 B3 vs B1: {'不劣' if incr['not_inferior'] else '劣'}")
-    lines.append(f"IKs强子集: {[d['drug'] for d in iks_strong] if iks_strong else '无'}")
-    lines.append(f"用时 {time.time() - t_start:.0f}s（{'冒烟演练' if SMOKE else '正式'}）")
+        lines.append(f"increment B3 vs B1: {'not inferior' if incr['not_inferior'] else 'inferior'}")
+    lines.append(f"IKs strong subset: {[d['drug'] for d in iks_strong] if iks_strong else 'none'}")
+    lines.append(f"elapsed {time.time() - t_start:.0f}s ({'smoke rehearsal' if SMOKE else 'formal'})")
     ax.text(0.02, 0.95, "\n".join(lines), transform=ax.transAxes, va="top", fontsize=11)
 
     fpng = os.path.join(BASE, f"2026-09-16_α模型_StageB_B3_双α化宿主复验_24药{tag}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
     plt.close(fig)
-    print(f" 图落盘: {fpng}", flush=True)
+    print(f" figure saved: {fpng}", flush=True)
 
     if SMOKE:
-        print("\n[冒烟完] 正式跑指令（Spyder，约 1–1.5h 并行）：\n"
+        print("\n[smoke done] formal-run command (Spyder, about 1-1.5h parallel):\n"
               "  %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/"
               "2026-09-16_α模型_StageB_B3_双α化宿主复验_24药.py' --wdir\n"
-              "  并行: 先设环境变量 NWORKERS=6~8 再同指令", flush=True)
+              "  parallel: set env NWORKERS=6~8 first, then the same command", flush=True)
 
 
 if __name__ == "__main__":

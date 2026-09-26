@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# EDFig10: IKs 机制锚定与金标准管线测试 (合并 Kα-5/Kα-6 四联图)
-# a) Δt vs F2 τ2 (物理身份)  b) z_a vs Boltzmann z (有效窗口)
-# c) 金标准 G-V recover      d) 金标准 τ_act/Δt recover
+# EDFig10: IKs mechanistic anchoring and gold-standard pipeline test (merged Kα-5/Kα-6 four-panel figure)
+# a) Δt vs F2 τ2 (physical identity)  b) z_a vs Boltzmann z (effective window)
+# c) gold-standard G-V recover      d) gold-standard τ_act/Δt recover
 import sys, json
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.executable).parent.parent.parent))
@@ -15,7 +15,7 @@ FIG = Path(r"D:\Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911
 k5 = json.load(open(RES / "判词组件_Kα5_VCF物理锚_2026-09-26.json", encoding="utf-8"))
 k6 = json.load(open(RES / "判词组件_Kα6_金标准_2026-09-26.json", encoding="utf-8"))
 
-# 从 Kα-5 CSV 取逐电压对拍
+# per-voltage comparison pairs from the Kα-5 CSV
 import csv
 tau2_v, tau2_m, tau2_s, dt_v, dt_m = [], [], [], [], []
 def _num(x):
@@ -29,7 +29,7 @@ with open(RES / "对拍_Kα5_VCF物理锚_2026-09-26.csv", encoding="utf-8-sig")
             tau2_v.append(_num(r[0])); tau2_m.append(float(r[1])); tau2_s.append(float(r[2]))
             if r[3]:
                 dt_v.append(_num(r[0])); dt_m.append(float(r[3]))
-# 从 Kα-6 CSV 取金标准提取
+# gold-standard extractions from the Kα-6 CSV
 g6 = {"V": [], "d": [], "tau": [], "rms": [], "tau_expt": [], "dt_expt": []}
 with open(RES / "金标准_Kα6_SchemeV管线测试_2026-09-26.csv", encoding="utf-8-sig") as f:
     for r in csv.reader(f):
@@ -44,7 +44,7 @@ fig = plt.figure(figsize=(10.4, 8.6))
 axa = fig.add_subplot(221); axb = fig.add_subplot(222)
 axc = fig.add_subplot(223); axd = fig.add_subplot(224)
 
-# a) Δt = F2 协同步
+# a) Δt = F2 synchronous step
 axa.errorbar(tau2_v, tau2_m, yerr=tau2_s, fmt="o-", ms=5, c="C0", capsize=3,
              label=r"VCF F2 $\tau_2=1/(\delta+\gamma)$ (per oocyte)")
 axa.plot(dt_v, dt_m, "s--", ms=5, c="C3", mfc="none",
@@ -53,7 +53,7 @@ axa.set_xlabel("V (mV)"); axa.set_ylabel("time scale (s)")
 axa.set_title("a  Delay $d$ = concerted VS/pore step (F2),\nmedian $d/\\tau_2$ = 0.89", fontsize=9.5)
 axa.legend(fontsize=7.5)
 
-# b) 门电荷
+# b) gating charge
 names = list(za); zm = [za[k][0] for k in names]; ze = [za[k][1] for k in names]
 xb = np.arange(len(names))
 axb.bar(xb, zm, 0.55, yerr=ze, capsize=4, color="C0", alpha=0.85,
@@ -67,7 +67,7 @@ axb.set_ylabel("effective gating charge ($e_0$)")
 axb.set_title("b  True charge vs apparent: $a_{ss}$ valid window\n$P_o \\gtrsim 0.01$ (registered)", fontsize=9.5)
 axb.legend(fontsize=7.5)
 
-# c) 金标准 G-V
+# c) gold-standard G-V
 gv = k6["GV"]
 def boltz(V, Vh, k): return 1.0 / (1.0 + np.exp(-(V - Vh) / k))
 Vf = np.linspace(-80, 110, 200)
@@ -79,7 +79,7 @@ axc.set_xlabel("V (mV)"); axc.set_ylabel("G/Gmax")
 axc.set_title("c  Gold-standard G-V recovery\n($\\Delta V_{1/2}$ = 0.9 mV vs experiment)", fontsize=9.5)
 axc.legend(fontsize=7, loc="center right")
 
-# d) 金标准动力学
+# d) gold-standard kinetics
 axd.plot(g6["V"], np.array(g6["tau_expt"]), "o-", ms=4, c="0.2", label=r"expt $\tau_{act}$")
 axd.plot(g6["V"], np.array(g6["tau"]) / 1000, "s--", ms=4, c="C0", mfc="none",
          label=r"$\alpha$-extracted $\tau_{act}$")

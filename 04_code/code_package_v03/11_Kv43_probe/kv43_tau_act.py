@@ -1,4 +1,4 @@
-# kv43_tau_act.py — Kv4.3 激活时间常数 @ −20 mV（与失活同电压对照）
+# kv43_tau_act.py - Kv4.3 activation time constant @ -20 mV (same-voltage control as inactivation)
 import scipy.io as sio, numpy as np, glob, os, csv
 from scipy.optimize import curve_fit
 
@@ -30,7 +30,7 @@ for grp, d in [("veh", "veh_act"), ("les", "les_act")]:
                     y = (cur[a:a + int(0.15 / dt)] - base) * 1e9
                     x = np.arange(len(y)) * dt
                     pk = y.max(); ip = int(np.argmax(y))
-                    if pk < 0.2:  # 太小拟合无意义
+                    if pk < 0.2:  # too small for a meaningful fit
                         break
                     seg_x, seg_y = x[:ip + 1], y[:ip + 1]
                     # t10-90
@@ -40,7 +40,7 @@ for grp, d in [("veh", "veh_act"), ("les", "les_act")]:
                         t1090s.append((i90 - i10) * dt * 1e3)
                     except Exception:
                         pass
-                    # 上升沿单指数（10%..峰）
+                    # rising-edge single exponential (10%..peak)
                     try:
                         i10 = np.where(seg_y >= 0.1 * pk)[0][0]
                         xx = seg_x[i10:] - seg_x[i10]; yy = seg_y[i10:]

@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-2026-09-14 · α模型 Stage B · B0 地基复核
+2026-09-14 · alpha-model Stage B · B0 foundation recheck
 ========================================
-Python 逐方程移植官方 newordherg_qNet.c（IKr-dynamic ORd，49 状态 + qNet 积分器），
-control 无药，CL=1000 ms 起搏。参数/初值运行时直接读官方 txt（不硬编码）。
+Equation-by-equation Python port of the official newordherg_qNet.c (IKr-dynamic ORd, 49 states + qNet integrator),
+drug-free control, CL=1000 ms pacing. Parameters/initial values are read from the official txt at runtime (no hard-coding).
 
-判线（预注册 §四 + §十一 v2 修订，跑前钉死）：
-  1. 稳态化：末 10 拍 APD90 极差 < 0.5 ms；
-  2. control 形态：末拍 APD90 ∈ [250,330] ms、qNet ∈ [0.05,0.12] µC/µF、
-     静息电位 ∈ [−95,−85] mV、APA ∈ [90,130] mV；
-  3. qNet 双口径自洽登记：整周期 = 状态49差分×1e-3；AP 窗内 = 六电流窗内积分×1e-3（末拍）；
-  4.（v3 重构）Euler 拍1 双步长收敛签名：e(0.005)/e(0.00125) ∈ [2,6]；
-     细网格 max|Δv| < 5 mV 且 argmax ≤ 10 ms；Euler-LSODA 拍1 ΔAPD90 < 1 ms；
-     LSODA(1e-7) vs LSODA(1e-9) 拍1 max|Δv| < 0.5 mV。
+Criteria (preregistration section 4 + section 11 v2 revision, pinned before the run):
+  1. Steady state: last-10-beat APD90 range < 0.5 ms;
+  2. Control morphology: last-beat APD90 in [250,330] ms, qNet in [0.05,0.12] uC/uF,
+     resting potential in [-95,-85] mV, APA in [90,130] mV;
+  3. qNet dual-convention consistency registry: full-cycle = state-49 difference x 1e-3; within-AP window = six-current window integral x 1e-3 (last beat);
+  4. (v3 rebuild) Euler beat-1 dual-step convergence signature: e(0.005)/e(0.00125) in [2,6];
+     fine-grid max|dv| < 5 mV and argmax <= 10 ms; Euler-LSODA beat-1 delta APD90 < 1 ms;
+     LSODA(1e-7) vs LSODA(1e-9) beat-1 max|dv| < 0.5 mV.
 
-纪律：本侧仅 ast.parse + SMOKE=1 冒烟（100 拍）；正式跑（1000 拍）用户 Spyder：
+Discipline: this side runs only ast.parse + SMOKE=1 smoke (100 beats); the full run (1000 beats) is done by the user in Spyder:
   %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/2026-09-14_α模型_StageB_B0_ORd移植地基复核.py' --wdir
-输出：本脚本同目录 _结果.json/.png（冒烟带 _冒烟 后缀）。
+Output: _结果.json/.png next to this script (smoke carries the _冒烟 suffix).
 """
 
 import os
@@ -35,9 +35,9 @@ STATES_FILE = os.path.join(ANCHOR, "newordherg_states_CL2000.txt")
 SMOKE = os.environ.get("SMOKE", "0") == "1"
 NBEATS = int(os.environ.get("SMOKE_BEATS", "100")) if SMOKE else int(os.environ.get("NBEATS", "1000"))
 CL = 1000.0          # ms
-DT_REC = 0.1         # ms 记录网格
-AMP = -80.0          # 刺激幅值（从 pars 读，此处仅注释锚）
-DUR = 0.5            # ms 刺激时长
+DT_REC = 0.1         # ms recording grid
+AMP = -80.0          # stimulus amplitude (read from pars; comment anchor only here)
+DUR = 0.5            # ms stimulus duration
 
 PARS_NAMES = ["celltype", "GKrfc", "GNaLfc", "GNafc", "GKsfc", "GK1fc", "PCafc", "Gtofc",
               "A1", "B1", "q1", "A2", "B2", "q2", "A3", "B3", "q3", "A4", "B4", "q4",
@@ -65,12 +65,12 @@ def load_named_values(path, expected):
             names.append(parts[0])
             vals.append(float(parts[1]))
     if names != expected:
-        raise RuntimeError(f"{os.path.basename(path)} 名称/顺序与官方锚不符: {names[:6]}...")
+        raise RuntimeError(f"{os.path.basename(path)} name/order mismatch vs official anchor: {names[:6]}...")
     return vals
 
 
 # ----------------------------------------------------------------------------
-# 模型本体：逐方程对照 newordherg_qNet.c derivs()
+# Model body: equation-by-equation against newordherg_qNet.c derivs()
 # ----------------------------------------------------------------------------
 def build_model(P):
     (celltype, GKrfc, GNaLfc, GNafc, GKsfc, GK1fc, PCafc, Gtofc,
@@ -80,14 +80,14 @@ def build_model(P):
      A61, B61, q61, A62, B62, q62, A63, B63, q63,
      Kmax, Ku, nHill, halfmax, Kt, Vhalf, Temp, ko, amp) = P
 
-    # 细胞外浓度 / 物理常数（C 码硬编码，照抄）
+    # extracellular concentrations / physical constants (hard-coded in the C code, copied verbatim)
     nao = 140.0
     cao = 1.8
     R = 8314.0
     T = 310.0
     F = 96485.0
 
-    # 几何（注意 C 码用 3.14 不是 pi）
+    # geometry (note the C code uses 3.14, not pi)
     L = 0.01
     rad = 0.0011
     vcell = 1000 * 3.14 * rad * rad * L
@@ -107,7 +107,7 @@ def build_model(P):
     vjsr_vss = vjsr / vss
     vjsr_vnsr = vjsr / vnsr
 
-    # hERG Markov 温度因子：rate = A*exp(B*v)*q^((Temp-20)/10)（Temp=37 -> q^1.7）
+    # hERG Markov temperature factor: rate = A*exp(B*v)*q^((Temp-20)/10) (Temp=37 -> q^1.7)
     tfac = (Temp - 20.0) / 10.0
     A1t = A1 * math.exp(tfac * math.log(q1));   A2t = A2 * math.exp(tfac * math.log(q2))
     A3t = A3 * math.exp(tfac * math.log(q3));   A4t = A4 * math.exp(tfac * math.log(q4))
@@ -117,7 +117,7 @@ def build_model(P):
     A52t = A52 * math.exp(tfac * math.log(q52)); A62t = A62 * math.exp(tfac * math.log(q62))
     A53t = A53 * math.exp(tfac * math.log(q53)); A63t = A63 * math.exp(tfac * math.log(q63))
 
-    # 电导（celltype=0 分支已解析，分支照抄）
+    # conductances (celltype=0 branch already resolved, branch copied verbatim)
     GNa = 75.0 / GNafc
     GNaL = 0.0075 / GNaLfc
     if celltype == 1:
@@ -167,8 +167,8 @@ def build_model(P):
     PNab = 3.75e-10
     PCab = 2.5e-8
 
-    epi_flag = 1.0 if celltype == 1 else 0.0      # delta_epi 只在 celltype==1 偏离 1
-    caMKt_jrel = 1.7 if celltype == 2 else 1.0    # Jrel 因子
+    epi_flag = 1.0 if celltype == 1 else 0.0      # delta_epi departs from 1 only for celltype==1
+    caMKt_jrel = 1.7 if celltype == 2 else 1.0    # Jrel factor
     jup_factor = 1.3 if celltype == 1 else 1.0
     cmdnmax = 0.05 * (1.3 if celltype == 1 else 1.0)
 
@@ -201,7 +201,7 @@ def build_model(P):
         CaMKa = CaMKb + CaMKt
         dy[38] = aCaMK * CaMKb * (CaMKb + CaMKt) - bCaMK * CaMKt
 
-        # ---- 反转电位 ----
+        # ---- reversal potentials ----
         ENa = RT_F * math.log(nao / nai)
         EK = RT_F * math.log(ko / ki)
         PKNa = 0.01833
@@ -311,7 +311,7 @@ def build_model(P):
         e2v = exp(2.0 * vfrt)
         den2 = e2v - 1.0
         if abs(den2) < 1e-12:
-            PhiCaL = 2.0 * F * (cass - 0.341 * cao)          # v->0 极限（可去奇点保险）
+            PhiCaL = 2.0 * F * (cass - 0.341 * cao)          # v->0 limit (removable-singularity guard)
         else:
             PhiCaL = 4.0 * vffrt * (cass * e2v - 0.341 * cao) / den2
         e1v = exp(vfrt)
@@ -331,7 +331,7 @@ def build_model(P):
         ICaK = ((1.0 - fICaLp) * PCaK * PhiCaK * d * (f * (1.0 - nca) + jca * fca * nca)
                 + fICaLp * PCaKp * PhiCaK * d * (fp * (1.0 - nca) + jca * fcap * nca))
 
-        # ---- IKr（hERG 六态 Markov + 药物结合态；control 下 Kmax=Ku=0）----
+        # ---- IKr (hERG six-state Markov + drug-bound states; Kmax=Ku=0 under control) ----
         r1f = A1t * exp(B1 * v);  r1b = A2t * exp(B2 * v)
         r2f = A3t * exp(B3 * v);  r2b = A4t * exp(B4 * v)
         r3f = A11t * exp(B11 * v); r3b = A21t * exp(B21 * v)
@@ -346,7 +346,7 @@ def build_model(P):
         j5 = r5f * C1 - r5b * IC1
         j6 = r6f * C2 - r6b * IC2
         j7 = r7f * O - r7b * IO
-        Dn = D ** nHill if D > 0.0 else 0.0     # C 码 log(0)=-inf 语义：D=0 时结合通量为 0
+        Dn = D ** nHill if D > 0.0 else 0.0     # C-code log(0)=-inf semantics: zero binding flux at D=0
         kon_v = Kmax * Ku * Dn / (Dn + halfmax)
         ktr = Kt / (1.0 + exp(-(v - Vhalf) / 6.789))
         dy[39] = -j3 + j5
@@ -378,7 +378,7 @@ def build_model(P):
         rk1 = 1.0 / (1.0 + exp((v + 105.8 - 2.6 * ko) / 9.493))
         IK1 = GK1 * sqrt_ko * rk1 * xk1 * (v - EK)
 
-        # ---- INaCa_i / INaCa_ss（两块同构，钠钙浓度不同）----
+        # ---- INaCa_i / INaCa_ss (two isomorphic blocks, different Na/Ca concentrations) ----
         kna1 = 15.0; kna2 = 5.0; kna3 = 88.12; kasymm = 12.5
         wna = 6.0e4; wca = 6.0e4; wnaca = 5.0e3
         kcaon = 1.5e6; kcaoff = 5.0e3
@@ -387,7 +387,7 @@ def build_model(P):
         hna = exp(qna * vfrt)
         KmCaAct = 150.0e-6
 
-        # i 池
+        # i pool
         h1 = 1.0 + nai / kna3 * (1.0 + hna)
         h2 = (nai * hna) / (kna3 * h1)
         h3 = 1.0 / h1
@@ -423,7 +423,7 @@ def build_model(P):
         JncxCa = E2 * k2 - E1 * k1
         INaCa_i = 0.8 * Gncx * allo * (1.0 * JncxNa + zca * JncxCa)
 
-        # ss 池
+        # ss pool
         h1 = 1.0 + nass / kna3 * (1.0 + hna)
         h2 = (nass * hna) / (kna3 * h1)
         h3 = 1.0 / h1
@@ -485,7 +485,7 @@ def build_model(P):
         JnakK = 2.0 * (E4 * b1 - E3 * a1)
         INaK = Pnak * (1.0 * JnakNa + 1.0 * JnakK)
 
-        # ---- 背景 / 泵 ----
+        # ---- background / pumps ----
         xkb = 1.0 / (1.0 + exp(-(v - 14.48) / 18.34))
         IKb = GKb * xkb * (v - EK)
         if abs(den1) < 1e-12:
@@ -498,19 +498,19 @@ def build_model(P):
             ICab = PCab * 4.0 * vffrt * (cai * e2v - 0.341 * cao) / den2
         IpCa = GpCa * cai / (0.0005 + cai)
 
-        # ---- 刺激（拍内 t <= 0.5 ms）----
+        # ---- stimulus (t <= 0.5 ms within a beat) ----
         Istim = amp if t <= DUR else 0.0
 
-        # ---- 膜电位 ----
+        # ---- membrane potential ----
         dy[0] = -(INa + INaL + Ito + ICaL + ICaNa + ICaK + IKr + IKs + IK1
                   + INaCa_i + INaCa_ss + INaK + INab + IKb + IpCa + ICab + Istim)
 
-        # ---- 扩散通量 ----
+        # ---- diffusion fluxes ----
         JdiffNa = (nass - nai) / 2.0
         JdiffK = (kss - ki) / 2.0
         Jdiff = (cass - cai) / 0.2
 
-        # ---- RyR 释放 ----
+        # ---- RyR release ----
         bt = 4.75
         a_rel = 0.5 * bt
         Jrel_inf = a_rel * (-ICaL) / (1.0 + (1.5 / cajsr) ** 8.0) * caMKt_jrel
@@ -528,7 +528,7 @@ def build_model(P):
         fJrelp = 1.0 / (1.0 + KmCaMK / CaMKa)
         Jrel = (1.0 - fJrelp) * Jrelnp + fJrelp * Jrelp
 
-        # ---- SERCA 摄取 ----
+        # ---- SERCA uptake ----
         Jupnp = 0.004375 * cai / (cai + 0.00092) * jup_factor
         Jupp = 2.75 * 0.004375 * cai / (cai + 0.00092 - 0.00017) * jup_factor
         fJupp = 1.0 / (1.0 + KmCaMK / CaMKa)
@@ -537,7 +537,7 @@ def build_model(P):
 
         Jtr = (cansr - cajsr) / 100.0
 
-        # ---- 缓冲与浓度 ----
+        # ---- buffers and concentrations ----
         kmcmdn = 0.00238
         trpnmax = 0.07
         kmtrpn = 0.0005
@@ -564,7 +564,7 @@ def build_model(P):
         Bcajsr = 1.0 / (1.0 + csqnmax * kmcsqn / (kmcsqn + cajsr) ** 2.0)
         dy[8] = Bcajsr * (Jtr - Jrel)
 
-        # ---- qNet 积分器（官方六电流，不含 INa）----
+        # ---- qNet integrator (official six currents, INa excluded) ----
         dy[49] = INaL + ICaL + Ito + IKr + IKs + IK1
 
         return dy, (INa, INaL, Ito, ICaL, IKr, IKs, IK1)
@@ -573,7 +573,7 @@ def build_model(P):
 
 
 # ----------------------------------------------------------------------------
-# APD90（官方 metric_funs.R find_rep 口径：xrest=拍内 v 最小，t_rep − t_dVdtmax）
+# APD90 (official metric_funs.R find_rep convention: xrest = within-beat v minimum, t_rep - t_dVdtmax)
 # ----------------------------------------------------------------------------
 def apd90(t, v):
     vmin = float(np.min(v))
@@ -596,7 +596,7 @@ def apd90(t, v):
 
 
 # ----------------------------------------------------------------------------
-# Euler 交叉对拍臂（前两拍，dt=0.005 ms，与 LSODA 同 rhs）
+# Euler cross-check arm (first two beats, dt=0.005 ms, same rhs as LSODA)
 # ----------------------------------------------------------------------------
 def euler_beats(rhs, y0, nbe, dt, t_rec):
     y = list(y0)
@@ -620,51 +620,51 @@ def euler_beats(rhs, y0, nbe, dt, t_rec):
 def main():
     t_start = time.time()
     print("=" * 74, flush=True)
-    print(" α模型 Stage B · B0 地基复核（官方 newordherg_qNet.c Python 移植，control）", flush=True)
-    print(f" 模式: {'冒烟 SMOKE（100 拍）' if SMOKE else '正式（' + str(NBEATS) + ' 拍）'}  CL={CL:.0f}ms  记录网格 {DT_REC}ms", flush=True)
-    print(" 积分器: LSODA rtol=1e-7 atol=1e-9（v2 修订）；Euler dt=0.005ms 前两拍交叉对拍", flush=True)
+    print(" alpha-model Stage B · B0 foundation recheck (Python port of official newordherg_qNet.c, control)", flush=True)
+    print(f" mode: {'smoke SMOKE (100 beats)' if SMOKE else 'full (' + str(NBEATS) + ' beats)'}  CL={CL:.0f}ms  recording grid {DT_REC}ms", flush=True)
+    print(" integrator: LSODA rtol=1e-7 atol=1e-9 (v2 revision); Euler dt=0.005ms first-two-beat cross-check", flush=True)
     print("=" * 74, flush=True)
 
     P = load_named_values(PARS_FILE, PARS_NAMES)
-    y0 = load_named_values(STATES_FILE, STATE_NAMES) + [0.0]     # 第 50 态 qNet 积分器
-    assert abs(P[0] - 0.0) < 1e-12 and abs(P[1] - 1.0) < 1e-12, "非 control 参数档！"
-    print(f"[锚] 参数 {len(P)} 项（celltype=0 control, Temp={P[56]:.0f}, ko={P[57]}, amp={P[58]}），"
-          f"初值 {len(y0) - 1} 态 + qNet（CL2000 稳态起跳）", flush=True)
+    y0 = load_named_values(STATES_FILE, STATE_NAMES) + [0.0]     # 50th state: qNet integrator
+    assert abs(P[0] - 0.0) < 1e-12 and abs(P[1] - 1.0) < 1e-12, "not the control parameter set!"
+    print(f"[anchor] parameters {len(P)} items (celltype=0 control, Temp={P[56]:.0f}, ko={P[57]}, amp={P[58]}), "
+          f"initial values {len(y0) - 1} states + qNet (starting from the CL2000 steady state)", flush=True)
 
     rhs = build_model(P)
     from scipy.integrate import solve_ivp
     f = lambda t, y: rhs(t, y)[0]
     t_rec = np.arange(0.0, CL + 1e-9, DT_REC)
 
-    # ---------- Euler 交叉对拍（判线4 v3：拍1 双步长 + LSODA 参考自洽）----------
-    print("\n[判线4·交叉对拍] Euler 拍1 dt=0.005/0.00125ms + LSODA(1e-9) 参考 ...", flush=True)
+    # ---------- Euler cross-check (criterion 4 v3: beat-1 dual step + LSODA reference self-consistency) ----------
+    print("\n[criterion 4 · cross-check] Euler beat 1 dt=0.005/0.00125ms + LSODA(1e-9) reference ...", flush=True)
     t0 = time.time()
     eu_c = euler_beats(rhs, y0, 1, 0.005, t_rec)[0]
-    print(f"  Euler dt=0.005 拍1完成，累计 {time.time() - t0:.1f}s", flush=True)
+    print(f"  Euler dt=0.005 beat 1 done, elapsed {time.time() - t0:.1f}s", flush=True)
     eu_f = euler_beats(rhs, y0, 1, 0.00125, t_rec)[0]
-    print(f"  Euler dt=0.00125 拍1完成，累计 {time.time() - t0:.1f}s", flush=True)
+    print(f"  Euler dt=0.00125 beat 1 done, elapsed {time.time() - t0:.1f}s", flush=True)
     sol_ref = solve_ivp(f, (0.0, CL), np.array(y0, dtype=float), method="LSODA",
                         t_eval=t_rec, rtol=1e-9, atol=1e-11)
     v_ref = sol_ref.y[0]
-    print(f"  LSODA(1e-9) 参考拍完成，累计 {time.time() - t0:.1f}s", flush=True)
+    print(f"  LSODA(1e-9) reference beat done, elapsed {time.time() - t0:.1f}s", flush=True)
 
-    # ---------- LSODA 主循环 ----------
+    # ---------- LSODA main loop ----------
     y = np.array(y0, dtype=float)
     apd = np.full(NBEATS, np.nan)
     qnet = np.full(NBEATS, np.nan)
     vmin_a = np.full(NBEATS, np.nan)
     vmax_a = np.full(NBEATS, np.nan)
     lsoda_first2 = []
-    last2 = []          # 末两拍 (t, v, currents[7])
+    last2 = []          # last two beats (t, v, currents[7])
     nfail = 0
-    print("\n[起搏]", flush=True)
+    print("\n[pacing]", flush=True)
     for b in range(NBEATS):
         q0 = y[49]
         sol = solve_ivp(f, (0.0, CL), y, method="LSODA",
                         t_eval=t_rec, rtol=1e-7, atol=1e-9)
         if not sol.success:
             nfail += 1
-            print(f"  拍 {b + 1}: LSODA 失败 {sol.message}", flush=True)
+            print(f"  beat {b + 1}: LSODA failed {sol.message}", flush=True)
             break
         v = sol.y[0]
         y = sol.y[:, -1].copy()
@@ -684,11 +684,11 @@ def main():
         if (b + 1) % 20 == 0 or b == 0:
             el = time.time() - t_start
             eta = el / (b + 1) * (NBEATS - b - 1)
-            print(f"  拍 {b + 1}/{NBEATS}  APD90={a90:7.2f}ms  qNet={qnet[b]:.4f}µC/µF  "
-                  f"v=[{vmin_a[b]:.1f},{vmax_a[b]:.1f}]  用时{el:.0f}s ETA{eta:.0f}s", flush=True)
+            print(f"  beat {b + 1}/{NBEATS}  APD90={a90:7.2f}ms  qNet={qnet[b]:.4f}uC/uF  "
+                  f"v=[{vmin_a[b]:.1f},{vmax_a[b]:.1f}]  took {el:.0f}s ETA {eta:.0f}s", flush=True)
 
     ndone = int(np.sum(~np.isnan(apd)))
-    # ---------- 判线4（v3 收敛签名）----------
+    # ---------- criterion 4 (v3 convergence signature) ----------
     xcheck = {}
     if len(lsoda_first2) >= 1:
         v_ls = lsoda_first2[0]
@@ -709,22 +709,22 @@ def main():
                   "argmax_t_ms": t_at, "dAPD90_ms": dAPD, "lsoda_ref_diff_mV": ref_diff,
                   "APA_ref_mV": apa_ref, "rel": e_f / apa_ref if apa_ref > 0 else float("nan"),
                   "pass": ok}
-    print(f"\n[判线4] 收敛签名: e005={xcheck.get('max_abs_dv_mV', float('nan')):.3f}mV "
+    print(f"\n[criterion 4] convergence signature: e005={xcheck.get('max_abs_dv_mV', float('nan')):.3f}mV "
           f"e00125={xcheck.get('max_abs_dv_fine_mV', float('nan')):.3f}mV "
-          f"比={xcheck.get('ratio', float('nan')):.2f}∈[2,6] "
-          f"峰位={xcheck.get('argmax_t_ms', float('nan')):.1f}ms(≤10) "
+          f"ratio={xcheck.get('ratio', float('nan')):.2f} in [2,6] "
+          f"peak at={xcheck.get('argmax_t_ms', float('nan')):.1f}ms(<=10) "
           f"ΔAPD90={xcheck.get('dAPD90_ms', float('nan')):.3f}ms(<1) "
-          f"LSODA参考差={xcheck.get('lsoda_ref_diff_mV', float('nan')):.4f}mV(<0.5) "
-          f"-> {'过' if xcheck.get('pass') else '不过'}", flush=True)
+          f"LSODA ref diff={xcheck.get('lsoda_ref_diff_mV', float('nan')):.4f}mV(<0.5) "
+          f"-> {'pass' if xcheck.get('pass') else 'fail'}", flush=True)
 
-    # ---------- 判线1 稳态化 ----------
+    # ---------- criterion 1 steady state ----------
     last10 = apd[max(0, ndone - 10):ndone]
     steady_range = float(np.nanmax(last10) - np.nanmin(last10)) if ndone >= 10 else float("nan")
     steady_pass = bool(steady_range < 0.5)
-    print(f"[判线1] 末10拍 APD90 极差 = {steady_range:.3f} ms (<0.5) -> {'过' if steady_pass else '不过'}"
-          + ("" if steady_pass else "（达不到→登记并延长 NBEATS，判线不动）"), flush=True)
+    print(f"[criterion 1] last-10-beat APD90 range = {steady_range:.3f} ms (<0.5) -> {'pass' if steady_pass else 'fail'}"
+          + ("" if steady_pass else " (not reached -> registry and extend NBEATS; criterion unchanged)"), flush=True)
 
-    # ---------- 判线2 形态 ----------
+    # ---------- criterion 2 morphology ----------
     ib = ndone - 1
     APD_last = float(apd[ib])
     qNet_last = float(qnet[ib])
@@ -737,11 +737,11 @@ def main():
         "APA_mV": {"value": APA_last, "band": [90.0, 130.0], "pass": bool(90.0 <= APA_last <= 130.0)},
     }
     crit2_pass = all(c["pass"] for c in crit2.values())
-    print("[判线2] 末拍形态：" + "  ".join(
+    print("[criterion 2] last-beat morphology: " + "  ".join(
         f"{k}={c['value']:.3f}∈[{c['band'][0]},{c['band'][1]}]{'✓' if c['pass'] else '×'}"
-        for k, c in crit2.items()) + f" -> {'过' if crit2_pass else '不过'}", flush=True)
+        for k, c in crit2.items()) + f" -> {'pass' if crit2_pass else 'fail'}", flush=True)
 
-    # ---------- 判线3 qNet 双口径（末拍 AP 窗内积分）----------
+    # ---------- criterion 3 qNet dual conventions (last-beat within-AP integral) ----------
     qnet_ap = float("nan")
     if last2:
         tL, vL, curL, t_up, t_rep = last2[-1]
@@ -749,17 +749,17 @@ def main():
         if not (math.isnan(t_up) or math.isnan(t_rep)):
             win = (tL >= t_up) & (tL <= t_rep)
             qnet_ap = float(np.trapezoid(sum6[win], tL[win]) * 1e-3)
-    print(f"[判线3] qNet 整周期={qNet_last:.4f} µC/µF（状态49差分）  AP窗内={qnet_ap:.4f} µC/µF"
-          f"（六电流积分，登记双口径）", flush=True)
+    print(f"[criterion 3] qNet full-cycle={qNet_last:.4f} uC/uF (state-49 difference)  within-AP={qnet_ap:.4f} uC/uF "
+          f"(six-current integral; both conventions registered)", flush=True)
 
     overall = bool(steady_pass and crit2_pass and xcheck.get("pass", False))
     print("\n" + "=" * 74, flush=True)
-    print(f" B0 总判词：{'过线 —— Python 引擎与官方口径等价，Stage B 可进 B1' if overall else '不过线 —— Stage B 不开工，查移植'}", flush=True)
+    print(f" B0 overall verdict: {'PASS - Python engine equivalent to the official convention; Stage B may proceed to B1' if overall else 'FAIL - Stage B does not start; check the port'}", flush=True)
     if not SMOKE and steady_pass is False:
-        print(" 提示：稳态化未达 → 以环境变量 NBEATS=2000 重跑（判线不动，照实登记）。", flush=True)
+        print(" hint: steady state not reached -> rerun with env NBEATS=2000 (criterion unchanged; registered as-is).", flush=True)
     print("=" * 74, flush=True)
 
-    # ---------- 落盘 ----------
+    # ---------- save ----------
     tag = "_冒烟" if SMOKE else "_结果"
     fjson = os.path.join(BASE, f"2026-09-14_α模型_StageB_B0_ORd移植地基复核{tag}.json")
     out = {
@@ -781,9 +781,9 @@ def main():
     }
     with open(fjson, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1)
-    print(f"\n 结果落盘: {fjson}", flush=True)
+    print(f"\n result saved: {fjson}", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     import matplotlib
     matplotlib.use("Agg")
     try:
@@ -796,34 +796,34 @@ def main():
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(4, 3, figsize=(17, 15))
-    fig.suptitle(f"B0 地基复核 · 官方 ORd Python 移植 · {'冒烟100拍' if SMOKE else str(ndone) + '拍'}"
-                 f" · 总判 {'过' if overall else '不过'}", fontsize=14)
+    fig.suptitle(f"B0 foundation recheck · official ORd Python port · {'smoke 100 beats' if SMOKE else str(ndone) + ' beats'}"
+                 f" · overall {'pass' if overall else 'fail'}", fontsize=14)
 
     ax = axes[0, 0]
     if last2:
         tL, vL, _, _, _ = last2[-1]
         ax.plot(tL, vL, "k-", lw=1.2)
-    ax.set_title("末拍 AP 全曲线")
+    ax.set_title("last-beat AP full trace")
     ax.set_xlabel("t (ms)"); ax.set_ylabel("v (mV)")
 
     ax = axes[0, 1]
     if last2:
         msk = tL <= 60.0
         ax.plot(tL[msk], vL[msk], "k-", lw=1.2)
-    ax.set_title("末拍前 60ms（上冲+早期复极）")
+    ax.set_title("last beat, first 60 ms (upstroke + early repolarization)")
     ax.set_xlabel("t (ms)")
 
     ax = axes[0, 2]
     ax.plot(np.arange(1, ndone + 1), apd[:ndone], ".-", ms=3, lw=0.6)
     ax.axhline(250, color="r", ls="--", lw=0.7); ax.axhline(330, color="r", ls="--", lw=0.7)
-    ax.set_title(f"APD90 逐拍轨迹（末10拍极差 {steady_range:.2f}ms）")
-    ax.set_xlabel("拍"); ax.set_ylabel("APD90 (ms)")
+    ax.set_title(f"APD90 beat-by-beat trajectory (last-10 range {steady_range:.2f}ms)")
+    ax.set_xlabel("beat"); ax.set_ylabel("APD90 (ms)")
 
     ax = axes[1, 0]
     ax.plot(np.arange(1, ndone + 1), qnet[:ndone], ".-", ms=3, lw=0.6, color="tab:green")
     ax.axhline(0.05, color="r", ls="--", lw=0.7); ax.axhline(0.12, color="r", ls="--", lw=0.7)
-    ax.set_title("qNet 逐拍轨迹（整周期口径）")
-    ax.set_xlabel("拍"); ax.set_ylabel("µC/µF")
+    ax.set_title("qNet beat-by-beat trajectory (full-cycle convention)")
+    ax.set_xlabel("beat"); ax.set_ylabel("uC/uF")
 
     names7 = ["INa", "INaL", "Ito", "ICaL", "IKr", "IKs", "IK1"]
     pos = [(1, 1), (1, 2), (2, 0), (2, 1), (2, 2), (3, 0), (3, 1)]
@@ -833,36 +833,36 @@ def main():
             ax = axes[r, c]
             i7 = names7.index(nm)
             ax.plot(tL, curL[i7], lw=0.9)
-            ax.set_title(f"{nm} 末拍")
+            ax.set_title(f"{nm} last beat")
             ax.set_xlabel("t (ms)"); ax.set_ylabel("pA/pF")
             if nm == "INa":
                 ax.set_xlim(0, 30)
 
     ax = axes[3, 2]
     ax.axis("off")
-    txt = (f"判线1 稳态化: 末10拍APD90极差 {steady_range:.3f}ms (<0.5) {'✓' if steady_pass else '×'}\n"
-           f"判线2 形态: APD90 {APD_last:.1f}ms∈[250,330] {'✓' if crit2['APD90_ms']['pass'] else '×'}  "
+    txt = (f"criterion 1 steady state: last-10 APD90 range {steady_range:.3f}ms (<0.5) {'v' if steady_pass else 'x'}\n"
+           f"criterion 2 morphology: APD90 {APD_last:.1f}ms in [250,330] {'v' if crit2['APD90_ms']['pass'] else 'x'}  "
            f"qNet {qNet_last:.3f}∈[0.05,0.12] {'✓' if crit2['qNet_uC_uF']['pass'] else '×'}\n"
            f"        RMP {RMP_last:.1f}mV∈[-95,-85] {'✓' if crit2['RMP_mV']['pass'] else '×'}  "
            f"APA {APA_last:.1f}mV∈[90,130] {'✓' if crit2['APA_mV']['pass'] else '×'}\n"
-           f"判线3 qNet双口径: 整周期 {qNet_last:.4f} / AP窗内 {qnet_ap:.4f} µC/µF（登记）\n"
-           f"判线4 Euler收敛签名: e005={xcheck.get('max_abs_dv_mV', float('nan')):.2f} "
+           f"criterion 3 qNet dual conventions: full-cycle {qNet_last:.4f} / within-AP {qnet_ap:.4f} uC/uF (registry)\n"
+           f"criterion 4 Euler convergence signature: e005={xcheck.get('max_abs_dv_mV', float('nan')):.2f} "
            f"e00125={xcheck.get('max_abs_dv_fine_mV', float('nan')):.2f}mV "
-           f"比{xcheck.get('ratio', float('nan')):.2f}∈[2,6] "
+           f"ratio {xcheck.get('ratio', float('nan')):.2f} in [2,6] "
            f"ΔAPD90={xcheck.get('dAPD90_ms', float('nan')):.2f}ms "
            f"{'✓' if xcheck.get('pass') else '×'}\n"
-           f"LSODA失败 {nfail} 次   总用时 {time.time() - t_start:.0f}s\n"
-           f"【B0 总判 {'过线' if overall else '不过线'}】")
+           f"LSODA failures {nfail}   total time {time.time() - t_start:.0f}s\n"
+           f"[B0 overall {'PASS' if overall else 'FAIL'}]")
     ax.text(0.02, 0.95, txt, transform=ax.transAxes, va="top", fontsize=10)
 
     fpng = os.path.join(BASE, f"2026-09-14_α模型_StageB_B0_ORd移植地基复核{tag}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
     plt.close(fig)
-    print(f" 图落盘: {fpng}", flush=True)
+    print(f" figure saved: {fpng}", flush=True)
 
     if SMOKE:
-        print("\n[冒烟完] 正式跑指令（Spyder）：\n"
+        print("\n[smoke done] full-run command (Spyder):\n"
               "  %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/"
               "2026-09-14_α模型_StageB_B0_ORd移植地基复核.py' --wdir", flush=True)
 

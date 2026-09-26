@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Kα-5: VCF荧光/极限斜率 → IKs α模型时间尺度的物理身份鉴定 + 门电荷窗口登记
-# A) Δt(V) vs F2荧光tau2(V)=1/(δ+γ): 逐电压对拍
-# B) 门电荷: 作者极限斜率 z_a vs 单Boltzmann表观 z=25.4/k -> α a_ss 有效窗口登记
+# Kα-5: VCF fluorescence / limiting slope -> physical identity of the IKs α-model time scales + gating-charge window registry
+# A) Dt(V) vs F2 fluorescence tau2(V)=1/(delta+gamma): per-voltage cross-check
+# B) gating charge: authors' limiting slope z_a vs single-Boltzmann apparent z=25.4/k -> α a_ss effective-window registry
 import sys, json
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.executable).parent.parent.parent))
@@ -14,12 +14,12 @@ BASE = Path(r"D:\Kimi_Agent_细胞仿真工具包扩展以及具身智能2026091
 ZEN = BASE / r"数据\Zenodo_10421153_IKs变构"
 RES = BASE / r"_归档\结果"
 
-# ---- A) tau2 (F2荧光, psQ+E1) 逐卵母细胞 ----
+# ---- A) tau2 (F2 fluorescence, psQ+E1) per oocyte ----
 wb = openpyxl.load_workbook(ZEN / "Scheme 2 Fluorescence_240116_2.xlsx", read_only=True)
 ws = wb["psQ+ E1 delta and gamma"]
 grid = list(ws.iter_rows(values_only=True))
 tau2 = {}   # V -> list of oocyte values (ms)
-for row in grid[10:16]:          # 行10..15: V=-40..80, 列1..9 卵母细胞
+for row in grid[10:16]:          # rows 10..15: V=-40..80, columns 1..9 oocytes
     try:
         v = int(float(row[0]))
     except (TypeError, ValueError):
@@ -28,7 +28,7 @@ for row in grid[10:16]:          # 行10..15: V=-40..80, 列1..9 卵母细胞
     if vals:
         tau2[v] = vals
 wb.close()
-# Δt 真值表 (Kα-4 已核)
+# Dt ground-truth table (verified in Ka-4)
 wb = openpyxl.load_workbook(ZEN / "Scheme 1 time constant and deltat_240116.xlsx", read_only=True)
 ws2 = wb["Fig.3 Fig.S3 data and models"]
 dt_true = {}
@@ -54,7 +54,7 @@ diffs = np.array([r[4] for r in cmp_rows if r[4] is not None])
 ratios = np.array([dt_true[r[0]] / (np.mean(tau2[r[0]]) / 1000.0) for r in cmp_rows if r[4] is not None])
 print(f"Δt/tau2 ratio: median {np.median(ratios):.2f}, range {ratios.min():.2f}-{ratios.max():.2f}")
 
-# ---- B) 门电荷 ----
+# ---- B) gating charge ----
 wb = openpyxl.load_workbook(ZEN / "Limiting slope Summary_240116.xlsx", read_only=True)
 ws = wb["Charges"]
 za = {}
@@ -66,10 +66,10 @@ def grab(rows, col, name):
             vals.append(float(v) * 2.303 * 25.0)
     za[name] = vals
 ws_rows = list(ws.iter_rows(values_only=True))
-grab(range(3, 7), 2, "hERG")          # 行3-6, slope在col2
-grab(range(11, 18), 1, "psQQ*+E1")    # 行11-17
-grab(range(24, 34), 1, "psQQ+E1")     # 行24-33
-grab(range(41, 51), 1, "psQ+E1")      # 行41-50
+grab(range(3, 7), 2, "hERG")          # rows 3-6, slope in col 2
+grab(range(11, 18), 1, "psQQ*+E1")    # rows 11-17
+grab(range(24, 34), 1, "psQQ+E1")     # rows 24-33
+grab(range(41, 51), 1, "psQ+E1")      # rows 41-50
 wb.close()
 za_mean = {k: (float(np.mean(v)), float(np.std(v) / np.sqrt(len(v))), len(v)) for k, v in za.items() if v}
 for k, (m, se, n) in za_mean.items():
@@ -81,7 +81,7 @@ z_boltz = {"author EQ 10s (k=13.5)": 25.4 / 13.5,
            "our cross-batch (k=19.05)": 25.4 / 19.05,
            "hERG α (k≈7.5)": 25.4 / 7.5}
 
-# ---- 图 ----
+# ---- figure ----
 fig = plt.figure(figsize=(9.2, 4.0))
 axa = fig.add_subplot(121); axb = fig.add_subplot(122)
 tm = [np.mean(tau2[v]) / 1000 for v in sorted(tau2)]

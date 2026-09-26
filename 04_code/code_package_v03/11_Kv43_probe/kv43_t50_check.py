@@ -1,4 +1,4 @@
-# kv43_t50_check.py — 无模型半衰期复核 τ_inact 组间差异
+# kv43_t50_check.py - model-free half-time recheck of the tau_inact between-group difference
 import scipy.io as sio, numpy as np, glob, os
 
 def halflife(fn):

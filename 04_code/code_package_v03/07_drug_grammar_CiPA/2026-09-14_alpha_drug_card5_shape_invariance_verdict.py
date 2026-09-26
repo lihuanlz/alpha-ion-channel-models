@@ -1,18 +1,18 @@
-# 2026-09-14_α模型_药物卡5_形状不变性判决.py
+# 2026-09-14_alpha-model_drug-card5_shape-invariance_verdict.py
 # ============================================================================
-# 药物卡5 · 形状不变性判决（预注册判决卡）
-# 预注册：结果\预注册_α模型_药物卡5_形状不变性判决_2026-09-14.md（判线跑前钉死）
+# Drug card 5 · shape-invariance verdict (preregistered verdict card)
+# Preregistration: 结果\预注册_α模型_药物卡5_形状不变性判决_2026-09-14.md (criteria pinned before the run)
 #
-# 假设：纯阻断——药物只缩放幅度，不动门控时间常数（电流形状不变）。
-# 方法：同细胞 对照段末5扫 vs 各浓度段末5扫，基线减除→扫平均→Ramp窗峰幅度归一
-#   → r_shape（Pearson）与 ε（相对形状残差）。
-# 门槛：|A_ctrl|≥50pA（卡3 v2 单位归一同用），0.2≤b_ss≤0.9，段扫数≥5；每数据集≤3细胞。
-# 判线：G1 汇总中位 ε_x≤ε_x_thr（v2 主指标，噪声地板扣除后；r/ε 登记）；
-#   G2 Spearman(ε_x,log10 C) 漂移检验；
-#   合成自检 C1 纯缩放全过 / C2 时间拉伸全被抓，ε_x_thr=max(3×C1中位ε_x,0.03)。
-# v3 修复：游标 STIMEU/ETIMEU 单位混杂（lab1/lab2=ms，lab3/4/5=s）统一换算为秒；
-#   zipfile 单句柄；合成自检抽离数据集循环只跑一次。
-# 运行：Spyder %runfile '...py' --wdir 。SMOKE=1 冒烟 3 数据集×1细胞，口径逐字相同。
+# Hypothesis: pure block -- the drug only scales the amplitude and does not touch gating time constants (current shape invariant).
+# Method: same cell, last 5 sweeps of the control segment vs last 5 sweeps of each concentration segment; baseline subtraction -> sweep average -> Ramp-window peak-amplitude normalization
+#   -> r_shape (Pearson) and eps (relative shape residual).
+# Gates: |A_ctrl|>=50pA (same unit normalization as card-3 v2), 0.2<=b_ss<=0.9, segment sweeps >=5; at most 3 cells per dataset.
+# Criteria: G1 pooled median eps_x<=eps_x_thr (v2 main metric, after noise-floor subtraction; r/eps registered);
+#   G2 Spearman(eps_x, log10 C) drift test;
+#   synthetic self-check C1 pure scaling all pass / C2 time stretch all caught, eps_x_thr=max(3x C1 median eps_x, 0.03).
+# v3 fix: cursor STIMEU/ETIMEU units mixed (lab1/lab2=ms, lab3/4/5=s) unified to seconds;
+#   zipfile single handle; synthetic self-check pulled out of the dataset loop to run once.
+# Run: Spyder %runfile '...py' --wdir. SMOKE=1 smoke: 3 datasets x 1 cell, metric verbatim identical.
 # ============================================================================
 import os
 import json
@@ -69,7 +69,7 @@ def load_ted(tedx):
         cells.setdefault(str(r[ix["CELLID"]]), []).append((tn, et, liq, cc, cu, rv, ctl))
     hdr_cd = [str(c).strip().upper() if c else "" for c in cd[0]]
     ic = {n: hdr_cd.index(n) for n in ("CURSOR", "STIME", "ETIME")}
-    # v3 修复：游标带 STIMEU/ETIMEU 单位列，lab1/lab2 是 ms、lab3/4/5 是 s（实证在案）
+    # v3 fix: cursors carry STIMEU/ETIMEU unit columns; lab1/lab2 are ms, lab3/4/5 are s (proven on record)
     iu_s = hdr_cd.index("STIMEU") if "STIMEU" in hdr_cd else None
     iu_e = hdr_cd.index("ETIMEU") if "ETIMEU" in hdr_cd else None
     curs = {}
@@ -88,7 +88,7 @@ def load_ted(tedx):
 
 
 def cell_plan(rows):
-    """一个细胞 → (A_ctrl, ctrl末5扫TRACENUM, [(conc, 末5扫TRACENUM, b_ss)])。单位归一同卡3 v2。"""
+    """One cell -> (A_ctrl, control last-5-sweep TRACENUMs, [(conc, last-5-sweep TRACENUMs, b_ss)]). Unit normalization same as card-3 v2."""
     tn0 = sorted((r for r in rows
                   if (r[6] == "Y" and (r[4] == 0.0 or "control" in r[2] or "vehicle" in r[2]))
                   or "control" in r[2] or "vehicle" in r[2]), key=lambda r: r[1])
@@ -126,7 +126,7 @@ def cell_plan(rows):
     return A_ctrl, ctrl_tr, segs
 
 
-# ---------- 原始 csv ----------
+# ---------- raw csv ----------
 def csv_cols(hdr):
     m = {}
     for j, c in enumerate(hdr):
@@ -143,10 +143,10 @@ def csv_cols(hdr):
 
 
 def load_csv_traces(path, need):
-    """只读需要的 trace 电流列 + t_ms。返回 t(s), {N: i}。"""
+    """Read only the needed trace current columns + t_ms. Returns t(s), {N: i}."""
     z = None
     if path.endswith(".zip"):
-        # v3 修复：单句柄（原写法双开 ZipFile，漏句柄）
+        # v3 fix: single handle (the original code opened ZipFile twice and leaked a handle)
         z = zipfile.ZipFile(path)
         fh = z.open(z.namelist()[0])
     else:
@@ -172,7 +172,7 @@ def load_csv_traces(path, need):
     return t, out
 
 
-# ---------- 形状指标 ----------
+# ---------- shape metrics ----------
 def mean_trace(t, traces, bwin):
     sub = []
     for i in traces:
@@ -183,7 +183,7 @@ def mean_trace(t, traces, bwin):
 
 
 def shape_metrics(t, ctrl, drug, bwin, rwin):
-    """返回 (r_shape, eps, eps_noise, eps_x)。v2：噪声地板扣除。
+    """Return (r_shape, eps, eps_noise, eps_x). v2: noise floor subtracted.
     ε_noise = sqrt(σ_d²/A_d² + σ_c²/A_c²)；ε_x = sqrt(max(ε²−ε_noise²,0))。"""
     m = (t >= rwin[0]) & (t <= rwin[1])
     mb = (t >= bwin[0]) & (t <= bwin[1])
@@ -206,7 +206,7 @@ def shape_metrics(t, ctrl, drug, bwin, rwin):
     return r, eps, eps_noise, eps_x
 
 
-# ---------- 合成自检（对照锚定阈值） ----------
+# ---------- synthetic self-check (control-anchored threshold) ----------
 def ar1_noise(n, sigma, rho=0.33, rng=RNG):
     e = rng.normal(0, sigma * np.sqrt(1 - rho * rho), n)
     x = np.zeros(n)
@@ -216,7 +216,7 @@ def ar1_noise(n, sigma, rho=0.33, rng=RNG):
 
 
 def warp_tail(y, t, rwin, factor=1.2):
-    """Ramp 窗内峰后时间轴拉伸 ×factor（模拟去激活减慢类变形）。"""
+    """Stretch the post-peak time axis within the Ramp window by xfactor (simulating a slowed-deactivation type warp)."""
     m = np.where((t >= rwin[0]) & (t <= rwin[1]))[0]
     seg = y[m]
     pk = int(np.argmax(np.abs(seg)))
@@ -229,7 +229,7 @@ def warp_tail(y, t, rwin, factor=1.2):
 
 
 def synth_check(t, tmpl, bwin, rwin):
-    print("\n[合成自检]", flush=True)
+    print("\n[synthetic self-check]", flush=True)
     mb = (t >= bwin[0]) & (t <= bwin[1])
     sigma = float(np.nanstd(tmpl[mb])) if mb.sum() >= 3 else 1.0
     e1, e2 = [], []
@@ -247,13 +247,13 @@ def synth_check(t, tmpl, bwin, rwin):
     ex_thr = max(3.0 * float(np.median(e1[:, 3])), 0.03)
     c1_ok = bool(np.all(e1[:, 3] <= ex_thr))
     c2_ok = bool(np.all(e2[:, 3] > ex_thr))
-    print(f"  C1 纯缩放: r 中位={np.median(e1[:, 0]):.4f} ε_x 中位={np.median(e1[:, 3]):.4f}"
-          f" -> {'全过' if c1_ok else '有误判'}", flush=True)
-    print(f"  C2 门控变形(峰后×1.2): r 中位={np.median(e2[:, 0]):.4f} "
-          f"ε_x 中位={np.median(e2[:, 3]):.4f} -> {'全被抓' if c2_ok else '有漏网'}", flush=True)
-    print(f"  ε_x_thr = {ex_thr:.4f}（对照锚定）", flush=True)
+    print(f"  C1 pure scaling: r median={np.median(e1[:, 0]):.4f} eps_x median={np.median(e1[:, 3]):.4f}"
+          f" -> {'all pass' if c1_ok else 'false verdicts present'}", flush=True)
+    print(f"  C2 gating warp (post-peak x1.2): r median={np.median(e2[:, 0]):.4f} "
+          f"eps_x median={np.median(e2[:, 3]):.4f} -> {'all caught' if c2_ok else 'some escaped'}", flush=True)
+    print(f"  eps_x_thr = {ex_thr:.4f} (control anchored)", flush=True)
     ok = c1_ok and c2_ok
-    print(f"  合成自检 {'过' if ok else '不过——全卡降级登记'}", flush=True)
+    print(f"  synthetic self-check {'pass' if ok else 'fail -- whole card downgraded to registry'}", flush=True)
     return ok, ex_thr
 
 
@@ -291,7 +291,7 @@ def analyze_dataset(arch, drug, ds_dir, eps_thr, smoke):
             units.append(dict(cell=cid, 判定="对照trace缺"))
             continue
         ctrl = mean_trace(t, ctrs, bwin)
-        # 噪声地板诊断：对照奇偶分裂
+        # noise-floor diagnostic: control odd/even split
         r_cc = None
         if len(ctrs) >= 4:
             odd = mean_trace(t, ctrs[0::2], bwin)
@@ -315,9 +315,9 @@ def analyze_dataset(arch, drug, ds_dir, eps_thr, smoke):
 
 
 def find_template(datasets):
-    """v3：合成自检模板查找抽成独立函数，数据集循环前只跑一次。
-    顺序扫数据集/细胞，取第一个合格单元数据集的对照均值波形。
-    返回 (t, tmpl, bwin, rwin) 或 None。"""
+    """v3: the synthetic self-check template lookup is factored into an independent function, run once before the dataset loop.
+    Scan datasets/cells in order and take the control mean waveform of the first dataset with a valid unit.
+    Returns (t, tmpl, bwin, rwin) or None."""
     for arch, drug, ds in datasets:
         tedx = os.path.join(ds, "subtracted", "ted", "ted.xlsx")
         try:
@@ -351,7 +351,7 @@ def find_template(datasets):
 
 def main():
     print("=" * 76, flush=True)
-    print(" 药物卡5 · 形状不变性判决（纯阻断假设封口）", flush=True)
+    print(" drug card 5 · shape-invariance verdict (sealing the pure-block hypothesis)", flush=True)
     print("=" * 76, flush=True)
 
     datasets = []
@@ -365,11 +365,11 @@ def main():
                 datasets.append((arch, drug, ds))
     if SMOKE:
         datasets = [d for d in datasets if (d[0], d[1]) in SMOKE_SETS]
-    print(f"\n数据集: {len(datasets)}（{'冒烟' if SMOKE else '全量'}）", flush=True)
+    print(f"\ndatasets: {len(datasets)} ({'smoke' if SMOKE else 'full'})", flush=True)
 
-    # v3：合成自检抽离数据集循环，循环前独立跑一次。
-    # 原实现嵌在循环里且异常被 except 吞掉 -> 每个数据集重试刷屏；
-    # 游标单位 bug 下 lab1/lab2 全空即被此路径放大。
+    # v3: synthetic self-check pulled out of the dataset loop, run once independently before the loop.
+    # the original implementation was nested in the loop with exceptions swallowed by except -> retried and spammed for every dataset;
+    # under the cursor-unit bug, lab1/lab2 coming up empty was amplified by exactly this path.
     eps_thr = None
     synth_ok = False
     tmpl = find_template(datasets)
@@ -377,10 +377,10 @@ def main():
         try:
             synth_ok, eps_thr = synth_check(tmpl[0], tmpl[1], tmpl[2], tmpl[3])
         except Exception as e:
-            print(f"  合成自检异常（降级登记）: {e}", flush=True)
+            print(f"  synthetic self-check exception (downgraded to registry): {e}", flush=True)
             synth_ok, eps_thr = False, None
     else:
-        print("\n[合成自检] 无可用模板（无任何合格单元）-> 全卡降级登记", flush=True)
+        print("\n[synthetic self-check] no usable template (no valid unit at all) -> whole card downgraded to registry", flush=True)
     result = {"预注册": "预注册_α模型_药物卡5_形状不变性判决_2026-09-14.md",
               "datasets": {}, "eps_thr": eps_thr, "合成自检": bool(synth_ok), "判词": {}}
     all_units = []
@@ -393,10 +393,10 @@ def main():
         result["datasets"][key] = r
         ok = [u for u in r["units"] if u["判定"] == "ok"]
         all_units += [dict(dataset=key, **u) for u in ok]
-        med = f"r中位={r['med_r']:.4f}" if r.get("med_r") else r["判"]
-        print(f"  [{i + 1}/{len(datasets)}] {key}: 单元{len(ok)} {med}", flush=True)
+        med = f"r median={r['med_r']:.4f}" if r.get("med_r") else r["判"]
+        print(f"  [{i + 1}/{len(datasets)}] {key}: units {len(ok)} {med}", flush=True)
 
-    # ---------- 判线（v2：ε_x 主指标，r/ε 登记） ----------
+    # ---------- criteria (v2: eps_x main metric, r/eps registered) ----------
     rs = np.array([u["r_shape"] for u in all_units])
     es = np.array([u["eps"] for u in all_units])
     exs = np.array([u["eps_x"] for u in all_units])
@@ -430,7 +430,7 @@ def main():
     }
     result["判词"] = verdict_d
 
-    # 分药汇总
+    # per-drug summary
     by_drug = {}
     for u in all_units:
         by_drug.setdefault(u["dataset"].split("|")[1], []).append(u)
@@ -440,18 +440,18 @@ def main():
     result["分药"] = drug_tab
 
     print("\n" + "=" * 76, flush=True)
-    print(f" 合格单元 {len(exs)}；中位 ε_x={verdict_d['G1']['med_eps_x']}"
-          f"（ε_x_thr={eps_thr}；噪声地板 ε_noise 中位={verdict_d['G1']['med_eps_noise']}）", flush=True)
-    print(f" 登记: 中位 r_shape={verdict_d['登记_中位r_shape']} "
-          f"中位 ε_raw={verdict_d['登记_中位eps_raw']} r_cc 中位={verdict_d['噪声地板r_cc中位']}", flush=True)
-    print(f" G1={'过' if g1 else '不过'}  G2={verdict_d['G2_浓度漂移']['判']}"
+    print(f" valid units {len(exs)}; median eps_x={verdict_d['G1']['med_eps_x']}"
+          f"(eps_x_thr={eps_thr}; noise-floor eps_noise median={verdict_d['G1']['med_eps_noise']})", flush=True)
+    print(f" registry: median r_shape={verdict_d['登记_中位r_shape']} "
+          f"median eps_raw={verdict_d['登记_中位eps_raw']} r_cc median={verdict_d['噪声地板r_cc中位']}", flush=True)
+    print(f" G1={'pass' if g1 else 'fail'}  G2={verdict_d['G2_浓度漂移']['判']}"
           f"（ρ={rho_c:.3f} p={p_c:.4f}）", flush=True)
-    print(f" 总判: {verdict}", flush=True)
+    print(f" overall verdict: {verdict}", flush=True)
 
     sfx = "_冒烟" if SMOKE else ""
     fj = os.path.join(HERE, f"2026-09-14_α模型_药物卡5_形状不变性判决{sfx}_结果.json")
     json.dump(result, open(fj, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"\n  结果落盘: {fj}", flush=True)
+    print(f"\n  results saved: {fj}", flush=True)
 
     # CSV
     fcsv = os.path.join(HERE, f"2026-09-14_α模型_药物卡5_形状不变性判决{sfx}_单元表.csv")
@@ -463,9 +463,9 @@ def main():
         w.writeheader()
         for u in all_units:
             w.writerow({k: u.get(k) for k in w.fieldnames})
-    print(f"  单元表落盘: {fcsv}", flush=True)
+    print(f"  unit table saved: {fcsv}", flush=True)
 
-    # 图
+    # figure
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -481,29 +481,29 @@ def main():
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
     ax = axes[0]
     if len(rs):
-        ax.hist(rs, bins=40, alpha=0.7, label="药段 vs 对照 r_shape")
+        ax.hist(rs, bins=40, alpha=0.7, label="drug vs control r_shape")
     if len(rccs):
-        ax.hist(rccs, bins=40, alpha=0.7, label="对照奇偶分裂 r_cc（噪声地板）")
-    ax.axvline(R_LINE, color="r", ls="--", label="判线 0.98")
-    ax.set_xlabel("形状相关 r")
-    ax.set_ylabel("单元数")
+        ax.hist(rccs, bins=40, alpha=0.7, label="control odd/even split r_cc (noise floor)")
+    ax.axvline(R_LINE, color="r", ls="--", label="criterion 0.98")
+    ax.set_xlabel("shape correlation r")
+    ax.set_ylabel("unit count")
     ax.legend()
-    ax.set_title(f"形状不变性分布（中位 {np.median(rs):.4f}）" if len(rs) else "无合格单元")
+    ax.set_title(f"shape-invariance distribution (median {np.median(rs):.4f})" if len(rs) else "no valid units")
     ax = axes[1]
     if len(exs):
-        ax.scatter(cs, exs, s=10, alpha=0.4, label="ε_x（噪声扣除后）")
-        ax.scatter(cs, ens, s=10, alpha=0.3, label="ε_noise（噪声地板）")
+        ax.scatter(cs, exs, s=10, alpha=0.4, label="eps_x (noise subtracted)")
+        ax.scatter(cs, ens, s=10, alpha=0.3, label="eps_noise (noise floor)")
         ax.set_xscale("log")
         thr_v = eps_thr if eps_thr is not None else 0.0
         ax.axhline(thr_v, color="r", ls="--", label=f"ε_x_thr={thr_v:.3f}")
-        ax.set_xlabel("浓度 (nM)")
-        ax.set_ylabel("形状残差")
-        ax.set_title(f"ε_x~浓度（Spearman ρ={rho_c:.2f} p={p_c:.4f}）")
+        ax.set_xlabel("concentration (nM)")
+        ax.set_ylabel("shape residual")
+        ax.set_title(f"eps_x ~ concentration (Spearman rho={rho_c:.2f} p={p_c:.4f})")
         ax.legend()
     fpng = os.path.join(HERE, f"2026-09-14_α模型_药物卡5_形状不变性判决{sfx}.png")
     fig.tight_layout()
     fig.savefig(fpng, dpi=140, bbox_inches="tight")
-    print(f"  图落盘: {fpng}", flush=True)
+    print(f"  figure saved: {fpng}", flush=True)
 
 
 if __name__ == "__main__":

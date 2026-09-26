@@ -1,14 +1,14 @@
 # 2026-09-14_α模型_药物卡6_形状变形分解.py
 # ============================================================================
-# 药物卡6 · 形状变形分解（τ类 vs h_ss类）（预注册归因卡）
-# 预注册：结果\预注册_α模型_药物卡6_形状变形分解_2026-09-14.md（判线跑前钉死）
+# Drug card 6: shape-deformation decomposition (tau-like vs h_ss-like), preregistered attribution card
+# Preregistration: 结果\预注册_α模型_药物卡6_形状变形分解_2026-09-14.md (criteria pinned before the run)
 #
-# 方法：卡5 单元逐字复用；Ramp 窗归一化形状做时间轴伸缩配准 κ*（网格 [0.5,2.0]
-#   步 0.02，域 D(κ) 不越界）；f_τ = 1−(ε_x1/ε_x0_sd)²（时间尺度解释的方差份额）；
-#   逐细胞对照奇/偶分裂给 f_τ_cc 地板；细胞级配对 Wilcoxon。
-# 判线：合成自检 C1/C2/C3 + 回归（vs 卡5 单元表 <1e-9）；主判 T1（配对 p<0.01
-#   且中位 Δf_τ≥0.25）× T2（中位 ε_x1>0.03）四象限。
-# 运行：Spyder %runfile '...py' --wdir 。SMOKE=1 冒烟 3 数据集×1细胞，口径逐字相同。
+# Method: card-5 units reused verbatim; normalized ramp-window shape is time-warp registered
+#   with kappa* (grid [0.5,2.0] step 0.02, domain D(k) never out of bounds);
+#   f_tau = 1-(eps_x1/eps_x0_sd)^2 (variance share explained by the time scale);
+#   per-cell control odd/even split gives the f_tau_cc floor; cell-level paired Wilcoxon.
+# Criteria: synthetic self-check C1/C2/C3 + regression (vs card-5 unit table <1e-9); main
+#   criterion T1 (paired p<0.01 and median delta f_tau>=0.25) x T2 (median eps_x1>0.03), four quadrants.
 # ============================================================================
 import os
 import json
@@ -32,10 +32,10 @@ MIN_SWEEPS = 5
 MAX_CELLS = 3
 RNG = np.random.default_rng(20260914)
 
-K_GRID = np.round(np.arange(0.5, 2.0001, 0.02), 4)  # 钉死：76 点含 1.0
-EX0_GATE = 0.03          # 卡5 ε_x_thr 在案值：判-able 门槛
-FTAU_FLOOR = 0.25        # T1 效应地板：中位 Δf_τ ≥ 0.25
-WILCOX_P = 0.01          # T1 显著性线
+K_GRID = np.round(np.arange(0.5, 2.0001, 0.02), 4)  # pinned: 76 points including 1.0
+EX0_GATE = 0.03          # card-5 eps_x_thr on-record value: judge-able gate
+FTAU_FLOOR = 0.25        # T1 effect floor: median delta f_tau >= 0.25
+WILCOX_P = 0.01          # T1 significance line
 
 
 def conc_nM(conc, unit):
@@ -43,7 +43,7 @@ def conc_nM(conc, unit):
     return conc * 1000.0 if (u.startswith("u") or u.startswith("µ")) else conc
 
 
-# ---------- ted.xlsx（与卡5 v3 逐字相同） ----------
+# ---------- ted.xlsx (identical to card 5 v3, verbatim) ----------
 def load_ted(tedx):
     wb = openpyxl.load_workbook(tedx, read_only=True)
     rw = [list(r) for r in wb["ResultsWide"].iter_rows(values_only=True)]
@@ -69,7 +69,7 @@ def load_ted(tedx):
         cells.setdefault(str(r[ix["CELLID"]]), []).append((tn, et, liq, cc, cu, rv, ctl))
     hdr_cd = [str(c).strip().upper() if c else "" for c in cd[0]]
     ic = {n: hdr_cd.index(n) for n in ("CURSOR", "STIME", "ETIME")}
-    # v3：游标单位列混杂（lab1/lab2=ms，lab3/4/5=s），统一换算为秒
+    # v3: cursor unit columns are mixed (lab1/lab2=ms, lab3/4/5=s); unified to seconds
     iu_s = hdr_cd.index("STIMEU") if "STIMEU" in hdr_cd else None
     iu_e = hdr_cd.index("ETIMEU") if "ETIMEU" in hdr_cd else None
     curs = {}
@@ -88,7 +88,7 @@ def load_ted(tedx):
 
 
 def cell_plan(rows):
-    """一个细胞 → (A_ctrl, ctrl末5扫TRACENUM, [(conc, 末5扫TRACENUM, b_ss)])。与卡5 逐字相同。"""
+    """One cell -> (A_ctrl, ctrl last-5-sweep TRACENUM, [(conc, last-5-sweep TRACENUM, b_ss)]). Verbatim from card 5."""
     tn0 = sorted((r for r in rows
                   if (r[6] == "Y" and (r[4] == 0.0 or "control" in r[2] or "vehicle" in r[2]))
                   or "control" in r[2] or "vehicle" in r[2]), key=lambda r: r[1])
@@ -126,7 +126,7 @@ def cell_plan(rows):
     return A_ctrl, ctrl_tr, segs
 
 
-# ---------- 原始 csv（与卡5 v3 逐字相同：zipfile 单句柄） ----------
+# ---------- raw csv (identical to card 5 v3: single zipfile handle) ----------
 def csv_cols(hdr):
     m = {}
     for j, c in enumerate(hdr):
@@ -143,7 +143,7 @@ def csv_cols(hdr):
 
 
 def load_csv_traces(path, need):
-    """只读需要的 trace 电流列 + t_ms。返回 t(s), {N: i}。"""
+    """Read only the needed trace current columns + t_ms. Returns t(s), {N: i}."""
     z = None
     if path.endswith(".zip"):
         z = zipfile.ZipFile(path)
@@ -171,7 +171,7 @@ def load_csv_traces(path, need):
     return t, out
 
 
-# ---------- 形状基础（与卡5 逐字相同） ----------
+# ---------- shape basics (verbatim from card 5) ----------
 def mean_trace(t, traces, bwin):
     sub = []
     for i in traces:
@@ -182,8 +182,8 @@ def mean_trace(t, traces, bwin):
 
 
 def shape_eps(t, ctrl, drug, bwin, rwin):
-    """卡5 口径 ε 与 ε_noise + 归一化窗波形（供 warp）。
-    返回 (eps_full, eps_noise, tm, cn, dn) 或 None。"""
+    """Card-5 eps and eps_noise + normalized window waveform (for warp).
+    Returns (eps_full, eps_noise, tm, cn, dn) or None."""
     m = (t >= rwin[0]) & (t <= rwin[1])
     mb = (t >= bwin[0]) & (t <= bwin[1])
     if m.sum() < 20:
@@ -203,10 +203,10 @@ def shape_eps(t, ctrl, drug, bwin, rwin):
     return eps, eps_noise, t[m], cn, dn
 
 
-# ---------- κ* 配准（钉死：网格 [0.5,2.0] 步 0.02，域不越界） ----------
+# ---------- kappa* registration (pinned: grid [0.5,2.0] step 0.02, domain never out of bounds) ----------
 def _domain_eps(tm, cn, dn, rwin, k):
-    # v2 修复：绕窗起点 r0 伸缩（ramp 相位从 r0 起算）——dq(t)=dn(r0+k·(t−r0))；
-    # 域 D(k)=[r0, min(r1, r0+(r1−r0)/k)]（k≤1 时全窗，k>1 时右缘收缩不越界）
+    # v2 fix: stretch around window start r0 (ramp phase counted from r0): dq(t)=dn(r0+k*(t-r0));
+    # domain D(k)=[r0, min(r1, r0+(r1-r0)/k)] (k<=1 full window; k>1 right edge shrinks, no overrun)
     r0, r1 = rwin
     hi = r0 + (r1 - r0) / k if k > 1.0 else r1
     sel = (tm >= r0) & (tm <= hi)
@@ -224,8 +224,8 @@ def _domain_eps(tm, cn, dn, rwin, k):
 
 
 def warp_fit(tm, cn, dn, rwin, eps_noise):
-    """返回 (kappa*, eps_x1, eps_x0_sd, f_tau_raw) 或 None。
-    f_tau_raw 无判-able 门槛（cc 地板也用同一口径）。"""
+    """Returns (kappa*, eps_x1, eps_x0_sd, f_tau_raw) or None.
+    f_tau_raw has no judge-able gate (the cc floor uses the same convention)."""
     best = None
     for k in K_GRID:
         e = _domain_eps(tm, cn, dn, rwin, k)
@@ -234,7 +234,7 @@ def warp_fit(tm, cn, dn, rwin, eps_noise):
     if best is None:
         return None
     k_star, e1 = best
-    # 同域 ε(1)：在 D(κ*) 上取 κ=1（绕 r0 口径下即原波形在收缩域上的比较）
+    # same-domain eps(1): take kappa=1 on D(kappa*) (under the r0 convention this compares the original waveform on the shrunk domain)
     r0, r1 = rwin
     hi = r0 + (r1 - r0) / k_star if k_star > 1.0 else r1
     sel = (tm >= r0) & (tm <= hi)
@@ -252,7 +252,7 @@ def warp_fit(tm, cn, dn, rwin, eps_noise):
     return k_star, ex1, ex0, f_tau, edge
 
 
-# ---------- 合成自检变形件 ----------
+# ---------- synthetic self-check deformation pieces ----------
 def ar1_noise(n, sigma, rho=0.33, rng=RNG):
     e = rng.normal(0, sigma * np.sqrt(1 - rho * rho), n)
     x = np.zeros(n)
@@ -262,7 +262,7 @@ def ar1_noise(n, sigma, rho=0.33, rng=RNG):
 
 
 def stretch_window(y, t, rwin, factor):
-    """Ramp 窗全窗均匀时间拉伸 ×factor（τ 类变形）：y2(t)=y(r0+(t−r0)/factor)。"""
+    """Uniform time stretch of the full ramp window by x factor (tau-like deformation): y2(t)=y(r0+(t-r0)/factor)."""
     m = np.where((t >= rwin[0]) & (t <= rwin[1]))[0]
     seg = y[m]
     tt = t[m]
@@ -273,7 +273,7 @@ def stretch_window(y, t, rwin, factor):
 
 
 def taper_tail(y, t, rwin, factor=0.75):
-    """峰后幅度线性渐缩至 ×factor（时间不动，h_ss 类幅度变形）。"""
+    """Linear post-peak amplitude taper to x factor (time untouched, h_ss-like amplitude deformation)."""
     m = np.where((t >= rwin[0]) & (t <= rwin[1]))[0]
     seg = y[m]
     pk = int(np.argmax(np.abs(seg)))
@@ -284,7 +284,7 @@ def taper_tail(y, t, rwin, factor=0.75):
 
 
 def synth_check(t, tmpl, bwin, rwin):
-    print("\n[合成自检]", flush=True)
+    print("\n[synthetic self-check]", flush=True)
     mb = (t >= bwin[0]) & (t <= bwin[1])
     sigma = float(np.nanstd(tmpl[mb])) if mb.sum() >= 3 else 1.0
     res = {"C1": [], "C2": [], "C3": []}
@@ -311,23 +311,24 @@ def synth_check(t, tmpl, bwin, rwin):
     c2_k = bool(np.sum(np.abs(out["C2"]["kappa"] - 1.25) <= 0.10 + 1e-9) >= 18)
     c2_f = bool(np.sum(out["C2"]["f_tau"] >= 0.8) >= 18)
     c2_ok = c2_k and c2_f
-    # v2：C3 判线只留 κ* 口径；f_τ 转登记——冒烟实证单参数伸缩可把平滑幅度
-    # 渐缩吸收 ~80%（f_τ≈0.8），故 f_τ 在 |κ*−1|<κ_thr 时不作 τ 证据
+    # v2: C3 criterion keeps only the kappa* measure; f_tau moved to registry - smoke evidence:
+    # a single-parameter stretch can absorb ~80% of a smooth amplitude taper (f_tau~0.8),
+    # so f_tau is not used as tau evidence when |kappa*-1| < k_thr
     c3_ok = bool(np.sum(np.abs(out["C3"]["kappa"] - 1.0) <= 0.05 + 1e-9) >= 18)
     k_thr = float(max(3.0 * np.median(np.abs(out["C1"]["kappa"] - 1.0)), 0.10))
-    print(f"  C1 纯缩放: κ* 中位={np.median(out['C1']['kappa']):.3f} "
-          f"全∈[0.95,1.05]={'是' if c1_ok else '否'}；"
-          f"原始 f_τ 中位={np.nanmedian(out['C1']['f_tau']):.3f}（合成地板参照）", flush=True)
-    print(f"  C2 时间拉伸×1.25: κ* 中位={np.median(out['C2']['kappa']):.3f} "
-          f"找回{np.sum(np.abs(out['C2']['kappa'] - 1.25) <= 0.10 + 1e-9)}/20（≥18）；"
-          f"f_τ 中位={np.nanmedian(out['C2']['f_tau']):.3f} ≥0.8 有"
+    print(f"  C1 pure scaling: kappa* median={np.median(out['C1']['kappa']):.3f} "
+          f"all in [0.95,1.05]={'yes' if c1_ok else 'no'}; "
+          f"raw f_tau median={np.nanmedian(out['C1']['f_tau']):.3f} (synthetic floor reference)", flush=True)
+    print(f"  C2 time stretch x1.25: kappa* median={np.median(out['C2']['kappa']):.3f} "
+          f"recovered {np.sum(np.abs(out['C2']['kappa'] - 1.25) <= 0.10 + 1e-9)}/20 (>=18); "
+          f"f_tau median={np.nanmedian(out['C2']['f_tau']):.3f}; >=0.8 in "
           f"{np.sum(out['C2']['f_tau'] >= 0.8)}/20（≥18）", flush=True)
-    print(f"  C3 幅度渐缩×0.75: κ* 中位={np.median(out['C3']['kappa']):.3f} "
-          f"∈[0.95,1.05] 有{np.sum(np.abs(out['C3']['kappa'] - 1.0) <= 0.05 + 1e-9)}/20（≥18）；"
-          f"f_τ 中位={np.nanmedian(out['C3']['f_tau']):.3f}（登记，不作 τ 证据）", flush=True)
-    print(f"  κ_thr = {k_thr:.3f}（C1 锚定 max(3×C1 中位|κ*−1|, 0.10)）", flush=True)
+    print(f"  C3 amplitude taper x0.75: kappa* median={np.median(out['C3']['kappa']):.3f} "
+          f"in [0.95,1.05] in {np.sum(np.abs(out['C3']['kappa'] - 1.0) <= 0.05 + 1e-9)}/20 (>=18); "
+          f"f_tau median={np.nanmedian(out['C3']['f_tau']):.3f} (registry only, not tau evidence)", flush=True)
+    print(f"  k_thr = {k_thr:.3f} (C1-anchored max(3 x C1 median |kappa*-1|, 0.10))", flush=True)
     ok = c1_ok and c2_ok and c3_ok
-    print(f"  合成自检 {'过' if ok else '不过——全卡降级登记'}", flush=True)
+    print(f"  synthetic self-check {'pass' if ok else 'fail - whole card downgraded to registry'}", flush=True)
     return ok, dict(C1_k_med=float(np.median(out["C1"]["kappa"])),
                     C1_f_med=float(np.nanmedian(out["C1"]["f_tau"])),
                     C2_k_med=float(np.median(out["C2"]["kappa"])),
@@ -338,7 +339,7 @@ def synth_check(t, tmpl, bwin, rwin):
                     k_thr=k_thr), k_thr
 
 
-# ---------- 模板查找（与卡5 v3 逐字相同） ----------
+# ---------- template lookup (identical to card 5 v3, verbatim) ----------
 def find_template(datasets):
     for arch, drug, ds in datasets:
         tedx = os.path.join(ds, "subtracted", "ted", "ted.xlsx")
@@ -371,7 +372,7 @@ def find_template(datasets):
     return None
 
 
-# ---------- 数据集分析 ----------
+# ---------- dataset analysis ----------
 def analyze_dataset(arch, drug, ds_dir, smoke):
     tedx = os.path.join(ds_dir, "subtracted", "ted", "ted.xlsx")
     cells, curs = load_ted(tedx)
@@ -408,7 +409,7 @@ def analyze_dataset(arch, drug, ds_dir, smoke):
             units.append(dict(cell=cid, 判定="对照trace缺"))
             continue
         ctrl = mean_trace(t, ctrs, bwin)
-        # 对照奇/偶分裂 → f_τ_cc 地板（无门槛）
+        # control odd/even split -> f_tau_cc floor (no gate)
         f_tau_cc = None
         if len(ctrs) >= 4:
             odd = mean_trace(t, ctrs[0::2], bwin)
@@ -443,10 +444,10 @@ def analyze_dataset(arch, drug, ds_dir, smoke):
     return dict(判="ok" if ok else "无合格单元", units=units)
 
 
-# ---------- 主流程 ----------
+# ---------- main flow ----------
 def main():
     print("=" * 76, flush=True)
-    print(" 药物卡6 · 形状变形分解（τ类 vs h_ss类）", flush=True)
+    print(" Drug card 6: shape-deformation decomposition (tau-like vs h_ss-like)", flush=True)
     print("=" * 76, flush=True)
 
     datasets = []
@@ -460,9 +461,9 @@ def main():
                 datasets.append((arch, drug, ds))
     if SMOKE:
         datasets = [d for d in datasets if (d[0], d[1]) in SMOKE_SETS]
-    print(f"\n数据集: {len(datasets)}（{'冒烟' if SMOKE else '全量'}）", flush=True)
+    print(f"\ndatasets: {len(datasets)} ({'smoke' if SMOKE else 'full'})", flush=True)
 
-    # 合成自检：循环前独立一次
+    # synthetic self-check: one independent run before the loop
     synth_ok = False
     synth_d = None
     k_thr = None
@@ -471,9 +472,9 @@ def main():
         try:
             synth_ok, synth_d, k_thr = synth_check(tmpl[0], tmpl[1], tmpl[2], tmpl[3])
         except Exception as e:
-            print(f"  合成自检异常（降级登记）: {e}", flush=True)
+            print(f"  synthetic self-check exception (downgraded to registry): {e}", flush=True)
     else:
-        print("\n[合成自检] 无可用模板 -> 全卡降级登记", flush=True)
+        print("\n[synthetic self-check] no usable template -> whole card downgraded to registry", flush=True)
 
     result = {"预注册": "预注册_α模型_药物卡6_形状变形分解_2026-09-14.md",
               "datasets": {}, "合成自检": synth_d, "回归": None, "判词": {}}
@@ -487,9 +488,9 @@ def main():
         result["datasets"][key] = r
         ok = [u for u in r["units"] if u["判定"] == "ok"]
         all_units += [dict(dataset=key, **u) for u in ok]
-        print(f"  [{i + 1}/{len(datasets)}] {key}: 单元{len(ok)}", flush=True)
+        print(f"  [{i + 1}/{len(datasets)}] {key}: units {len(ok)}", flush=True)
 
-    # ---------- 回归检查：vs 卡5 单元表（判线 <1e-9） ----------
+    # ---------- regression check: vs card-5 unit table (criterion <1e-9) ----------
     sfx = "_冒烟" if SMOKE else ""
     f5 = os.path.join(HERE, f"2026-09-14_α模型_药物卡5_形状不变性判决{sfx}_单元表.csv")
     reg_ok = None
@@ -506,16 +507,16 @@ def main():
             mx = float(np.max(diffs))
             reg_ok = bool(mx < 1e-9)
             result["回归"] = dict(比对单元=len(diffs), 卡5单元=len(m5), 最大绝对差=mx, 过=reg_ok)
-            print(f"\n[回归] 与卡5 单元表比对 {len(diffs)}/{len(all_units)} 单元，"
-                  f"最大 |Δε_x|={mx:.2e} -> {'复现过' if reg_ok else '复现不过'}", flush=True)
+            print(f"\n[regression] vs card-5 unit table {len(diffs)}/{len(all_units)} units, "
+                  f"max |delta eps_x|={mx:.2e} -> {'reproduced' if reg_ok else 'not reproduced'}", flush=True)
     else:
-        print("\n[回归] 卡5 单元表缺失或无单元 -> 降级登记", flush=True)
+        print("\n[regression] card-5 unit table missing or empty -> downgraded to registry", flush=True)
 
-    # ---------- 判线（预注册 §六） ----------
+    # ---------- criteria (preregistration section 6) ----------
     print("\n" + "=" * 76, flush=True)
     gated = [u for u in all_units if u.get("gated") and u.get("f_tau") is not None]
     n_edge = int(np.sum([u["edge"] for u in all_units]))
-    print(f" 单元 {len(all_units)}；判-able（ε_x0≥{EX0_GATE}）{len(gated)}；网格触边 {n_edge}", flush=True)
+    print(f" units {len(all_units)}; judge-able (eps_x0>={EX0_GATE}) {len(gated)}; grid edge hits {n_edge}", flush=True)
 
     ks = np.array([u["kappa"] for u in gated])
     fs = np.array([u["f_tau"] for u in gated])
@@ -525,7 +526,7 @@ def main():
     med_koff = float(np.median(np.abs(ks - 1.0))) if len(ks) else np.nan
     med_f = float(np.median(fs)) if len(fs) else np.nan
 
-    # 细胞级配对（v2 起为登记，不入判线）
+    # cell-level pairing (registry only since v2, not part of the criteria)
     by_cell = {}
     for u in gated:
         by_cell.setdefault((u["dataset"], u["cell"]), {"f": [], "cc": u["f_tau_cc"]})
@@ -545,9 +546,9 @@ def main():
             p_two = float(w.pvalue)
             p_one = p_two / 2.0 if med_d > 0 else 1.0 - p_two / 2.0
         except Exception as e:
-            print(f"  Wilcoxon 异常: {e}", flush=True)
+            print(f"  Wilcoxon exception: {e}", flush=True)
 
-    # v2 判线：T1 = 中位 |κ*−1| ≥ κ_thr（C1 锚定）且 中位 f_τ ≥ 0.5；T2 不变
+    # v2 criterion: T1 = median |kappa*-1| >= k_thr (C1-anchored) and median f_tau >= 0.5; T2 unchanged
     T1 = bool(len(ks) >= 30 and k_thr is not None and
               med_koff >= k_thr and med_f >= 0.5)
     T2 = bool(len(ex1s) >= 30 and med_ex1 > EX0_GATE)
@@ -584,7 +585,7 @@ def main():
     }
     result["判词"] = verdict_d
 
-    # 分药汇总
+    # per-drug summary
     by_drug = {}
     for u in gated:
         by_drug.setdefault(u["dataset"].split("|")[1], []).append(u)
@@ -595,18 +596,18 @@ def main():
                 for d, us in by_drug.items()}
     result["分药"] = drug_tab
 
-    print(f" 判-able 单元 {len(gated)}；配对细胞 {len(pairs)}", flush=True)
-    print(f" 中位 κ*={verdict_d['中位kappa']}；中位 f_τ 药={verdict_d['中位f_tau_药']} "
+    print(f" judge-able units {len(gated)}; paired cells {len(pairs)}", flush=True)
+    print(f" median kappa*={verdict_d['中位kappa']}; median f_tau drug={verdict_d['中位f_tau_药']} "
           f"vs cc={verdict_d['中位f_tau_cc']}", flush=True)
-    print(f" T1={'过' if T1 else '不过'}（中位|κ*−1|={med_koff:.4f} κ_thr={k_thr} "
-          f"中位f_τ={med_f:.3f}） T2={'过' if T2 else '不过'}（中位 ε_x1={med_ex1:.4f}）", flush=True)
-    print(f" 登记: Wilcoxon 配对 p={p_one:.4g} 中位Δf_τ={med_d:.3f}（{len(pairs)} 细胞）", flush=True)
-    print(f" 登记: Spearman(κ*,log10 C) ρ={rho_k:.3f} p={p_k:.3g}", flush=True)
-    print(f" 总判: {verdict}", flush=True)
+    print(f" T1={'pass' if T1 else 'fail'} (median |kappa*-1|={med_koff:.4f} k_thr={k_thr} "
+          f"median f_tau={med_f:.3f}) T2={'pass' if T2 else 'fail'} (median eps_x1={med_ex1:.4f})", flush=True)
+    print(f" registry: Wilcoxon paired p={p_one:.4g} median delta f_tau={med_d:.3f} ({len(pairs)} cells)", flush=True)
+    print(f" registry: Spearman(kappa*, log10 C) rho={rho_k:.3f} p={p_k:.3g}", flush=True)
+    print(f" overall verdict: {verdict}", flush=True)
 
     fj = os.path.join(HERE, f"2026-09-14_α模型_药物卡6_形状变形分解{sfx}_结果.json")
     json.dump(result, open(fj, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"\n  结果落盘: {fj}", flush=True)
+    print(f"\n  result saved: {fj}", flush=True)
 
     fcsv = os.path.join(HERE, f"2026-09-14_α模型_药物卡6_形状变形分解{sfx}_单元表.csv")
     import csv as csvmod
@@ -618,9 +619,9 @@ def main():
         w.writeheader()
         for u in all_units:
             w.writerow({k: u.get(k) for k in w.fieldnames})
-    print(f"  单元表落盘: {fcsv}", flush=True)
+    print(f"  unit table saved: {fcsv}", flush=True)
 
-    # 图
+    # figure
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -637,29 +638,29 @@ def main():
     ax = axes[0, 0]
     if len(ks):
         ax.hist(ks, bins=40, alpha=0.75)
-        ax.axvline(1.0, color="r", ls="--", label="κ=1（无时间变形）")
-        ax.set_xlabel("κ*（>1 = 药物减慢）")
-        ax.set_ylabel("单元数")
-        ax.set_title(f"κ* 分布（中位 {np.median(ks):.3f}）")
+        ax.axvline(1.0, color="r", ls="--", label="kappa=1 (no time deformation)")
+        ax.set_xlabel("kappa* (>1 = drug slows)")
+        ax.set_ylabel("unit count")
+        ax.set_title(f"kappa* distribution (median {np.median(ks):.3f})")
         ax.legend()
     ax = axes[0, 1]
     if len(pairs):
         ax.scatter(pairs[:, 1], pairs[:, 0], s=14, alpha=0.5)
         lim = [0, 1]
         ax.plot(lim, lim, "r--", label="y=x")
-        ax.set_xlabel("f_τ_cc（对照奇偶分裂地板）")
-        ax.set_ylabel("f_τ 药（细胞中位）")
-        ax.set_title(f"配对：Δ中位={med_d:.3f}，Wilcoxon 单侧 p={p_one:.3g}")
+        ax.set_xlabel("f_tau_cc (control odd/even split floor)")
+        ax.set_ylabel("f_tau drug (cell median)")
+        ax.set_title(f"paired: delta median={med_d:.3f}, Wilcoxon one-sided p={p_one:.3g}")
         ax.legend()
     ax = axes[1, 0]
     if len(gated):
         ex0s = np.array([u["eps_x0_full"] for u in gated])
         ax.scatter(ex0s, ex1s, s=10, alpha=0.4)
-        ax.plot([0, 1], [0, 1], "r--", label="y=x（warp 全吃掉）")
-        ax.axhline(EX0_GATE, color="gray", ls=":", label=f"残差线 {EX0_GATE}")
-        ax.set_xlabel("ε_x0（warp 前，卡5 口径）")
-        ax.set_ylabel("ε_x1（warp 后残差）")
-        ax.set_title("warp 前后变形对照（判-able 单元）")
+        ax.plot([0, 1], [0, 1], "r--", label="y=x (warp absorbs all)")
+        ax.axhline(EX0_GATE, color="gray", ls=":", label=f"residual line {EX0_GATE}")
+        ax.set_xlabel("eps_x0 (pre-warp, card-5 convention)")
+        ax.set_ylabel("eps_x1 (post-warp residual)")
+        ax.set_title("pre/post-warp deformation (judge-able units)")
         ax.legend()
     ax = axes[1, 1]
     if drug_tab:
@@ -669,14 +670,14 @@ def main():
         ax.bar(range(len(names)), vals)
         ax.set_xticks(range(len(names)))
         ax.set_xticklabels(names, rotation=90, fontsize=7)
-        ax.axhline(FTAU_FLOOR, color="r", ls="--", label=f"参考线 {FTAU_FLOOR}（非判线）")
-        ax.set_ylabel("中位 f_τ")
-        ax.set_title("分药时间尺度份额（登记）")
+        ax.axhline(FTAU_FLOOR, color="r", ls="--", label=f"reference line {FTAU_FLOOR} (not a criterion)")
+        ax.set_ylabel("median f_tau")
+        ax.set_title("per-drug time-scale share (registry)")
         ax.legend()
     fpng = os.path.join(HERE, f"2026-09-14_α模型_药物卡6_形状变形分解{sfx}.png")
     fig.tight_layout()
     fig.savefig(fpng, dpi=140, bbox_inches="tight")
-    print(f"  图落盘: {fpng}", flush=True)
+    print(f"  figure saved: {fpng}", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_负40档漂移鉴定.py
-# 问题：v5 里 -40mV 档 τ_late 跨细胞 CV=0.45（其它档 0.13-0.18）。
-#   鉴定：hook 残留 / 基线漂移污染，还是真实细胞间差异？
-# 方法（只读数据，零拟合族）：
-#   每细胞 -40mV 尾：起点 skip=50/150/300ms × 基线=末200ms/末1s；
-#   τ_late = [3.5,5.4]s 绝对窗对数斜率；亚窗稳定 = τ_A[2.2,3.5] vs τ_B[4.0,5.4]。
-# 判词预先钉死（v2 修正：亚窗稳定不当门——对照证明真离散 20s 也有 τ_A/τ_B≈0.5，
-#   因 1s 模态在早窗残留。亚窗改作"离散形态签名"，判决由 skip/基线/离群三杠杆承担；
-#   v3 再修正：分支1 机制归因改为"浮动晚窗窗位伪影"，因冒烟实测 CV 对 skip/基线均不敏感）：
-#   1) skip=150ms 后 CV<0.30 -> 污染说成立，恒定性延伸到 -40（若 CV50 明显更大，hook 坐实）；
-#   2) 否则若去掉最差 1 个离群后 CV<0.30 -> 离群说：核心群体恒定，离群登记；
-#   3) 否则 -> 真实异质：-40 档超慢层逐细胞建表；
-#   附记：τ_A/τ_B 落在对照带 [0.3,0.8] 内的细胞比例（离散同型率）。
-# 对照：合成 0.15/1/20s 三指数 + 0.036nA 噪声，τ_late 与 τ_B 都必须落 [12,30]s。
+# 2026-09-13_minus40_step_drift_assay.py
+# Problem: in v5 the -40 mV level tau_late has cross-cell CV = 0.45 (other levels 0.13-0.18).
+#   Identify: hook residual / baseline-drift contamination, or genuine cell-to-cell difference?
+# Method (read-only data, zero fit families):
+#   per cell -40 mV tail: start skip = 50/150/300 ms x baseline = last 200 ms / last 1 s;
+#   tau_late = log slope over the absolute window [3.5,5.4] s; sub-window stability = tau_A[2.2,3.5] vs tau_B[4.0,5.4].
+# Verdict pinned in advance (v2 fix: sub-window stability no longer a gate - controls prove
+#   a true discrete 20 s also gives tau_A/tau_B ~= 0.5 because the 1 s mode lingers in the
+#   early window; sub-window becomes a "discrete-shape signature", the verdict rests on the
+#   skip/baseline/outlier three levers; v3 further fix: branch 1 mechanism attribution changed
+#   1) if CV < 0.30 after skip = 150 ms -> contamination account holds, constancy extends to -40
+#   2) else if CV < 0.30 after dropping the single worst outlier -> outlier account: core
+#   3) else -> genuine heterogeneity: build a per-cell table of the -40 ultra-slow layer;
+#      (if CV50 is markedly larger, the hook is confirmed);
+#      population constant, outlier registered; v3 attribution: floating-late-window position artefact (smoke showed CV insensitive to skip/baseline).
+#   note: fraction of cells with tau_A/tau_B inside the control band [0.3,0.8] (discrete-shape concordance).
+# Controls: synthetic 0.15/1/20 s three-exponential + 0.036 nA noise; both tau_late and tau_B must land in [12,30] s.
 import os
 import json
 import numpy as np
@@ -66,7 +69,7 @@ def find_tail_40(V):
 
 
 def extract(I, tl, skip_s, base_s):
-    """绝对时间分箱序列 + 噪声；base_s=基线取静默段末尾多少秒"""
+    """Absolute-time binned series + noise; base_s = how many seconds at the end of the silent segment the baseline takes"""
     s0 = tl["start"] + int(skip_s / DT)
     y = I[s0: tl["start"] + tl["n"]].astype(float)
     h0, h1 = tl["hold"]
@@ -115,10 +118,10 @@ def cv_of(vals):
 def main():
     rng = np.random.default_rng(7)
     print("=" * 74)
-    print(" -40mV 档漂移鉴定（hook 残留 / 基线敏感 / 亚窗稳定 / 离群）")
+    print(" -40 mV level drift assay (hook residual / baseline sensitivity / sub-window stability / outlier)")
     print("=" * 74, flush=True)
 
-    # ---------- 对照 ----------
+    # ---------- controls ----------
     t = np.arange(0.05, 5.55, DT * DS)
     yc = 0.5 * np.exp(-t / 0.15) + 0.5 * np.exp(-t / 1.0) + 0.4 * np.exp(-t / 20.0)
     yc = yc + rng.normal(0, 0.036, len(t))
@@ -134,26 +137,26 @@ def main():
     tb_c = slope_tau(bts, bys, W_B, sig_c)
     stab_c = abs(ta_c - tb_c) / tb_c if not (np.isnan(ta_c) or np.isnan(tb_c)) else np.nan
     ratio_ref = ta_c / tb_c if not (np.isnan(ta_c) or np.isnan(tb_c)) else np.nan
-    print(f"\n[对照] 合成 0.15/1/20s: τ_late={tl_c:.1f}s（真值20，要求[12,30]）"
-          f" τ_A={ta_c:.1f} τ_B={tb_c:.1f}（要求[12,30]）τ_A/τ_B={ratio_ref:.2f}（离散形态签名参考）")
+    print(f"\n[controls] synthetic 0.15/1/20 s: tau_late={tl_c:.1f}s (truth 20, require [12,30])"
+          f" tau_A={ta_c:.1f} tau_B={tb_c:.1f} (require [12,30]) tau_A/tau_B={ratio_ref:.2f} (discrete-shape signature reference)")
     if not (12.0 <= tl_c <= 30.0 and 12.0 <= tb_c <= 30.0):
-        print("  对照未归位 -> 测量作废，停。")
+        print("  controls not seated -> measurement void, halt.")
         return
-    print("  对照过。", flush=True)
+    print("  controls passed.", flush=True)
 
-    # ---------- 真实数据 ----------
-    print("\n[真实数据] 每细胞 -40mV 尾：")
-    print(f"  {'细胞':>9} | {'τ_late@50ms':>11} {'τ_late@150ms':>12} {'τ_late@300ms':>12} "
-          f"{'τ_late@150ms基线1s':>16} | {'τ_A':>6} {'τ_B':>6} {'稳定':>5}")
+    # ---------- real data ----------
+    print("\n[real data] per-cell -40 mV tails:")
+    print(f"  {'cell':>9} | {'tau_late@50ms':>11} {'tau_late@150ms':>12} {'tau_late@300ms':>12} "
+          f"{'tau_late@150ms base1s':>16} | {'tau_A':>6} {'tau_B':>6} {'stable':>5}")
     rows = []
     for cell in CELLS:
         V, I = load(cell)
         if I is None:
-            print(f"  {cell:>9} | 文件缺失")
+            print(f"  {cell:>9} | file missing")
             continue
         tl = find_tail_40(V)
         if tl is None:
-            print(f"  {cell:>9} | 无 -40 尾")
+            print(f"  {cell:>9} | no -40 tail")
             continue
         rec = dict(cell=cell)
         bt150, by150, sig150 = None, None, None
@@ -176,7 +179,7 @@ def main():
               f"{f(rec['late_150_base1s']):>16} | {f(rec['tau_A']):>6} {f(rec['tau_B']):>6} "
               f"{f(stab):>5}", flush=True)
 
-    # ---------- 汇总 ----------
+    # ---------- summary ----------
     cv50, _ = cv_of([r.get("late_50") for r in rows])
     cv150, n150 = cv_of([r.get("late_150") for r in rows])
     cv300, _ = cv_of([r.get("late_300") for r in rows])
@@ -192,32 +195,32 @@ def main():
         outlier = max(vals, key=lambda p: abs(np.log(p[1] / med)))
         cv150x, _ = cv_of([v for c, v in vals if c != outlier[0]])
     print("\n" + "-" * 74)
-    print(f"  τ_late 跨细胞 CV: skip50={cv50:.2f}  skip150={cv150:.2f}(n={n150})  "
-          f"skip300={cv300:.2f}  基线1s={cvb1:.2f}")
-    print(f"  离散同型率: {frac_sig * 100:.0f}%（τ_A/τ_B∈[0.3,0.8]，对照参考 {ratio_ref:.2f}）")
+    print(f"  tau_late cross-cell CV: skip50={cv50:.2f}  skip150={cv150:.2f}(n={n150})  "
+          f"skip300={cv300:.2f}  baseline1s={cvb1:.2f}")
+    print(f"  discrete-shape concordance: {frac_sig * 100:.0f}% (tau_A/tau_B in [0.3,0.8], control reference {ratio_ref:.2f})")
     if outlier:
-        print(f"  最差离群: {outlier[0]}（τ_late={outlier[1]:.2f}s）；去掉后 CV={cv150x:.2f}")
+        print(f"  worst outlier: {outlier[0]} (tau_late={outlier[1]:.2f}s); CV after removal={cv150x:.2f}")
 
-    # ---------- 判词（预先钉死） ----------
+    # ---------- verdict (pinned in advance) ----------
     print("\n" + "=" * 74)
     if cv150 < CV_TOL:
-        verdict = (f"测量伪影说成立：固定绝对窗后 -40 恒定（CV={cv150:.2f}），常数图景延伸到 -40；"
-                   f"v5 的 CV=0.45 来自浮动晚窗随各细胞截断位置游走")
+        verdict = (f"measurement-artefact account holds: with a fixed absolute window -40 is constant (CV={cv150:.2f}), the constant picture extends to -40; "
+                   f"v5's CV=0.45 came from the floating late window wandering with each cell's truncation position")
         if cv50 > cv150 + 0.10:
-            verdict += "；CV50 明显更大 -> hook/早段残留也有贡献"
+            verdict += "; CV50 markedly larger -> hook/early-segment residual also contributes"
         else:
-            verdict += "；CV 对起点、基线均不敏感 -> 非 hook、非基线，纯窗位伪影"
+            verdict += "; CV insensitive to both start and baseline -> neither hook nor baseline, pure window-position artefact"
     elif not np.isnan(cv150x) and cv150x < CV_TOL:
-        verdict = (f"离群说：核心群体（{len(vals) - 1} 细胞）在 -40 恒定（CV={cv150x:.2f}），"
-                   f"离群细胞 {outlier[0]} 登记在案，单独描述")
+        verdict = (f"outlier account: the core population ({len(vals) - 1} cells) is constant at -40 (CV={cv150x:.2f}); "
+                   f"outlier cell {outlier[0]} registered, described separately")
     else:
-        verdict = ("真实异质：-40 档 τ_late 跨细胞漂移（skip/基线/离群都救不回）-> "
-                   "-40 超慢层逐细胞建表")
-    verdict += f"；离散同型率 {frac_sig * 100:.0f}%"
-    print(" 判词: " + verdict)
+        verdict = ("genuine heterogeneity: -40 level tau_late drifts across cells (skip/baseline/outlier all fail to rescue) -> "
+                   "build a per-cell table of the -40 ultra-slow layer")
+    verdict += f"; discrete-shape concordance {frac_sig * 100:.0f}%"
+    print(" verdict: " + verdict)
     print("=" * 74)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, axes = plt.subplots(1, 3, figsize=(18, 5.2))
     ax = axes[0]
     for r in rows:
@@ -227,7 +230,7 @@ def main():
             continue
         ref = by[m][0]
         ax.plot(bt[m], np.log10(by[m] / ref), lw=1.2, alpha=0.8, label=r["cell"][-4:])
-    ax.set_title("-40mV 尾重叠（0.3s 处归一，log10）", fontweight="bold")
+    ax.set_title("-40 mV tail overlay (normalised at 0.3 s, log10)", fontweight="bold")
     ax.set_xlabel("t (s)"); ax.set_ylabel("log10 I/I(0.3s)")
     ax.legend(fontsize=7, ncol=2); ax.grid(alpha=0.3)
 
@@ -242,16 +245,16 @@ def main():
         if xs:
             ax.plot(xs, ys_, "o-", ms=4, lw=1.2, alpha=0.8, label=r["cell"][-4:])
     ax.axhline(np.nanmedian([r["late_150"] for r in rows]), color="k", ls="--", lw=0.8)
-    ax.set_title("τ_late 随起点的稳定性（每细胞）", fontweight="bold")
-    ax.set_xlabel("起点 skip (ms)"); ax.set_ylabel("τ_late (s)")
+    ax.set_title("tau_late stability vs start point (per cell)", fontweight="bold")
+    ax.set_xlabel("start skip (ms)"); ax.set_ylabel("tau_late (s)")
     ax.legend(fontsize=7, ncol=2); ax.grid(alpha=0.3)
 
     ax = axes[2]
     ax.axis("off")
-    lines = ["-40 档漂移鉴定", "",
+    lines = ["-40 level drift assay", "",
              f"CV skip50/150/300: {cv50:.2f}/{cv150:.2f}/{cv300:.2f}",
-             f"CV 基线1s: {cvb1:.2f}   离散同型率: {frac_sig * 100:.0f}%",
-             f"离群: {outlier[0] if outlier else '--'}  去离群 CV: "
+             f"CV baseline1s: {cvb1:.2f}   discrete-shape concordance: {frac_sig * 100:.0f}%",
+             f"outlier: {outlier[0] if outlier else '--'}  CV without outlier: "
              f"{'--' if np.isnan(cv150x) else f'{cv150x:.2f}'}", "", verdict]
     y0 = 0.96
     for L in lines:
@@ -267,8 +270,8 @@ def main():
                cv150_no_outlier=cv150x, verdict=verdict)
     fjson = os.path.join(HERE, "2026-09-13_负40档漂移鉴定_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 
 if __name__ == "__main__":

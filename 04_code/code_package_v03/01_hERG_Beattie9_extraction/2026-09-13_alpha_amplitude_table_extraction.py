@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_α模型_幅度表提取.py
-# 目的：τ 表已封卷（阶梯表 2026-09-13），每细胞每电压只解幅度 -> 线性最小二乘。
-#   模型：I(t) = c* + a_f·e^{-t/τ_f(V)} + a_m·e^{-t/τ_m(V)} + a_s·(e^{-t/τ_late(V)}-1)
-#   （慢分量减 1 使其与常数解耦；y_ss = c* - a_s，y(0) = c* + a_f + a_m）
-# 隐藏红利：固定 τ + 只解幅度仍能拟白 = τ 表的前向验证（τ 照抄、只重标幅度 实测成立）。
-# τ 来源（v5 判决/鉴定封卷值）：
-#   τ_f/τ_m：-70/-60 恒定档实测（不动）；
-#            -50/-40 档做"共享 τ 网格精修"（每档一个 τ 横跨九细胞，幅度逐细胞线性解，
-#            恒定性约束内置；冒烟暴露 -40 外推 τ_m=2.425s 错误致 w_m<0/w_s>1，故改精修）；
-#   τ_late：阶梯表（-70:2.055, -60:4.418, -50:10.141, -40:24.054）。
-# 判白：v5 噪声包络门（静默段实测 ACF）。对照：两条已知幅度合成尾，恢复误差>10% 作废。
-# 说明：本脚本提取衰减分量幅度表 + 常数项 c（应≈0，基线质检）；
-#       稳态表 y_ss(V) 需从 steady_activation 协议另提（下一步）。
-# 运行：python 本文件
+# 2026-09-13_alpha model_amplitude table extraction.py
+# Purpose: the tau table is sealed (ladder table 2026-09-13); solve only amplitudes per cell
+#   Model: I(t) = c* + a_f*e^{-t/tau_f(V)} + a_m*e^{-t/tau_m(V)} + a_s*(e^{-t/tau_late(V)}-1)
+#   (the -1 on the slow component decouples it from the constant; y_ss = c* - a_s, y(0) = c* + a_f + a_m)
+# Hidden bonus: fixed taus + amplitudes-only still whitens = forward validation of the tau table
+# tau sources (v5 adjudicated/sealed values):
+#   tau_f/tau_m: measured at the -70/-60 constant steps (untouched);
+#            -50/-40 steps get a shared-tau grid refinement (one tau per step across all nine cells,
+#            amplitudes solved linearly per cell, constancy constraint built in; the smoke exposed that
+#   tau_late: ladder table (-70:2.055, -60:4.418, -50:10.141, -40:24.054).
+# Whitening criterion: v5 noise-envelope gate (measured ACF of silent segments). Controls: two synthetic
+# Note: this script extracts the decay-component amplitude table + constant c (should be ~0, baseline QC);
+#       the steady-state table y_ss(V) must be extracted separately from the steady_activation protocol (next step).
+# Run: python this file
 import os
 import json
 import numpy as np
@@ -42,8 +42,8 @@ H_ACF = 20
 VIOL_TOL = 2
 ENV = None
 
-TAU_F = {-70: 0.19105, -60: 0.27645, -50: 0.30892}     # -40 外推
-TAU_M = {-70: 0.81270, -60: 1.20549, -50: 1.67193}     # -40 外推
+TAU_F = {-70: 0.19105, -60: 0.27645, -50: 0.30892}     # -40 extrapolated
+TAU_M = {-70: 0.81270, -60: 1.20549, -50: 1.67193}     # -40 extrapolated
 TAU_L = {-70: 2.05505, -60: 4.41849, -50: 10.14073, -40: 24.0539}
 GEARS = [-70, -60, -50, -40]
 
@@ -52,7 +52,7 @@ def load(cell):
     V = sio.loadmat(f"{DATA}/data/protocols/deactivation_protocol.mat")['T'].flatten().astype(float)
     fp = f"{DATA}/data/cells/{cell}/deactivation_{cell}_dofetilide_subtracted_leak_subtracted.mat"
     if not os.path.exists(fp):
-        return V, None, "文件缺失"
+        return V, None, "file missing"
     I = sio.loadmat(fp)['T'].flatten().astype(float)
     diag = f"lenI={len(I)} lenV={len(V)} NaN={int(np.isnan(I).sum())}"
     n = min(len(I), len(V))
@@ -191,7 +191,7 @@ def extrapolate_tau():
 
 
 def control(rng):
-    """两条已知幅度合成尾：恢复误差 >10% 或 y_ss 偏差 >0.02nA -> 作废"""
+    """two synthetic tails with known amplitudes: recovery error >10% or y_ss deviation >0.02nA -> void"""
     t = np.arange(0.05, 5.5, DT * DS)
     cases = [dict(tf=0.2, tm=0.8, tl=2.0, c=0.01, af=0.30, am=0.50, as_=0.40),
              dict(tf=0.3, tm=1.7, tl=10.0, c=-0.01, af=0.20, am=0.35, as_=0.60)]
@@ -207,10 +207,10 @@ def control(rng):
         r = fit_amps(np.array(bt), np.array(by), cs["tf"], cs["tm"], cs["tl"])
         errs = {k: abs(r[k] - cs[kk]) / cs[kk] for k, kk in (("a_f", "af"), ("a_m", "am"), ("a_s", "as_"))}
         yss_err = abs(r["y_ss"] - cs["c"])
-        print(f"  对照{i+1}: a_f 误差 {errs['a_f']*100:.1f}%  a_m {errs['a_m']*100:.1f}%  "
-              f"a_s {errs['a_s']*100:.1f}%  y_ss 偏差 {yss_err:.3f}nA  违约 {r['viol']}", flush=True)
+        print(f"  control{i+1}: a_f error {errs['a_f']*100:.1f}%  a_m {errs['a_m']*100:.1f}%  "
+              f"a_s {errs['a_s']*100:.1f}%  y_ss deviation {yss_err:.3f}nA  violations {r['viol']}", flush=True)
         if max(errs.values()) > 0.10 or yss_err > 0.02:
-            print("  对照未归位 -> 统计量作废，停。")
+            print("  controls not returned to baseline -> statistic voided, halt.")
             return False
     return True
 
@@ -218,13 +218,13 @@ def control(rng):
 def main():
     rng = np.random.default_rng(11)
     print("=" * 76)
-    print(" α 模型幅度表提取（τ 钉死表值，线性最小二乘解幅度）")
+    print(" alpha model amplitude table extraction (taus pinned to table values, amplitudes by linear least squares)")
     print("=" * 76, flush=True)
 
     tf40, tm40 = extrapolate_tau()
     TF = dict(TAU_F); TM = dict(TAU_M)
     TF[-40] = tf40; TM[-40] = tm40
-    print(f"  τ_f(−40) 外推 = {tf40:.3f}s，τ_m(−40) 外推 = {tm40:.3f}s（-70/-60/-50 对数线性，标记待验）")
+    print(f"  tau_f(-40) extrapolated = {tf40:.3f}s, tau_m(-40) extrapolated = {tm40:.3f}s (log-linear over -70/-60/-50, flagged for verification)")
 
     all_noise = []
     for cell in CELLS:
@@ -232,20 +232,20 @@ def main():
         if I is not None:
             all_noise.extend(noise_segments(V, I))
     nseg = build_envelope(all_noise)
-    print(f"  噪声包络门就绪（{nseg} 段静默段）", flush=True)
+    print(f"  noise-envelope gate ready ({nseg} silent segments)", flush=True)
 
-    print("\n[对照]", flush=True)
+    print("\n[controls]", flush=True)
     if not control(rng):
         return
-    print("  对照过。", flush=True)
+    print("  controls passed.", flush=True)
 
-    # ---------- 真实数据：第一遍收集 ----------
-    print("\n[真实数据]", flush=True)
+    # ---------- real data: first pass, collect ----------
+    print("\n[real data]", flush=True)
     tails_data = []
     for cell in CELLS:
         V, I, diag = load(cell)
         if I is None:
-            print(f"  细胞 {cell}: {diag}")
+            print(f"  cell {cell}: {diag}")
             continue
         cnt = 0
         for tl in find_tails(V):
@@ -258,15 +258,15 @@ def main():
             bt, by, _, sig_bin = tb
             tails_data.append(dict(cell=cell, v=vv, bt=bt, by=by))
             cnt += 1
-        print(f"  细胞 {cell}: {cnt} 条可用尾  [{diag}]", flush=True)
+        print(f"  cell {cell}: {cnt} usable tails  [{diag}]", flush=True)
 
-    # ---------- 第二遍：-50/-40 档共享 τ 精修 ----------
-    print("\n[τ 精修] -50/-40 共享 τ_f/τ_m 网格搜索（-70/-60 用封卷值不动）", flush=True)
+    # ---------- second pass: shared-tau refinement at -50/-40 ----------
+    print("\n[tau refinement] -50/-40 shared tau_f/tau_m grid search (-70/-60 keep sealed values)", flush=True)
     edge_flags = {}
     for vv in (-50, -40):
         ents = [e for e in tails_data if e["v"] == vv]
         if len(ents) < 3:
-            print(f"  {vv} mV: 数据不足，保留原值")
+            print(f"  {vv} mV: insufficient data, keeping original values")
             continue
         best = None
         for tf in np.linspace(0.15, 0.6, 10):
@@ -281,10 +281,10 @@ def main():
         edge = best[1] in (0.15, 0.6) or best[2] in (0.8, 3.2)
         edge_flags[vv] = edge
         print(f"  {vv} mV: τ_f {TF[vv]:.3f}->{best[1]:.3f}s  τ_m {TM[vv]:.3f}->{best[2]:.3f}s"
-              f"{'  （顶网格边：劈分不可识别，非测量值）' if edge else ''}", flush=True)
+              f"{'  (at grid edge: splitting not identifiable, not a measurement)' if edge else ''}", flush=True)
         TF[vv], TM[vv] = best[1], best[2]
 
-    # ---------- 第三遍：最终 τ 解幅度 ----------
+    # ---------- third pass: solve amplitudes with the final taus ----------
     rows = []
     n_white = n_tot = 0
     for e in tails_data:
@@ -294,17 +294,17 @@ def main():
         a_sum = r["a_f"] + r["a_m"] + r["a_s"]
         w = tuple(r[k] / a_sum if abs(a_sum) > 1e-6 else np.nan for k in ("a_f", "a_m", "a_s"))
         rows.append(dict(cell=e["cell"], v=e["v"], **r, w_f=w[0], w_m=w[1], w_s=w[2]))
-    print(f"\n  白化率 {n_white}/{n_tot}（v5 自由 τ 27/32 作参照；此为共享 τ，非逐细胞自由）")
+    print(f"\n  whitening rate {n_white}/{n_tot} (v5 free-tau 27/32 as reference; this is shared tau, not per-cell free)")
 
-    # ---------- 汇总表 ----------
+    # ---------- summary table ----------
     print("\n" + "-" * 76)
-    print("[幅度表] 九细胞均值 ± SD（只用包络白的尾巴）；每档标可识别等级")
-    print(f"  {'V':>5} {'n':>3} | {'a_f':>7} {'a_m':>7} {'a_s':>7} {'y_ss':>7} {'y0':>7} | {'w_f':>5} {'w_m':>5} {'w_s':>5} | 等级")
+    print("[amplitude table] nine-cell mean +/- SD (whitened tails only); identifiability grade per step")
+    print(f"  {'V':>5} {'n':>3} | {'a_f':>7} {'a_m':>7} {'a_s':>7} {'y_ss':>7} {'y0':>7} | {'w_f':>5} {'w_m':>5} {'w_s':>5} | grade")
     table = []
     for vv in GEARS:
         rs = [r for r in rows if r["v"] == vv and r["white"]]
         if len(rs) < 3:
-            print(f"  {vv:>5} {len(rs):>3} | 数据不足")
+            print(f"  {vv:>5} {len(rs):>3} | insufficient data")
             continue
         def ms(key):
             a = np.array([r[key] for r in rs], float)
@@ -314,11 +314,11 @@ def main():
         cond = float(np.median([r["cond"] for r in rs]))
         neg_amp = min(af[0], am[0], as_[0]) < -0.02
         if edge_flags.get(vv, False) or neg_amp:
-            note = "仅y0+τ_late（快/中劈分不可识别）"
+            note = "y0+tau_late only (fast/medium splitting not identifiable)"
         elif abs(ys[0]) >= 0.10:
-            note = "全分解（y_ss偏高，常数项参考）"
+            note = "full decomposition (y_ss biased high, constant term for reference)"
         else:
-            note = "全分解"
+            note = "full decomposition"
         table.append(dict(v=vv, n=len(rs),
                           a_f=af, a_m=am, a_s=as_, y_ss=ys, y0=y0,
                           w_f=wf, w_m=wm, w_s=ws, cond=cond, note=note))
@@ -330,52 +330,52 @@ def main():
     w40 = [r["w_m"] for r in rows if r["v"] == -40 and r["white"]]
     w40m = float(np.mean(w40)) if w40 else np.nan
 
-    # ---------- 判词（预先钉死） ----------
+    # ---------- verdict (fixed in advance) ----------
     frac = n_white / max(n_tot, 1)
     print("\n" + "=" * 76)
-    print(" 总判词：")
-    print(f"  白化 {n_white}/{n_tot}；-70 档 |y_ss| 均值 {c70m:.3f} nA（基线质检，应≈0）；"
-          f"-40 档 w_m 均值 {w40m:.2f}（物理化应≥0）")
+    print(" overall verdict:")
+    print(f"  whitening {n_white}/{n_tot}; -70 step |y_ss| mean {c70m:.3f} nA (baseline QC, should be ~0);"
+          f" -40 step w_m mean {w40m:.2f} (physical value should be >=0)")
     if frac >= 0.75 and (not np.isnan(c70m)) and c70m < 0.05:
-        nfull = sum(1 for t in table if t["note"].startswith("全分解"))
-        nlim = sum(1 for t in table if t["note"].startswith("仅y0"))
-        final = (f"τ 表前向验证过（共享 τ 白化 {n_white}/{n_tot}，不低于自由 τ 的 27/32）；"
-                 f"幅度表按可识别等级交付：{nfull} 档全分解，{nlim} 档仅 y0+τ_late"
-                 "（快/中劈分窗内不可识别是信息极限，非模型错误）")
+        nfull = sum(1 for t in table if t["note"].startswith("full decomposition"))
+        nlim = sum(1 for t in table if t["note"].startswith("y0"))
+        final = (f"tau table forward validation passed (shared-tau whitening {n_white}/{n_tot}, not below free-tau 27/32);"
+                 f" amplitude table delivered by identifiability grade: {nfull} steps full decomposition, {nlim} steps y0+tau_late only"
+                 " (fast/medium splitting not identifiable within the window is an information limit, not a model error)")
     elif frac >= 0.60:
-        final = "幅度表可用但白化低于预期：列出低白化档位复查共享 τ"
+        final = "amplitude table usable but whitening below expectation: list low-whitening steps and recheck the shared taus"
     elif not np.isnan(c70m) and c70m >= 0.05:
-        final = "基线质检不过：-70 档常数项系统性偏零，先查基线/漂移再谈幅度表"
+        final = "baseline QC failed: -70 step constant term systematically off zero; check baseline/drift before any amplitude table"
     else:
-        final = "共享 τ 不可行：白化崩塌，回到逐细胞自由 τ（τ 表恒定性需重审）"
+        final = "shared tau infeasible: whitening collapsed; return to per-cell free taus (tau-table constancy needs re-examination)"
     print("  " + final)
     print("=" * 76)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, axes = plt.subplots(2, 3, figsize=(20, 9))
     ax = axes[0, 0]
     for cell in CELLS:
         rs = sorted([r for r in rows if r["cell"] == cell and r["white"]], key=lambda r: r["v"])
         if rs:
             ax.plot([r["v"] for r in rs], [r["y0"] for r in rs], "o-", ms=3, lw=1, alpha=0.75, label=cell[-4:])
-    ax.set_title("初始幅度 y0(V) 每细胞", fontweight="bold")
-    ax.set_xlabel("尾电压 mV"); ax.set_ylabel("nA")
+    ax.set_title("initial amplitude y0(V) per cell", fontweight="bold")
+    ax.set_xlabel("tail voltage mV"); ax.set_ylabel("nA")
     ax.legend(fontsize=6.5, ncol=3); ax.grid(alpha=0.3)
 
-    for ax, key, ttl in ((axes[0, 1], "w_f", "快分量分数 w_f(V)"),
-                         (axes[0, 2], "w_m", "中分量分数 w_m(V)")):
+    for ax, key, ttl in ((axes[0, 1], "w_f", "fast-component fraction w_f(V)"),
+                         (axes[0, 2], "w_m", "medium-component fraction w_m(V)")):
         for trow in table:
             ax.errorbar([trow["v"]], [trow[key][0]], yerr=trow[key][1], fmt="s", ms=7,
                         capsize=4, color="steelblue")
-        ax.set_title(ttl + "（均值±SD）", fontweight="bold")
-        ax.set_xlabel("尾电压 mV"); ax.set_ylim(-0.05, 1.05); ax.grid(alpha=0.3)
+        ax.set_title(ttl + " (mean+/-SD)", fontweight="bold")
+        ax.set_xlabel("tail voltage mV"); ax.set_ylim(-0.05, 1.05); ax.grid(alpha=0.3)
 
     ax = axes[1, 0]
     for trow in table:
         ax.errorbar([trow["v"]], [trow["w_s"][0]], yerr=trow["w_s"][1], fmt="s", ms=7,
                     capsize=4, color="darkred")
-    ax.set_title("慢分量分数 w_s(V)（均值±SD）", fontweight="bold")
-    ax.set_xlabel("尾电压 mV"); ax.set_ylim(-0.05, 1.05); ax.grid(alpha=0.3)
+    ax.set_title("slow-component fraction w_s(V) (mean+/-SD)", fontweight="bold")
+    ax.set_xlabel("tail voltage mV"); ax.set_ylim(-0.05, 1.05); ax.grid(alpha=0.3)
 
     ax = axes[1, 1]
     shown = 0
@@ -390,17 +390,17 @@ def main():
         r = rs[0]
         yrec = (r["c_star"] + r["a_f"] * np.exp(-bt / TF[-50]) + r["a_m"] * np.exp(-bt / TM[-50])
                 + r["a_s"] * (np.exp(-bt / TAU_L[-50]) - 1))
-        ax.semilogy(bt, by, ".", ms=2, alpha=0.5, label=f"{cell[-4:]} 数据")
-        ax.semilogy(bt, yrec, "-", lw=1.5, label=f"{cell[-4:]} 重建")
+        ax.semilogy(bt, by, ".", ms=2, alpha=0.5, label=f"{cell[-4:]} data")
+        ax.semilogy(bt, yrec, "-", lw=1.5, label=f"{cell[-4:]} reconstruction")
         shown += 1
-    ax.set_title("重建示例（-50 mV，固定 τ + 线性幅度）", fontweight="bold")
+    ax.set_title("reconstruction example (-50 mV, fixed tau + linear amplitudes)", fontweight="bold")
     ax.set_xlabel("t (s)"); ax.legend(fontsize=7); ax.grid(alpha=0.3)
 
     ax = axes[1, 2]
     ax.axis("off")
-    lines = ["α 模型幅度表提取", "",
-             f"白化: {n_white}/{n_tot}   -70 |y_ss|均值: {c70m:.3f} nA",
-             f"τ 精修后: τ_f={TF[-50]:.2f}/{TF[-40]:.2f} τ_m={TM[-50]:.2f}/{TM[-40]:.2f}s(-50/-40)", "", final]
+    lines = ["alpha model amplitude table extraction", "",
+             f"whitening: {n_white}/{n_tot}   -70 |y_ss| mean: {c70m:.3f} nA",
+             f"after tau refinement: tau_f={TF[-50]:.2f}/{TF[-40]:.2f} tau_m={TM[-50]:.2f}/{TM[-40]:.2f}s(-50/-40)", "", final]
     y0_ = 0.95
     for L in lines:
         ax.text(0.02, y0_, L, fontsize=10,
@@ -414,8 +414,8 @@ def main():
                table=table, rows=rows, final=final)
     fjson = os.path.join(HERE, "2026-09-13_α模型_幅度表提取_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 
 if __name__ == "__main__":

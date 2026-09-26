@@ -1,4 +1,4 @@
-# kv43_amp30_check.py — −30 mV 峰电流组间对拍（论文锚 3.8→1.7 nA），复用已验证提取逻辑
+# kv43_amp30_check.py - peak current at -30 mV, between-group comparison (paper anchor 3.8->1.7 nA), reusing the verified extraction logic
 import scipy.io as sio, numpy as np, glob, os
 
 BASE = r"D:\data\doi_10_5061_dryad_76hdr7t6z\physiology_data\in_vitro\extracted"
@@ -32,7 +32,7 @@ def ipk_at(fn, target=-30.0):
     if not vals:
         return np.nan
     vals = np.asarray(vals, float)
-    # 尖峰伪迹修复：重复扫次 max/min>5 取小值
+    # spike-artifact repair: for repeated sweeps with max/min>5 take the smaller value
     if len(vals) >= 2 and vals.max() / max(vals.min(), 1e-12) > 5:
         return float(vals.min())
     return float(vals.mean())

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_慢记忆层_可识别性数学验证.py
-# 目的：纯数学验证（不用任何实验数据，秒级）——
-#   "快 Markov 层 x 慢记忆层"混合结构的可观测映射有没有等价族（简并）。
-# 五个探针：
-#   T1 核族混淆矩阵：拉伸指数核不同 (beta,tau) 在观测窗内能否互相冒充
-#   T2 离散 5 指数核对连续核的逼近残差（等价族存在性的直接度量）
-#   T3 乘积层吸收测试：慢核参数错时，快层振幅能否把残差吸回零
-#   T4 Jacobian SVD：混合参数在 2s 窗 / 90s 窗 / 双窗下的零方向计数
-#   T5 汇总判词
-# 判读标准（事先写死，不做事后调整）：
-#   T1: 窗内曲线相对差 <1e-3 且参数相对差 >30% -> 记"该窗存在简并方向"
-#   T2: 5 指数逼近残差 <1e-3 -> 记"离散核与连续核在窗内不可区分"
-#   T3: 错参慢核+自由快层残差 <真值的 1% -> 记"乘积层存在吸收简并"
-#   T4: 奇异值 < 最大奇异值*1e-8 -> 记零方向
-# 运行：python 本文件
+# 2026-09-13_slow-memory-layer_identifiability_math_validation.py
+# Purpose: pure math validation (no experimental data, seconds) --
+#   does the observable map of the "fast Markov layer x slow memory layer" hybrid structure have an equivalence family (degeneracy)?
+# Five probes:
+#   T1 kernel-family confusion matrix: can stretched-exponential kernels with different (beta,tau) impersonate each other within the observation window
+#   T2 approximation residual of a discrete 5-exponential kernel to continuous kernels (direct measure of equivalence-family existence)
+#   T3 product-layer absorption test: with a wrong slow kernel, can free fast-layer amplitudes absorb the residual back to zero
+#   T4 Jacobian SVD: null-direction count of hybrid parameters in the 2s window / 90s window / dual window
+#   T5 summary verdict
+# Reading criteria (pinned in advance, no post-hoc adjustment):
+#   T1: in-window curve relative difference <1e-3 with parameter relative difference >30% -> record "degenerate direction exists in this window"
+#   T2: 5-exponential approximation residual <1e-3 -> record "discrete and continuous kernels indistinguishable in the window"
+#   T3: wrong-parameter slow kernel + free fast layer residual <1% of truth -> record "product-layer absorption degeneracy exists"
+#   T4: singular value < max singular value *1e-8 -> record null direction
+# Run: python this_file
 import numpy as np
 import json
 import os
@@ -28,22 +28,22 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_JSON = os.path.join(HERE, "2026-09-13_慢记忆层_可识别性数学验证_结果.json")
 OUT_PNG = os.path.join(HERE, "2026-09-13_慢记忆层_可识别性数学验证.png")
 
-TAUS5 = np.logspace(1.0, np.log10(300.0), 5)   # 193 战役的固定慢核网格（秒）
+TAUS5 = np.logspace(1.0, np.log10(300.0), 5)   # fixed slow-kernel grid of the 193 campaign (seconds)
 
 
-# ---------- 核函数 ----------
+# ---------- kernel functions ----------
 def kernel_stretched(t, beta, tau):
-    """拉伸指数记忆核的生存/弛豫形式：m(t)=exp(-(t/tau)^beta)，beta=1 退回普通指数"""
+    """Stretched-exponential memory kernel survival/relaxation form: m(t)=exp(-(t/tau)^beta); beta=1 reduces to an ordinary exponential"""
     return np.exp(-(t / tau) ** beta)
 
 
 def kernel_powerlaw(t, gamma, tau):
-    """截断幂律：m(t)=(1+t/tau)^(-gamma)"""
+    """Truncated power law: m(t)=(1+t/tau)^(-gamma)"""
     return (1.0 + t / tau) ** (-gamma)
 
 
 def kernel_discrete5(t, w):
-    """战役旧离散核：sum_k w_k exp(-t/tau_k)，sum w = 1"""
+    """Legacy discrete kernel of the campaign: sum_k w_k exp(-t/tau_k), sum w = 1"""
     w = np.asarray(w)
     return np.sum(w[:, None] * np.exp(-t[None, :] / TAUS5[:, None]), axis=0)
 
@@ -52,7 +52,7 @@ def rel_diff(a, b):
     return float(np.max(np.abs(a - b)) / (np.max(np.abs(a)) + 1e-300))
 
 
-# ---------- T1：核族混淆矩阵 ----------
+# ---------- T1: kernel-family confusion matrix ----------
 def T1():
     windows = {"2s窗": np.linspace(1e-3, 2.0, 2000), "90s窗": np.linspace(1e-3, 92.9, 4000)}
     betas = np.array([0.30, 0.45, 0.60, 0.75, 0.90, 1.00])
@@ -69,7 +69,7 @@ def T1():
                     for t2 in taus:
                         if abs(b2 - b1) < 1e-12 and abs(t2 - t1) < 1e-12:
                             continue
-                        # 参数相对差
+                        # parameter relative difference
                         pd = max(abs(b2 - b1) / b1, abs(t2 - t1) / t1)
                         if pd < 0.30:
                             continue
@@ -83,10 +83,10 @@ def T1():
     return out, worst
 
 
-# ---------- T2：离散 5 核逼近连续核 ----------
+# ---------- T2: discrete 5-kernel approximation of continuous kernels ----------
 def T2():
     t = np.logspace(-3, np.log10(92.9), 3000)
-    A = np.exp(-t[:, None] / TAUS5[None, :])   # 设计矩阵
+    A = np.exp(-t[:, None] / TAUS5[None, :])   # design matrix
     res = {}
     targets = {
         "拉伸指数 beta=0.5, tau=30": kernel_stretched(t, 0.5, 30.0),
@@ -104,14 +104,14 @@ def T2():
     return res
 
 
-# ---------- T3：乘积层吸收测试 ----------
+# ---------- T3: product-layer absorption test ----------
 def T3():
     t = np.linspace(1e-3, 2.0, 5000)
-    # 真模型：快层双指数 x 慢层拉伸指数
+    # true model: fast-layer double exponential x slow-layer stretched exponential
     fast_true = lambda t, a1, t1, a2, t2: a1 * np.exp(-t / t1) + a2 * np.exp(-t / t2)
     y_true = fast_true(t, 0.6, 0.02, 0.4, 0.15) * kernel_stretched(t, 0.55, 40.0)
-    # 错慢核（beta 错）：快层 4 振幅参数自由（双指数振幅自由），用网格+lstsq
-    # 快层基：tau 网格上 6 个指数，振幅非负自由
+    # wrong slow kernel (beta wrong): 4 fast-layer amplitude parameters free (double-exponential amplitudes free), grid + lstsq
+    # fast-layer basis: 6 exponentials on a tau grid, non-negative free amplitudes
     tau_grid = np.array([0.005, 0.015, 0.04, 0.12, 0.35, 1.0])
     F = np.exp(-t[:, None] / tau_grid[None, :])
     floors = {}
@@ -128,18 +128,18 @@ def T3():
 
 # ---------- T4：Jacobian SVD ----------
 def hybrid_response(t, p):
-    """混合结构可观测（省略 G 与 (V-E)：只留形状）
-    快层：p_A^4 用双指数代理 a1 e^{-t/tf1}+a2 e^{-t/tf2}（a1+a2=1）
-    慢层：拉伸指数 beta,tau_s
-    参数：tf1, tf2, a1, beta, tau_s（5 个）"""
+    """Hybrid-structure observable (G and (V-E) omitted: shape only).
+    Fast layer: p_A^4 proxied by a double exponential a1 e^{-t/tf1}+a2 e^{-t/tf2} (a1+a2=1)
+    Slow layer: stretched exponential beta, tau_s
+    Parameters: tf1, tf2, a1, beta, tau_s (5 total)"""
     tf1, tf2, a1, beta, tau_s = p
     fast = a1 * np.exp(-t / tf1) + (1 - a1) * np.exp(-t / tf2)
     return fast * kernel_stretched(t, beta, tau_s)
 
 
 def T4():
-    p0 = np.array([0.018, 0.149, 0.45, 0.55, 40.0])   # 战役实测量级（18ms/149ms + 慢核）
-    names = ["tau_f1(快)", "tau_f2(中)", "a1(快振幅)", "beta(慢谱宽)", "tau_s(慢尺度)"]
+    p0 = np.array([0.018, 0.149, 0.45, 0.55, 40.0])   # campaign measured magnitudes (18ms/149ms + slow kernel)
+    names = ["tau_f1(fast)", "tau_f2(mid)", "a1(fast amplitude)", "beta(slow spectral width)", "tau_s(slow scale)"]
     windows = {
         "仅 2s 窗": np.linspace(1e-3, 2.0, 4000),
         "仅 90s 窗": np.logspace(-3, np.log10(92.9), 4000),
@@ -156,7 +156,7 @@ def T4():
             J = np.vstack([J1, J2])
         else:
             J = _jacobian(p0, t)
-        # 列归一（参数尺度差异）
+        # column normalization (parameter scale differences)
         col = np.linalg.norm(J, axis=0) + 1e-300
         sv = np.linalg.svd(J / col, compute_uv=False)
         rank = int(np.sum(sv > sv[0] * 1e-8))
@@ -178,13 +178,13 @@ def _jacobian(p0, t):
     return J
 
 
-# ---------- 主程序 ----------
+# ---------- main program ----------
 def main():
     print("=" * 64)
-    print(" 慢记忆层可识别性数学验证（纯数学，无实验数据）")
+    print(" slow-memory-layer identifiability math validation (pure math, no experimental data)")
     print("=" * 64, flush=True)
 
-    print("\n[T1] 拉伸指数核族内混淆（参数差>30% 且曲线差<1e-3 记简并）", flush=True)
+    print("\n[T1] within-family confusion of stretched-exponential kernels (parameter diff >30% with curve diff <1e-3 counts as degeneracy)", flush=True)
     t1, worst = T1()
     for wname, d in t1.items():
         print(f"  {wname}: 简并 {d['参数差>30%且曲线差<1e-3 的对数']} / {d['检测总对数']} 对")
@@ -193,7 +193,7 @@ def main():
         t1_verdict[wname] = "存在简并方向" if d["参数差>30%且曲线差<1e-3 的对数"] > 0 else "未见简并"
         print(f"    -> {wname}: {t1_verdict[wname]}")
 
-    print("\n[T2] 离散 5 核逼近连续核（残差<1e-3 记不可区分）", flush=True)
+    print("\n[T2] discrete 5-kernel approximation of continuous kernels (residual <1e-3 counts as indistinguishable)", flush=True)
     t2 = T2()
     t2_verdict = {}
     for name, d in t2.items():
@@ -201,11 +201,11 @@ def main():
         t2_verdict[name] = flag
         print(f"  {name}: 残差 {d['逼近残差(相对最大值)']} -> {flag}  权重 {d['最优权重']}")
 
-    print("\n[T3] 乘积层吸收（错慢核 + 自由快层 能否吸回零）", flush=True)
+    print("\n[T3] product-layer absorption (can wrong slow kernel + free fast layer absorb back to zero)", flush=True)
     t3 = T3()
     base = t3["真参残差基准"]
     t3_verdict = {}
-    print(f"  真参残差基准: {base}")
+    print(f"  true-parameter residual baseline: {base}")
     for k, v in t3.items():
         if k == "真参残差基准":
             continue
@@ -213,12 +213,12 @@ def main():
         t3_verdict[k] = flag
         print(f"  错参 {k}: 残差 {v} -> {flag}")
 
-    print("\n[T4] Jacobian SVD 零方向（判线：奇异值 < max*1e-8）", flush=True)
+    print("\n[T4] Jacobian SVD null directions (criterion: singular value < max*1e-8)", flush=True)
     t4, names, sv_store = T4()
     for wname, d in t4.items():
         print(f"  {wname}: 有效秩 {d['有效秩/总参数']}，零方向 {d['零方向数']}，奇异值 {d['奇异值']}")
 
-    print("\n[T5] 汇总判词", flush=True)
+    print("\n[T5] summary verdict", flush=True)
     lines = []
     lines.append(f"T1: 2s窗[{t1_verdict['2s窗']}]  90s窗[{t1_verdict['90s窗']}]")
     n_indist = sum(1 for v in t2_verdict.values() if v == "窗内不可区分")
@@ -235,13 +235,13 @@ def main():
                else "存在简并方向——见上面逐条")
     print(f"\n  总判词：{overall}")
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, axes = plt.subplots(2, 2, figsize=(13, 9))
     ax = axes[0, 0]
     t = np.logspace(-3, 2, 2000)
     for b in [0.3, 0.5, 0.7, 1.0]:
         ax.semilogx(t, kernel_stretched(t, b, 30.0), label=f"beta={b}, tau=30")
-    ax.set_title("T1 拉伸指数核族（tau=30s, 变 beta）", fontweight="bold")
+    ax.set_title("T1 stretched-exponential kernel family (tau=30s, varying beta)", fontweight="bold")
     ax.set_xlabel("t (s)"); ax.set_ylabel("m(t)"); ax.legend(); ax.grid(alpha=0.3)
 
     ax = axes[0, 1]
@@ -250,17 +250,17 @@ def main():
     A = np.exp(-t2[:, None] / TAUS5[None, :])
     w, *_ = np.linalg.lstsq(A, y, rcond=None)
     w = np.clip(w, 0, None); w /= w.sum()
-    ax.semilogx(t2, y, 'k-', lw=2, label="真 拉伸指数 beta=0.5")
-    ax.semilogx(t2, A @ w, 'r--', lw=1.5, label="离散5核最优逼近")
-    ax.set_title("T2 离散核冒充连续核", fontweight="bold")
+    ax.semilogx(t2, y, 'k-', lw=2, label="true stretched exp beta=0.5")
+    ax.semilogx(t2, A @ w, 'r--', lw=1.5, label="discrete 5-kernel best approximation")
+    ax.set_title("T2 discrete kernel impersonating a continuous kernel", fontweight="bold")
     ax.set_xlabel("t (s)"); ax.legend(); ax.grid(alpha=0.3)
 
     ax = axes[1, 0]
     for wname, sv in sv_store.items():
         ax.semilogy(range(1, len(sv) + 1), sv / sv[0], 'o-', label=wname)
-    ax.axhline(1e-8, color='r', ls='--', label='零方向判线 1e-8')
-    ax.set_title("T4 奇异值谱（列归一）", fontweight="bold")
-    ax.set_xlabel("序号"); ax.set_ylabel("sigma/sigma_max"); ax.legend(); ax.grid(alpha=0.3)
+    ax.axhline(1e-8, color='r', ls='--', label='null-direction criterion 1e-8')
+    ax.set_title("T4 singular-value spectrum (column normalized)", fontweight="bold")
+    ax.set_xlabel("index"); ax.set_ylabel("sigma/sigma_max"); ax.legend(); ax.grid(alpha=0.3)
 
     ax = axes[1, 1]
     ax.axis("off")
@@ -268,9 +268,9 @@ def main():
     for L in ["可识别性验证判词", ""] + lines + ["", f"总判词：{overall}"]:
         ax.text(0.03, y0, L, fontsize=11, fontweight="bold" if ("判词" in L) else "normal", wrap=True)
         y0 -= 0.085
-    fig.suptitle("慢记忆层 · 可识别性数学验证（无数据，纯结构分析）", fontsize=13, fontweight="bold")
+    fig.suptitle("slow memory layer · identifiability math validation (no data, pure structural analysis)", fontsize=13, fontweight="bold")
     fig.savefig(OUT_PNG, dpi=130, bbox_inches="tight")
-    print(f"\n  图落盘: {OUT_PNG}")
+    print(f"\n  figure saved: {OUT_PNG}")
 
     results = {"T1": t1, "T1_verdict": t1_verdict, "T1_worst_pairs": worst,
                "T2": t2, "T2_verdict": t2_verdict,
@@ -284,7 +284,7 @@ def main():
             return o.item()
         return str(o)
     json.dump(results, open(OUT_JSON, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=_jdefault)
-    print(f"  结果落盘: {OUT_JSON}")
+    print(f"  results saved: {OUT_JSON}")
 
 
 if __name__ == "__main__":

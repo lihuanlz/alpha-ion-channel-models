@@ -1,8 +1,8 @@
-# lei211_C1_合成回收.py
-# C1 对照（预注册 §3）：合成 sinactiv 测试段，回收 h_ss 档值误差须 <10%
-# 物理：+20 预脉冲后 m0=0.9, h0=0.02（全失活）；测试段 dh/dt=(h_ss-h)/τ_rec(V)，
-#       dm/dt=(0-m)/τ_deact(V)；I=G·m·h·(V-E_rev)+噪声(σ=11pA, 实测量级)
-# 用 J1 统计量（A=极值-末段, DF校正归一）回收 h(V)/h(-140)
+# lei211_C1_synthetic_recovery.py
+# C1 control (pre-registration section 3): synthetic sinactiv test segment; recovered h_ss level error must be < 10%
+# Physics: after the +20 prepulse m0 = 0.9, h0 = 0.02 (fully inactivated); test segment dh/dt = (h_ss - h)/tau_rec(V),
+#       dm/dt = (0 - m)/tau_deact(V); I = G*m*h*(V - E_rev) + noise (sigma = 11 pA, measured magnitude)
+# Recover h(V)/h(-140) with the J1 statistic (A = extremum minus end-segment, DF-corrected normalisation)
 import numpy as np
 
 DT = 2e-4
@@ -10,7 +10,7 @@ E_REV = -83.9
 G = 22.0  # nS
 SIG = 11.0
 
-# 测试条件（群体中位数）
+# test conditions (population medians)
 H_TRUE = {-140: 1.00, -120: 0.95, -100: 0.88, -60: 0.23, -40: 0.09, -20: 0.055}
 TREC = {-140: 0.0043, -120: 0.0053, -100: 0.0065, -60: 0.02, -40: 0.05, -20: 0.1}
 TDEC = {-140: 0.05, -120: 0.06, -100: 0.08, -60: 0.3, -40: 0.8, -20: 1.5}
@@ -24,7 +24,7 @@ for V, h_ss in H_TRUE.items():
     m = 0.9 * np.exp(-t / TDEC[V])
     h = h_ss + (0.02 - h_ss) * np.exp(-t / TREC[V])
     I = G * m * h * (V - E_REV) + rng.normal(0, SIG, len(t))
-    # J1 统计量
+    # J1 statistic
     late = np.mean(I[-int(0.05 / DT):])
     win = I[: int(0.2 / DT)]
     pk = np.min(win) if V < E_REV else np.max(win)
@@ -37,4 +37,4 @@ for V in H_TRUE:
     if err >= 10:
         ok = False
     print(f"{V:5d} | {H_TRUE[V]:.3f} | {h_rec:.3f} | {err:.1f}% {flag}")
-print("C1", "PASS" if ok else "FAIL", "（判线：全档误差<10%）")
+print("C1", "PASS" if ok else "FAIL", "(criterion: all-level error < 10%)")

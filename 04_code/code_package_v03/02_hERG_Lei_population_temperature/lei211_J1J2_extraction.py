@@ -1,9 +1,9 @@
-# lei211_J1J2_提取.py  (v2: 再漏减 + J4 E_rev 先行 + DF校正 h_ss)
-# 判线来源：预注册判决卡_Lei211_α群体_2026-09-21.md（冻结+修订A1/A2/A3）
-# J4: staircase 下坡(-70→-109, 1mV/3ms) 过零电压 -> E_rev 逐细胞
-# J1: h_ss(V) = [A(V)/(V-E_rev)] / [A(-140)/(-140-E_rev)]，A=瞬态幅度(极值-末段50ms)
-# J2: m_ss(V)=A_tail(V)/A_tail(+40)（尾峰-尾末段）；τ_act(V) 测试段上升沿(再漏减后)
-# SMOKE=1 三孔出图
+# lei211_J1J2_extraction.py  (v2: re-leak-correction + J4 E_rev first + DF-corrected h_ss)
+# criteria source: pre-registered verdict card Lei211 alpha population 2026-09-21 (frozen + amendments A1/A2/A3)
+# J4: staircase downslope (-70 -> -109, 1 mV/3 ms) zero-crossing voltage -> per-cell E_rev
+# J1: h_ss(V) = [A(V)/(V - E_rev)] / [A(-140)/(-140 - E_rev)], A = transient amplitude (extremum minus last 50 ms)
+# J2: m_ss(V) = A_tail(V)/A_tail(+40) (tail peak minus tail end); tau_act(V) test-segment rising edge (after re-leak-correction)
+# SMOKE=1 three-well figures
 import os, json
 import numpy as np
 import matplotlib
@@ -44,13 +44,13 @@ def load_current(proto, well):
 
 
 def releak_sweep(i5, v10):
-    """Lei 官方再漏减（lib/releakcorrect.py 移植）：I'=I+g*(V-V0)，g 最小化 |0.175-0.2s 窗均值|"""
+    """Lei official re-leak-correction (ported from lib/releakcorrect.py): I' = I + g*(V - V0), g minimises |mean of 0.175-0.2 s window|"""
     v = v10[::2][:len(i5)]
     v0 = v[0]
     wa, wb = int(0.175 / DT_I), int(0.2 / DT_I)
     win_i = i5[wa:wb]
     win_v = v[wa:wb] - v0
-    # |mean(I + g*dV)| 对 g 的闭式解：g = -mean(I)/mean(dV)（均值符号对齐）
+    # closed-form solution of |mean(I + g*dV)| for g: g = -mean(I)/mean(dV) (signs aligned by the means)
     mv = np.mean(win_v)
     g = 0.0 if abs(mv) < 1e-9 else -np.mean(win_i) / mv
     return i5 + g * (v - v0), g
@@ -63,20 +63,20 @@ def segments(v10):
 
 
 def extract_J4(well):
-    """staircase 下坡过零 -> E_rev"""
+    """staircase downslope zero-crossing -> E_rev"""
     _, V = load_protocol("staircaseramp")
     v10 = V[:, 0]
     I = load_current("staircaseramp", well)[:, 0]
     segs = segments(v10)
-    # 找 +40x0.5s 段（在 -80x1.0 之后、且其后紧跟 3ms 小步下坡）
+    # find the +40 x0.5 s segment (after -80 x1.0, immediately followed by the 3 ms small-step downslope)
     ramp_a = ramp_b = None
     for k, (vv, a, b) in enumerate(segs):
         if vv == 40 and 0.4 <= (b - a) * DT_V <= 0.6 and k + 1 < len(segs):
-            # 其后应为 -70 起步的 3ms 小步
+            # what follows should be the 3 ms small steps starting at -70
             vv2, a2, b2 = segs[k + 1]
             if vv2 == -70 and (b2 - a2) * DT_V < 0.02:
                 ramp_a = a2
-                # 延续到 >= -109 的小步结束
+                # continue to the end of the small steps reaching >= -109
                 j = k + 1
                 while j < len(segs) and (segs[j][2] - segs[j][1]) * DT_V < 0.02:
                     ramp_b = segs[j][2]
@@ -89,14 +89,14 @@ def extract_J4(well):
     i_seg = I[ia:ib]
     n = min(len(v_seg), len(i_seg))
     v_seg, i_seg = v_seg[:n].copy(), i_seg[:n].copy()
-    # 稳健化：5点中值平滑 + 跳过坡首 15ms（+40→-70 步进伪影）
+    # robustify: 5-point median smoothing + skip the first 15 ms of the slope (+40 -> -70 step artefact)
     k_s = int(0.015 / DT_I)
     if len(i_seg) < k_s + 20:
         return None
     ker = np.ones(5) / 5
     i_sm = np.convolve(i_seg, ker, mode="same")
     s = np.sign(i_sm[k_s:])
-    cross = np.where(np.diff(s) < 0)[0]  # 仅 + 转 -（下坡电流由正转负）
+    cross = np.where(np.diff(s) < 0)[0]  # only + to - (downslope current turns from positive to negative)
     if len(cross) == 0:
         return None
     k = cross[0] + k_s
@@ -109,7 +109,7 @@ def extract_J1(well, e_rev):
     _, V = load_protocol("sinactiv")
     I = load_current("sinactiv", well)
     n_sw = I.shape[1]
-    # 噪声：再漏减后 -80 保持段
+    # noise: -80 holding segment after re-leak-correction
     i0c, _ = releak_sweep(I[: int(0.1 / DT_I), 0], V[: int(0.1 / DT_V), 0])
     sig = float(np.std(i0c[: int(0.09 / DT_I)]))
     A = np.full(n_sw, np.nan)
@@ -143,7 +143,7 @@ def extract_J1(well, e_rev):
             qc.append("low_snr")
             continue
         qc.append("ok")
-    # DF 校正归一
+    # DF-corrected normalisation
     A0 = A[0]
     if not np.isfinite(A0) or abs(A0) < 1e-9:
         return None, sig
@@ -151,7 +151,7 @@ def extract_J1(well, e_rev):
     for sw in range(n_sw):
         df = SIN_V[sw] - e_rev
         if abs(df) < 10:
-            continue  # -80 档剔除
+            continue  # -80 level excluded
         h[sw] = (A[sw] / df) / (A0 / (SIN_V[0] - e_rev))
     ok = np.array([q == "ok" for q in qc]) & np.isfinite(h) & (h >= -0.1) & (h <= 1.3)
     return {"h": h.tolist(), "A": A.tolist(), "ok": ok.tolist(), "qc": qc}, sig
@@ -184,7 +184,7 @@ def extract_J2(well):
         ta, tb = tail[0] // 2, tail[1] // 2
         tseg = ic[ta:tb]
         xa, xb = test[0] // 2, test[1] // 2
-        test_end = float(np.mean(ic[xb - int(0.05 / DT_I): xb]))  # 修订A4：减测试段末电平
+        test_end = float(np.mean(ic[xb - int(0.05 / DT_I): xb]))  # amendment A4: subtract end-of-test-segment level
         pk = float(np.max(tseg[: int(0.15 / DT_I)]))
         amp = pk - test_end
         atail[sw] = amp
@@ -224,21 +224,21 @@ def main():
             axes[0, 1].plot(np.array(ACT_V)[okm], mv[okm], "s-", label=w, ms=4)
             av = np.array(j2["atail"])
             axes[1, 0].plot(np.array(ACT_V)[okm], av[okm], "^-", label=w, ms=4)
-        axes[0, 0].set_title("J1 h_ss(V) DF校正（修订A2）")
+        axes[0, 0].set_title("J1 h_ss(V) DF-corrected (amendment A2)")
         axes[0, 0].axhline(1.0, color="gray", lw=0.5)
         axes[0, 0].set_xlabel("mV"); axes[0, 0].legend()
-        axes[0, 1].set_title("J2 m_ss(V) = A_tail/A_tail(+40)（修订A4）")
+        axes[0, 1].set_title("J2 m_ss(V) = A_tail/A_tail(+40) (amendment A4)")
         axes[0, 1].set_xlabel("mV")
-        axes[1, 0].set_title("J2 A_tail(V) 原始幅度 pA")
+        axes[1, 0].set_title("J2 A_tail(V) raw amplitude pA")
         axes[1, 0].set_xlabel("mV")
-        # A01 sactiv sweep6 再漏减前后
+        # A01 sactiv sweep6 before/after re-leak-correction
         _, V6 = load_protocol("sactiv")
         I6 = load_current("sactiv", "A01")[:, 6]
         ic6, g6 = releak_sweep(I6, V6[:, 6])
         tt = np.arange(len(I6)) * DT_I
-        axes[1, 1].plot(tt, I6, lw=0.5, label="再漏减前", color="C7")
-        axes[1, 1].plot(tt, ic6, lw=0.5, label=f"再漏减后 g={g6:.2f}", color="C0")
-        axes[1, 1].set_title("A01 sactiv sweep6(+40) 再漏减对照")
+        axes[1, 1].plot(tt, I6, lw=0.5, label="before re-leak-corr", color="C7")
+        axes[1, 1].plot(tt, ic6, lw=0.5, label=f"after re-leak-corr g={g6:.2f}", color="C0")
+        axes[1, 1].set_title("A01 sactiv sweep6(+40) re-leak-correction comparison")
         axes[1, 1].legend(fontsize=8)
         fig.tight_layout()
         png = os.path.join(ROOT, "lei211_J1J2_冒烟.png")

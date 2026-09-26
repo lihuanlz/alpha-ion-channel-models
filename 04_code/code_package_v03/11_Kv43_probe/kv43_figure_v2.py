@@ -1,4 +1,4 @@
-# kv43_figure_v2.py — Kv4.3+HCN 单数据集三角验证终图（2×3，登记层）
+# kv43_figure_v2.py - Kv4.3+HCN single-dataset triangulation final figure (2x3, registry tier)
 import os, sys
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ ax.set_xticks([1, 2]); ax.set_xticklabels([f"veh\n({len(viq)})", f"6-OHDA\n({len
 ax.set_ylabel(r"per-cell $V_{1/2}$ inact (mV)")
 ax.set_title(f"Kv4.3 availability $V_{{1/2}}$ unchanged\n(Δ1.3%, p={p:.2f}) ✓ paper", fontsize=6.4)
 
-# b 幅度锚点 I(-30) + 论文星
+# b amplitude anchor I(-30) + paper star
 ax = axes[0, 1]
 box_strip(ax, vaq.Imax_nA, 1, VC); box_strip(ax, laq.Imax_nA, 2, LC)
 ax.scatter([1], [3.8], marker="*", s=70, c="#B22222", zorder=6)
@@ -74,7 +74,7 @@ ax.set_xticks([1, 2]); ax.set_xticklabels([f"veh\n({len(vaq)})", f"6-OHDA\n({len
 ax.set_ylabel(r"per-cell peak $I$(−30 mV) (nA)")
 ax.set_title(f"Kv4.3 amplitude down-regulated\n(p={p:.0e}) ★ paper 3.8/1.7 nA ✓", fontsize=6.4)
 
-# c 激活脚部 s_ref
+# c activation foot s_ref
 ax = axes[0, 2]
 box_strip(ax, vaq.s_ref, 1, VC); box_strip(ax, laq.s_ref, 2, LC)
 p = p_mwu(vaq.s_ref, laq.s_ref)
@@ -82,9 +82,9 @@ ax.set_xticks([1, 2]); ax.set_xticklabels([f"veh\n({len(vaq)})", f"6-OHDA\n({len
 ax.set_ylabel(r"activation-foot $s_{ref}$ (mV$^{-1}$)")
 ax.set_title(f"activation slope differs (Δ−28%,\np={p:.0e}) ✓ paper", fontsize=6.4)
 
-# d 表观失活 τ（无模型 t50）
+# d apparent inactivation tau (model-free t50)
 ax = axes[1, 0]
-t50v = bx[(bx.group == "veh")].pk_nA  # placeholder 防错
+t50v = bx[(bx.group == "veh")].pk_nA  # placeholder safeguard
 import scipy.io as sio, glob
 def t50_list(d):
     out = []
@@ -116,7 +116,7 @@ ax.set_ylabel(r"apparent decay $t_{50}$(−20 mV) (ms)")
 ax.set_title(f"apparent inactivation slows (Δ+{100*(np.median(t50l)/np.median(t50v)-1):.0f}%,\n"
              f"p={p:.0e}) — NOT reported by paper", fontsize=6.4)
 
-# e HCN 幅度 −120（Tukey 栅栏去伪迹）
+# e HCN amplitude at -120 (Tukey fence de-artifacted)
 ax = axes[1, 1]
 def tukey(d):
     d = np.asarray(d, float); d = d[np.isfinite(d)]
@@ -133,7 +133,7 @@ ax.set_ylabel(r"|$I_h$|(−120 mV) (nA)")
 ax.set_title(f"HCN amplitude unchanged\n(p={p:.2f}) ✓ paper", fontsize=6.4)
 n_excl_e = nv + nl
 
-# f HCN τ_act −120（R²≥0.8 且 τ<2 s 且幅度>0.1 nA）
+# f HCN tau_act at -120 (R2>=0.8 and tau<2 s and amplitude>0.1 nA)
 ax = axes[1, 2]
 def hcn_tau(g):
     s = hc[(hc.group == g) & (abs(hc.V_cond + 120) < 1) & (hc.fit_R2 >= 0.8)

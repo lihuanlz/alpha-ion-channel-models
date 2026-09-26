@@ -1,14 +1,14 @@
-# 2026-09-14_α模型_药物卡3_全药库全景参数表.py
+# 2026-09-14_alpha-model_drug-card3_full-library_panorama_parameter_table.py
 # ============================================================================
-# 药物卡3：全药库全景参数表（普查提取卡；判线见
-#   预注册_α模型_药物卡3_全药库全景参数表_2026-09-14.md）
+# Drug card 3: full-library panorama parameter table (census extraction card; criteria see
+#   预注册_α模型_药物卡3_全药库全景参数表_2026-09-14.md)
 #
-# 数据：本地 a6k5t\hERG* 全部数据集 subtracted\ted\ted.xlsx（不碰大 csv）
-# 单元 = (细胞 × 浓度段)；k_obs = 卡2 锚定非线性估计器（单指数+漂移）
-# 门：可判门槛 / L1 Hill 锚比∈[0.7,1.4] / 端点 Welch t / E-4031 R_E 参考
-# 合成自检：单浓度型+累积型各一，IC50 找回比∈[0.7,1.4] 且端点 t 可证
+# Data: local a6k5t\hERG* all datasets subtracted\ted\ted.xlsx (the large csv is not touched)
+# Unit = (cell x concentration segment); k_obs = card-2 anchored nonlinear estimator (single exponential + drift)
+# Gates: judgeability threshold / L1 Hill anchor ratio in [0.7,1.4] / endpoint Welch t / E-4031 R_E reference
+# Synthetic self-check: one single-concentration type + one cumulative type, IC50 recovery ratio in [0.7,1.4] and endpoint t provable
 #
-# 运行：Spyder %runfile '...py' --wdir 。SMOKE=1 冒烟 3 数据集。
+# Run: Spyder %runfile '...py' --wdir. SMOKE=1 smoke: 3 datasets.
 # ============================================================================
 import os, json
 import numpy as np
@@ -24,7 +24,7 @@ SMOKE_SETS = [("a6k5t-osfstorage-hERG-archivelab3", "dofetilide"),
               ("a6k5t-osfstorage-hERG-archivelab4", "pimozide"),
               ("a6k5t-osfstorage-hERG_Phase_II-archivelab1", "moxifloxacin")]
 
-# ---- 判线（钉死）----
+# ---- criteria (pinned) ----
 MIN_UNITS, MIN_CONCS, MIN_CELLS = 6, 3, 4
 MIN_ACTRL_PA, MIN_BSS, MIN_BSS_E, MIN_SWEEPS = 50.0, 0.05, 0.5, 10
 RATIO_LINE = (0.7, 1.4)
@@ -35,7 +35,7 @@ KGRID = np.logspace(-4.5, 0, 26)
 
 
 def null_fit(t, b):
-    """卡2 估计器：b_ss 锚定=末5扫中位；k 网格+d 线性 LS + curve_fit 精修。"""
+    """Card-2 estimator: b_ss anchored to the median of the last 5 sweeps; k grid + d linear LS + curve_fit polish."""
     bss = float(np.median(b[-5:]))
     tt2 = float(np.sum(t * t))
     E = 1.0 - np.exp(-np.outer(KGRID, t))
@@ -83,7 +83,7 @@ def load_dataset(tedx):
 
 
 def extract_units(rows):
-    """一个细胞 → (对照A, [(conc_nM, t, b)], e4031)。"""
+    """One cell -> (control A, [(conc_nM, t, b)], e4031)."""
     tn0 = sorted((r for r in rows
                   if (r[5] == "Y" and (r[2] == 0.0 or "control" in r[1] or "vehicle" in r[1]))
                   or "control" in r[1] or "vehicle" in r[1]), key=lambda r: r[0])
@@ -93,8 +93,8 @@ def extract_units(rows):
     if not tn0 or not drg:
         return None
     A_ctrl = float(np.median([r[4] for r in tn0[-5:]]))
-    # 单位归一（v2 钉死）：不同实验室 Ramp 游标单位混杂（pA / nA / A 实证皆存在）
-    # |A|<1e-6 → 安培 ×1e12；[1e-6,0.02) → fA 级不可能，排除；[0.02,50) → nA ×1e3；≥50 → pA
+    # Unit normalization (pinned in v2): Ramp cursor units are mixed across laboratories (pA / nA / A all proven to exist)
+    # |A|<1e-6 -> amperes x1e12; [1e-6,0.02) -> fA scale impossible, excluded; [0.02,50) -> nA x1e3; >=50 -> pA
     a0 = abs(A_ctrl)
     if a0 < 1e-6:
         scale = 1e12
@@ -185,7 +185,7 @@ def analyze_dataset(arch, drug, ds_dir):
     concs = sorted(set(round(u["conc_nM"], 6) for u in units))
     res = dict(n_units=len(units), n_cells=ncells, n_concs=len(concs),
                concs_nM=concs, units=units, kE4031_med=float(np.median(kE)) if kE else None)
-    # 可判门槛
+    # judgeability threshold
     if not (len(units) >= MIN_UNITS and len(concs) >= MIN_CONCS and ncells >= MIN_CELLS):
         res["判"] = "样本不足"
         return res
@@ -202,7 +202,7 @@ def analyze_dataset(arch, drug, ds_dir):
         L1["过"] = None
         L1["注"] = "实验室锚缺失"
     res["L1"] = L1
-    # 浓度依赖（端点 t）
+    # concentration dependence (endpoint t)
     kk = [(u["conc_nM"], u["k_obs"]) for u in units if u["k_obs"]]
     gB = dict(判="组不足")
     if len(set(round(c, 6) for c, _ in kk)) >= 3:
@@ -218,14 +218,14 @@ def analyze_dataset(arch, drug, ds_dir):
                       p_one_side=p1, k_lo=float(k[lo].mean()), k_hi=float(k[hi].mean()),
                       n_lo=int(lo.sum()), n_hi=int(hi.sum()))
     res["B"] = gB
-    # E-4031 参照
+    # E-4031 reference
     if kE and gB.get("k_hi"):
         res["R_E"] = float(np.median(kE) / gB["k_hi"])
     res["判"] = "可判"
     return res
 
 
-# ------------------------------------------------------------ 合成自检
+# ------------------------------------------------------------ synthetic self-check
 def synth_check():
     def synth_units(kind):
         units = []
@@ -256,20 +256,20 @@ def synth_check():
         p1 = float(p2 / 2) if tstat > 0 else 1.0
         ok = RATIO_LINE[0] <= ratio <= RATIO_LINE[1] and p1 < B_P
         ok_all &= ok
-        print(f"  [合成 {kind}] IC50 找回比 {ratio:.3f} 端点p {p1:.5f} -> {'过' if ok else '不过'}", flush=True)
+        print(f"  [synthetic {kind}] IC50 recovery ratio {ratio:.3f} endpoint p {p1:.5f} -> {'pass' if ok else 'fail'}", flush=True)
     return bool(ok_all)
 
 
-# ------------------------------------------------------------ 主跑
+# ------------------------------------------------------------ main run
 print("=" * 76, flush=True)
-print(" 药物卡3 · 全药库全景参数表（普查提取卡）", flush=True)
+print(" drug card 3 · full-library panorama parameter table (census extraction card)", flush=True)
 print("=" * 76, flush=True)
 
-print("\n[合成自检]", flush=True)
+print("\n[synthetic self-check]", flush=True)
 synth_ok = synth_check()
-print(f"  合成自检 {'过' if synth_ok else '不过——全卡降级登记'}", flush=True)
+print(f"  synthetic self-check {'pass' if synth_ok else 'fail -- whole card downgraded to registry'}", flush=True)
 
-# 数据集清单
+# dataset inventory
 datasets = []
 for arch in sorted(os.listdir(PACK)):
     d0 = os.path.join(PACK, arch)
@@ -281,7 +281,7 @@ for arch in sorted(os.listdir(PACK)):
             datasets.append((arch, drug, ds))
 if SMOKE:
     datasets = [d for d in datasets if (d[0], d[1]) in SMOKE_SETS]
-print(f"\n数据集: {len(datasets)}（{'冒烟' if SMOKE else '全量'}）", flush=True)
+print(f"\ndatasets: {len(datasets)} ({'smoke' if SMOKE else 'full'})", flush=True)
 
 result = {"预注册": "预注册_α模型_药物卡3_全药库全景参数表_2026-09-14.md",
           "合成自检": synth_ok, "datasets": {}, "汇总": {}}
@@ -294,12 +294,12 @@ for i, (arch, drug, ds) in enumerate(datasets):
     result["datasets"][key] = r
     tag = r.get("判", "?")
     l1 = r.get("L1") or {}
-    line = (f"  [{i + 1}/{len(datasets)}] {key}: {tag} 单元{r.get('n_units', 0)}"
-            f" IC50比 {l1.get('ratio_ic50', float('nan')):.2f}" if l1 else
-            f"  [{i + 1}/{len(datasets)}] {key}: {tag} 单元{r.get('n_units', 0)}")
+    line = (f"  [{i + 1}/{len(datasets)}] {key}: {tag} units {r.get('n_units', 0)}"
+            f" IC50 ratio {l1.get('ratio_ic50', float('nan')):.2f}" if l1 else
+            f"  [{i + 1}/{len(datasets)}] {key}: {tag} units {r.get('n_units', 0)}")
     print(line, flush=True)
 
-# 汇总（只描述不判决）
+# summary (descriptive only, no verdict)
 rows = []
 for key, r in result["datasets"].items():
     if r.get("判") != "可判":
@@ -320,8 +320,8 @@ result["汇总"] = dict(可判数据集=len(rows), L1过率=float(np.mean([bool(
                     分药IC50比=summ)
 
 print("\n" + "=" * 76, flush=True)
-print(f" 可判 {len(rows)}/{len(datasets)}；L1过率 {result['汇总']['L1过率']}; "
-      f"浓度依赖可证率 {result['汇总']['浓度依赖可证率']}", flush=True)
+print(f" judgeable {len(rows)}/{len(datasets)}; L1 pass rate {result['汇总']['L1过率']}; "
+      f"concentration-dependence provable rate {result['汇总']['浓度依赖可证率']}", flush=True)
 
 sfx = "_冒烟" if SMOKE else ""
 fj = os.path.join(HERE, f"2026-09-14_α模型_药物卡3_全药库全景参数表{sfx}_结果.json")
@@ -346,9 +346,9 @@ def _clean(o):
 
 
 json.dump(_clean(result), open(fj, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print("  结果落盘:", fj, flush=True)
+print("  results saved:", fj, flush=True)
 
-# CSV 全景表
+# CSV panorama table
 import csv as _csv
 fc = os.path.join(HERE, f"2026-09-14_α模型_药物卡3_全景表{sfx}.csv")
 with open(fc, "w", newline="", encoding="utf-8-sig") as w:
@@ -356,9 +356,9 @@ with open(fc, "w", newline="", encoding="utf-8-sig") as w:
     wr.writeheader()
     for r in rows:
         wr.writerow(r)
-print("  全景表落盘:", fc, flush=True)
+print("  panorama table saved:", fc, flush=True)
 
-# ------------------------------------------------------------ 图
+# ------------------------------------------------------------ figure
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -369,11 +369,11 @@ fig, ax = plt.subplots(1, 3, figsize=(15, 5))
 xs = [r["ic50_ratio"] for r in rows if r["ic50_ratio"]]
 ax[0].hist(xs, bins=20, color="#4472C4")
 ax[0].axvline(0.7, ls="--", c="r"); ax[0].axvline(1.4, ls="--", c="r")
-ax[0].set_title(f"L1 IC50 自提/锚 比分布（n={len(xs)}）"); ax[0].grid(alpha=0.3)
+ax[0].set_title(f"L1 IC50 self-extracted/anchor ratio distribution (n={len(xs)})"); ax[0].grid(alpha=0.3)
 ys = [r["R_E"] for r in rows if r["R_E"]]
 ax[1].hist(np.log10(np.clip(ys, 0.05, 1e4)), bins=20, color="#70AD47")
 ax[1].axvline(np.log10(3), ls="--", c="r"); ax[1].axvline(np.log10(2), ls="--", c="orange")
-ax[1].set_title(f"log10 R_E 分布（n={len(ys)}，红=灌注否线3）"); ax[1].grid(alpha=0.3)
+ax[1].set_title(f"log10 R_E distribution (n={len(ys)}, red = perfusion-rejected line 3)"); ax[1].grid(alpha=0.3)
 bd = {}
 for r in rows:
     bd.setdefault(r["drug"], []).append(r["ic50_ratio"])
@@ -385,8 +385,8 @@ ax[2].hlines(yv, [s[0] for s in spans], [s[1] for s in spans], color="#999")
 ax[2].plot(meds, yv, "o", color="#C00000")
 ax[2].axvline(0.7, ls="--", c="r"); ax[2].axvline(1.4, ls="--", c="r")
 ax[2].set_yticks(yv); ax[2].set_yticklabels(names, fontsize=6)
-ax[2].set_title("分药 IC50 比（点=中位，线=跨实验室极差）"); ax[2].grid(alpha=0.3)
+ax[2].set_title("per-drug IC50 ratio (dots = median, lines = cross-lab range)"); ax[2].grid(alpha=0.3)
 fig.tight_layout()
 fp = os.path.join(HERE, f"2026-09-14_α模型_药物卡3_全景参数表{sfx}.png")
 fig.savefig(fp, dpi=130, bbox_inches="tight")
-print("  图落盘:", fp, flush=True)
+print("  figure saved:", fp, flush=True)

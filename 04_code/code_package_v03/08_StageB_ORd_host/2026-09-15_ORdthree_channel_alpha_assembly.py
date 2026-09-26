@@ -1,31 +1,31 @@
 # -*- coding: utf-8 -*-
 """
-2026-09-15 · ORd α 化组装 + AP 仿真（v1.1：Kr+Ks 主臂 + INa 登记失败臂）
+2026-09-15 · ORd alpha-ised assembly + AP simulation (v1.1: Kr+Ks main arm + INa registry failure arm)
 ====================================================================================
-预注册：结果\\预注册_ORd三通道α化组装_2026-09-15.md（v1.0 + v1.1 修订，判线正式跑前钉死）
+Preregistration: 结果\预注册_ORd三通道α化组装_2026-09-15.md (v1.0 + v1.1 revision, criteria pinned before the formal run)
 
-v1.1 要点：
-  主臂 = Kr+Ks 双通道 α 化（INa 保留官方）；
-  N-arm = INa 换芯登记臂（G∈{1,16}×100拍，文档化"表观 m∞ 细胞级不可携带"失败模式）；
-  ICaL 保留官方（CaV12 模型卡 §5 激活表缺口）。
-56 态：0–48 ORd、49 qNet、50 m_Kr、51 h_Kr、52 D_Kr、53 m_Na、54 h_Na、55 a_dyn_Ks。
+v1.1 key points:
+  main arm = Kr+Ks dual-channel alpha-isation (INa kept official);
+  N-arm = INa swap-in registry arm (G in {1,16} x 100 beats, documenting the "apparent m_inf not cell-portable" failure mode);
+  ICaL kept official (CaV12 model card section 5 activation-table gap).
+56 states: 0-48 ORd, 49 qNet, 50 m_Kr, 51 h_Kr, 52 D_Kr, 53 m_Na, 54 h_Na, 55 a_dyn_Ks.
 
-判线（v1.1 §3，正式跑前钉死）：
-  J1 稳态：末10拍 APD90 极差 <0.5ms（CL=1000，500拍）
-  J2 形态：|APD90−252.118|≤2%；APA∈[124.4,130.0]；RMP∈[−95,−85]；qNet∈[0.05,0.12]
-  J3a Kr单换(G=0.2943)：APD90 与 B2-stat 253.965 差≤1%
-  J3b Ks单换(G_Ks 标定值)：J1+J2 带内
-  J3c N-arm 登记成立：APA<90 且 G×16 下 ΔAPA<5mV（饱和签名；APA≥90 属意外，升级重议）
-  J4 上冲：dV/dt_max∈[50,500] V/s（登记比值）
-  J5 频率：CL{2000,1000,500,300}×200拍 两臂，APD90 随频率单调缩短 + 1:1 夺获（登记判）
-  J6 电流量级：IKr/IKs 峰与参考臂比值∈[0.2,5]（INa/ICaL 仅 ≈1 sanity 登记）
-  总判：J1+J2+J3+J4 全过 = 组装封卷。J5/J6 登记判。
-敏感性臂（正式）：S1 Q10_Ks=2.0 / S2 Q10_Ks=3.0 / S3 τ_act×0.5（各重标 G_Ks + 300拍）
+Criteria (v1.1 section 3, pinned before the formal run):
+  J1 steady state: last-10-beat APD90 range <0.5 ms (CL=1000, 500 beats)
+  J2 morphology: |APD90-252.118|<=2%; APA in [124.4,130.0]; RMP in [-95,-85]; qNet in [0.05,0.12]
+  J3a Kr-only swap (G=0.2943): APD90 within 1% of B2-stat 253.965
+  J3b Ks-only swap (calibrated G_Ks): inside the J1+J2 bands
+  J3c N-arm registry holds: APA<90 and delta APA<5 mV under G x16 (saturation signature; APA>=90 would be unexpected, escalate)
+  J4 upstroke: dV/dt_max in [50,500] V/s (ratio registered)
+  J5 rate: CL{2000,1000,500,300} x 200 beats, both arms, APD90 monotonically shortens with rate + 1:1 capture (registry judgement)
+  J6 current magnitudes: IKr/IKs peak ratio vs reference arm in [0.2,5] (INa/ICaL only ~1 sanity registry)
+  overall: J1+J2+J3+J4 all pass = assembly SEALED. J5/J6 are registry judgements.
+Sensitivity arms (formal): S1 Q10_Ks=2.0 / S2 Q10_Ks=3.0 / S3 tau_act x0.5 (each recalibrates G_Ks + 300 beats)
 
-环境变量：SMOKE=1 冒烟。
-纪律：本侧 ast.parse + SMOKE 冒烟；正式跑用户 Spyder：
+Environment variable: SMOKE=1 smoke.
+Discipline: this side runs ast.parse + SMOKE smoke; the formal run is done by the user in Spyder:
   %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/2026-09-15_ORd三通道α化组装.py' --wdir
-输出：本脚本同目录 _结果.json/.png（冒烟带 _冒烟 后缀）。
+Output: _结果.json/.png next to this script (smoke carries the _冒烟 suffix).
 """
 
 import os
@@ -44,12 +44,12 @@ FEDIDA_CSV = os.path.join(BASE, "2026-09-15_Kα2_Fedida2024_Fig3B_wtEQ_数字化
 
 SMOKE = os.environ.get("SMOKE", "0") == "1"
 
-# ---- 拍数预算 ----
+# ---- beat budget ----
 CAL_BEATS = int(os.environ.get("CAL_BEATS", "12" if SMOKE else "60"))
 REF_BEATS = int(os.environ.get("REF_BEATS", "25" if SMOKE else "500"))
 MAIN_BEATS = int(os.environ.get("MAIN_BEATS", "25" if SMOKE else "500"))
 J3_BEATS = int(os.environ.get("J3_BEATS", "15" if SMOKE else "200"))
-J3A_BEATS = int(os.environ.get("J3A_BEATS", "15" if SMOKE else "500"))   # 与 B2 锚同拍数，同基准对拍
+J3A_BEATS = int(os.environ.get("J3A_BEATS", "15" if SMOKE else "500"))   # same beat count as the B2 anchor, same-baseline comparison
 NARM_BEATS = int(os.environ.get("NARM_BEATS", "10" if SMOKE else "100"))
 J5_BEATS = int(os.environ.get("J5_BEATS", "12" if SMOKE else "200"))
 S_BEATS = int(os.environ.get("S_BEATS", "300"))
@@ -62,10 +62,10 @@ B0_APD90 = 252.1181387725961
 B2_GKR = 0.29427271762092816
 B2_CTRL_APD90 = 253.96494081245848
 
-# ---- 温度桥（预注册 §2.4 钉死）----
+# ---- temperature bridge (pinned in preregistration section 2.4) ----
 Q10_KR = 2.5; QFAC_KR = Q10_KR ** ((37.0 - 21.5) / 10.0)     # ÷4.138
 Q10_NA = 1.8; QFAC_NA = Q10_NA ** ((37.0 - 35.0) / 10.0)     # ÷1.125
-Q10_KS = 2.5; QFAC_KS = Q10_KS ** 1.5                        # ÷3.952（主臂）
+Q10_KS = 2.5; QFAC_KS = Q10_KS ** 1.5                        # /3.952 (main arm)
 
 RT_F = 8314.0 * 310.0 / 96485.0
 NAO = 140.0
@@ -81,7 +81,7 @@ def load_mod(name, filename):
 
 
 class Lut:
-    """线性插值查找表，端点外钳制。"""
+    """Linear-interpolation lookup table, clamped outside the endpoints."""
     def __init__(self, xs, ys):
         o = np.argsort(xs)
         self.xs = np.asarray(xs, dtype=float)[o]
@@ -91,10 +91,10 @@ class Lut:
 
 
 # ----------------------------------------------------------------------------
-# α 表
+# alpha tables
 # ----------------------------------------------------------------------------
 def build_tabs_kr(eng):
-    """hERG 四表（B2 build_alpha_tabs 同逻辑，TAU_ARM=1，Q10=2.5）。"""
+    """hERG four tables (same logic as B2 build_alpha_tabs, TAU_ARM=1, Q10=2.5)."""
     amp = json.load(open(eng.F_AMP, encoding="utf-8"))
     hook = json.load(open(eng.F_HOOK, encoding="utf-8"))
     inact = json.load(open(eng.F_INACT, encoding="utf-8"))
@@ -113,7 +113,7 @@ def build_tabs_kr(eng):
 
 
 def build_tabs_na():
-    """Nav1.5 三表（模型卡 §3.1/3.3/3.4；τ ÷QFAC_NA）——仅供 N-arm 登记臂。"""
+    """Nav1.5 three tables (model card sections 3.1/3.3/3.4; tau / QFAC_NA) - for the N-arm registry arm only."""
     tm = Lut([-20, -10, 0, 10, 20, 30, 40],
              [0.075, 0.0323, 0.0262, 0.0264, 0.0251, 0.0216, 0.0216])
     th = Lut([-30, -20, -10, 0, 10, 20, 30, 40],
@@ -125,7 +125,7 @@ def build_tabs_na():
 
 
 def build_tabs_ks_scaled(q10, tscale):
-    """IKs：a_ss Boltzmann + Fedida τ_act 25 点（s→ms，÷q10^1.5，×tscale）。"""
+    """IKs: a_ss Boltzmann + Fedida tau_act 25 points (s->ms, / q10^1.5, x tscale)."""
     qfac = q10 ** 1.5
     xs, ys = [], []
     with open(FEDIDA_CSV, encoding="utf-8-sig") as fh:
@@ -142,7 +142,7 @@ def build_tabs_ks():
 
 
 # ----------------------------------------------------------------------------
-# 组装 rhs（B0 移植件 + 通道置换；冻结官方门；电导置零）
+# assembly rhs (B0 port + channel replacement; official gates frozen; conductances zeroed)
 # ----------------------------------------------------------------------------
 def build_asm(b0, P_ctrl, tabs, G, swaps):
     P2 = list(P_ctrl)
@@ -217,7 +217,7 @@ def wrap_ref(b0, P_ctrl):
 
 
 # ----------------------------------------------------------------------------
-# 跑拍
+# pacing
 # ----------------------------------------------------------------------------
 def run_beats(b0, rhs, y0, nbeats, cl, label="", keep_last=False, keep_currents=False):
     from scipy.integrate import solve_ivp
@@ -235,7 +235,7 @@ def run_beats(b0, rhs, y0, nbeats, cl, label="", keep_last=False, keep_currents=
         sol = solve_ivp(f, (0.0, cl), y, method="LSODA", t_eval=t_rec,
                         rtol=1e-7, atol=1e-9)
         if not sol.success:
-            print(f"    {label} 拍 {b + 1}: LSODA 失败 {sol.message}", flush=True)
+            print(f"    {label} beat {b + 1}: LSODA failed {sol.message}", flush=True)
             break
         v = sol.y[0]
         y = sol.y[:, -1].copy()
@@ -255,8 +255,8 @@ def run_beats(b0, rhs, y0, nbeats, cl, label="", keep_last=False, keep_currents=
                 out["cur"] = cur
         if (b + 1) % 50 == 0 or b == 0:
             el = time.time() - t0
-            print(f"    {label} 拍 {b + 1}/{nbeats}  APD90={apd[b]:7.2f}ms"
-                  f"  qNet={qnet[b]:.4f}  用时{el:.0f}s", flush=True)
+            print(f"    {label} beat {b + 1}/{nbeats}  APD90={apd[b]:7.2f}ms"
+                  f"  qNet={qnet[b]:.4f}  took {el:.0f}s", flush=True)
     out["y_end"] = y
     return apd[:nd], apa[:nd], qnet[:nd], out
 
@@ -287,7 +287,7 @@ def morph_check(apd_last, apa_last, rmp_last, qnet_last):
 
 
 def cal_kr_on_apd(b0, P_ctrl, tabs, G_fix, swaps, y0, target, label):
-    """G_Kr 网格+二分锚 APD90（APD90 随 G_Kr 单调减）。"""
+    """G_Kr grid + bisection anchored on APD90 (APD90 decreases monotonically with G_Kr)."""
     kr_grid = [-1.0, -0.53, 0.0] if SMOKE else [-1.0, -0.70, -0.53, -0.22, 0.0]
 
     def probe(lg):
@@ -301,8 +301,8 @@ def cal_kr_on_apd(b0, P_ctrl, tabs, G_fix, swaps, y0, target, label):
     for lg in kr_grid:
         a, pa = probe(lg)
         pts.append((lg, a, pa))
-        print(f"  [{label}·网格] G_Kr=10^{lg:+.2f}={10 ** lg:.4g}  APD90={a:.2f}  APA={pa:.1f}"
-              f"  {'健康' if pa >= 90 else '病理'}", flush=True)
+        print(f"  [{label}·grid] G_Kr=10^{lg:+.2f}={10 ** lg:.4g}  APD90={a:.2f}  APA={pa:.1f}"
+              f"  {'healthy' if pa >= 90 else 'pathological'}", flush=True)
     healthy = [(lg, a) for lg, a, pa in pts if pa >= 90 and not math.isnan(a)]
     bracket = None
     for (l1, a1), (l2, a2) in zip(healthy, healthy[1:]):
@@ -312,19 +312,19 @@ def cal_kr_on_apd(b0, P_ctrl, tabs, G_fix, swaps, y0, target, label):
     if bracket is None:
         if healthy:
             lg, a = min(healthy, key=lambda p: abs(p[1] - target))
-            print(f"  [{label}] 无括弧，取最贴线健康点 G_Kr=10^{lg:+.2f}（贴线登记）", flush=True)
+            print(f"  [{label}] no bracket; taking the closest healthy point G_Kr=10^{lg:+.2f} (borderline registry)", flush=True)
             return 10.0 ** lg, a, bool(abs(a - target) <= 0.02 * target)
         lg, a, pa = min(pts, key=lambda p: abs((p[1] if not math.isnan(p[1]) else 9e3) - target))
-        print(f"  [{label}] 无健康点——照实登记", flush=True)
+        print(f"  [{label}] no healthy point - registered as-is", flush=True)
         return 10.0 ** lg, a, False
     lo, hi = bracket
     best = None
     for it in range(KR_ITERS):
         mid = 0.5 * (lo + hi)
         a, pa = probe(mid)
-        print(f"  [{label}·二分 {it + 1}] G_Kr=10^{mid:.3f}={10 ** mid:.4g}  APD90={a:.2f}  APA={pa:.1f}", flush=True)
+        print(f"  [{label}·bisect {it + 1}] G_Kr=10^{mid:.3f}={10 ** mid:.4g}  APD90={a:.2f}  APA={pa:.1f}", flush=True)
         if pa < 90.0 or math.isnan(a) or a > target:
-            lo = mid           # APD 过长/不健康 -> G_Kr 太小，上移
+            lo = mid           # APD too long/unhealthy -> G_Kr too small, move up
         else:
             hi = mid
         best = (mid, a, pa)
@@ -335,22 +335,22 @@ def cal_kr_on_apd(b0, P_ctrl, tabs, G_fix, swaps, y0, target, label):
 
 
 def cal_ks_on_charge(b0, P_ctrl, tabs, y0, qKs_ref, label):
-    """G_Ks 线性锚官方 IKs 电荷（swaps={Ks} 健康语境，IKs_α 对 G 精确线性）。"""
+    """G_Ks linear-anchored on the official IKs charge (swaps={Ks} healthy context; IKs_alpha exactly linear in G)."""
     rhs = build_asm(b0, P_ctrl, tabs, {"Ks": 1e-2}, ("Ks",))
-    _, _, _, out_p = run_beats(b0, rhs, y0, CAL_BEATS, 1000.0, label=f"{label}-探针",
+    _, _, _, out_p = run_beats(b0, rhs, y0, CAL_BEATS, 1000.0, label=f"{label}-probe",
                                keep_last=True, keep_currents=True)
     qKs_probe = float(np.trapezoid(out_p["cur"][5], out_p["t"]))
     if qKs_probe <= 0 or qKs_ref <= 0:
-        print(f"  [{label}] qKs 探针={qKs_probe:.3e} 非正——线性锚失效，G_Ks=1e-2 登记", flush=True)
+        print(f"  [{label}] qKs probe={qKs_probe:.3e} non-positive - linear anchor fails, G_Ks=1e-2 registered", flush=True)
         return 1e-2, qKs_probe, float("nan"), False
     G_Ks = 1e-2 * qKs_ref / qKs_probe
     rhs = build_asm(b0, P_ctrl, tabs, {"Ks": G_Ks}, ("Ks",))
-    _, _, _, out_v = run_beats(b0, rhs, y0, CAL_BEATS, 1000.0, label=f"{label}-验证",
+    _, _, _, out_v = run_beats(b0, rhs, y0, CAL_BEATS, 1000.0, label=f"{label}-verify",
                                keep_last=True, keep_currents=True)
     qKs_v = float(np.trapezoid(out_v["cur"][5], out_v["t"]))
     ok = bool(abs(qKs_v / qKs_ref - 1.0) <= 0.05)
-    print(f"  [{label}] 探针 qKs={qKs_probe:.3e} 靶 {qKs_ref:.3e} -> G_Ks={G_Ks:.4g}；"
-          f"验证比={qKs_v / qKs_ref:.3f} {'过' if ok else '贴线登记'}", flush=True)
+    print(f"  [{label}] probe qKs={qKs_probe:.3e} target {qKs_ref:.3e} -> G_Ks={G_Ks:.4g}; "
+          f"verify ratio={qKs_v / qKs_ref:.3f} {'pass' if ok else 'borderline registry'}", flush=True)
     return G_Ks, qKs_probe, qKs_v, ok
 
 
@@ -358,9 +358,9 @@ def cal_ks_on_charge(b0, P_ctrl, tabs, y0, qKs_ref, label):
 def main():
     t_start = time.time()
     print("=" * 76, flush=True)
-    print(" ORd α 化组装 + AP 仿真（v1.1：Kr+Ks 主臂 + INa 登记失败臂）", flush=True)
-    print(f" 模式: {'冒烟 SMOKE' if SMOKE else '正式'}  Q10: Kr {Q10_KR} Ks {Q10_KS}(÷{QFAC_KS:.3f})", flush=True)
-    print(f" 拍数: 参考{REF_BEATS} 主臂{MAIN_BEATS} 标定{CAL_BEATS} J3 {J3_BEATS} N-arm {NARM_BEATS} J5 {J5_BEATS}", flush=True)
+    print(" ORd alpha-ised assembly + AP simulation (v1.1: Kr+Ks main arm + INa registry failure arm)", flush=True)
+    print(f" mode: {'smoke SMOKE' if SMOKE else 'formal'}  Q10: Kr {Q10_KR} Ks {Q10_KS}(/{QFAC_KS:.3f})", flush=True)
+    print(f" beats: ref {REF_BEATS} main {MAIN_BEATS} calib {CAL_BEATS} J3 {J3_BEATS} N-arm {NARM_BEATS} J5 {J5_BEATS}", flush=True)
     print("=" * 76, flush=True)
 
     b0 = load_mod("b0_engine", "2026-09-14_α模型_StageB_B0_ORd移植地基复核.py")
@@ -373,23 +373,23 @@ def main():
     tabs_kr = build_tabs_kr(eng)
     tabs_na = build_tabs_na()
     tabs_ks = build_tabs_ks()
-    print(f"[表] hERG四表(16713003, ÷{QFAC_KR:.3f}) + Nav三表(N-arm专用) + IKs Fedida25点(÷{QFAC_KS:.3f}) 装载", flush=True)
+    print(f"[tables] hERG four tables (16713003, /{QFAC_KR:.3f}) + Nav three tables (N-arm only) + IKs Fedida 25 points (/{QFAC_KS:.3f}) loaded", flush=True)
 
     y0_alpha = list(y_ss) + [tabs_kr["m_ss"](v0), tabs_kr["h_ss"](v0), 0.0,
                              tabs_na["m_ss"](v0), tabs_na["h_ss"](v0),
                              (1.0 - BETA) * tabs_ks["a_ss"](v0)]
-    print(f"[初值] α 态 @v={v0:.2f}mV: m_Kr={y0_alpha[50]:.4f} h_Kr={y0_alpha[51]:.4f}"
+    print(f"[init] alpha states @v={v0:.2f}mV: m_Kr={y0_alpha[50]:.4f} h_Kr={y0_alpha[51]:.4f}"
           f" h_Na={y0_alpha[54]:.4f} a_dyn={y0_alpha[55]:.5f}", flush=True)
 
     log = {"meta": {"smoke": SMOKE, "version": "v1.1", "t_start": time.strftime("%H:%M:%S"),
                     "Q10": {"Kr": Q10_KR, "Ks": Q10_KS},
                     "beats": {"ref": REF_BEATS, "main": MAIN_BEATS}}}
 
-    # ===================== 参考臂 =====================
-    print("\n[参考臂] 官方 ORd，同初值，CL=1000 ...", flush=True)
+    # ===================== reference arm =====================
+    print("\n[reference arm] official ORd, same initial values, CL=1000 ...", flush=True)
     rhs_ref = wrap_ref(b0, P_ctrl)
     apd_r, apa_r, qn_r, out_r = run_beats(b0, rhs_ref, y_ss, REF_BEATS, 1000.0,
-                                          label="参考", keep_last=True, keep_currents=True)
+                                          label="ref", keep_last=True, keep_currents=True)
     APD_ref = last_med(apd_r)
     APA_ref = last_med(apa_r)
     qNet_ref = last_med(qn_r)
@@ -397,33 +397,33 @@ def main():
     DVDT_ref = dvdts_max(out_r["t"], out_r["v"])
     qKs_ref = float(np.trapezoid(out_r["cur"][5], out_r["t"]))
     qKr_ref = float(np.trapezoid(out_r["cur"][4], out_r["t"]))
-    print(f"[参考臂] APD90={APD_ref:.3f}ms APA={APA_ref:.2f}mV RMP={RMP_ref:.2f}mV"
+    print(f"[reference arm] APD90={APD_ref:.3f}ms APA={APA_ref:.2f}mV RMP={RMP_ref:.2f}mV"
           f" qNet={qNet_ref:.4f} dVdt={DVDT_ref:.0f}V/s qKs={qKs_ref:.3e} qKr={qKr_ref:.3e}", flush=True)
     log["reference"] = {"APD90_ms": APD_ref, "APA_mV": APA_ref, "RMP_mV": RMP_ref,
                         "qNet": qNet_ref, "dVdt_Vs": DVDT_ref, "qKs": qKs_ref, "qKr": qKr_ref,
                         "apd_trace": [None if math.isnan(x) else x for x in apd_r],
                         "v_last": out_r["v"].tolist()}
 
-    # ===================== 标定（v1.1 §5）=====================
-    print("\n[标定 1/2] G_Ks（swaps={Ks}，线性锚 qKs_ref）...", flush=True)
+    # ===================== calibration (v1.1 section 5) =====================
+    print("\n[calib 1/2] G_Ks (swaps={Ks}, linear anchor qKs_ref) ...", flush=True)
     G_Ks, qKs_probe, qKs_v, ok_ks = cal_ks_on_charge(
-        b0, P_ctrl, {"Ks": tabs_ks}, y0_alpha, qKs_ref, "标定Ks")
+        b0, P_ctrl, {"Ks": tabs_ks}, y0_alpha, qKs_ref, "calibKs")
 
-    print("\n[标定 2/2] G_Kr（swaps={Kr,Ks}，靶 APD90=%.3f ±2%%）..." % APD_ref, flush=True)
+    print("\n[calib 2/2] G_Kr (swaps={Kr,Ks}, target APD90=%.3f +/-2%%) ..." % APD_ref, flush=True)
     tabs_main = {"Kr": tabs_kr, "Ks": tabs_ks}
     G_Kr, apd_cal, ok_kr = cal_kr_on_apd(
-        b0, P_ctrl, tabs_main, {"Ks": G_Ks}, ("Kr", "Ks"), y0_alpha, APD_ref, "标定Kr")
-    print(f"[标定] 终值 G_Kr={G_Kr:.4g}（{'过' if ok_kr else '贴线登记'}）  G_Ks={G_Ks:.4g}"
-          f"（{'过' if ok_ks else '贴线登记'}）", flush=True)
+        b0, P_ctrl, tabs_main, {"Ks": G_Ks}, ("Kr", "Ks"), y0_alpha, APD_ref, "calibKr")
+    print(f"[calib] final G_Kr={G_Kr:.4g} ({'pass' if ok_kr else 'borderline registry'})  G_Ks={G_Ks:.4g} "
+          f"({'pass' if ok_ks else 'borderline registry'})", flush=True)
     log["calibration"] = {"G_Kr": G_Kr, "G_Ks": G_Ks, "ok_kr": ok_kr, "ok_ks": ok_ks,
                           "qKs_probe": qKs_probe, "qKs_verify": qKs_v, "apd_cal": apd_cal}
     G_ALL = {"Kr": G_Kr, "Ks": G_Ks}
 
-    # ===================== 主臂 =====================
-    print("\n[主臂] Kr+Ks 双通道 α 化，500 拍 ...", flush=True)
+    # ===================== main arm =====================
+    print("\n[main arm] Kr+Ks dual-channel alpha-isation, 500 beats ...", flush=True)
     rhs_main = build_asm(b0, P_ctrl, tabs_main, G_ALL, ("Kr", "Ks"))
     apd_m, apa_m, qn_m, out_m = run_beats(b0, rhs_main, y0_alpha, MAIN_BEATS, 1000.0,
-                                          label="主臂", keep_last=True, keep_currents=True)
+                                          label="main", keep_last=True, keep_currents=True)
     APD_m = last_med(apd_m)
     APA_m = last_med(apa_m)
     qNet_m = last_med(qn_m)
@@ -433,28 +433,28 @@ def main():
     J1 = bool(J1_range < 0.5)
     crit2 = morph_check(APD_m, APA_m, RMP_m, qNet_m)
     J2 = all(c["pass"] for c in crit2.values())
-    print(f"[主臂] APD90={APD_m:.3f} APA={APA_m:.2f} RMP={RMP_m:.2f} qNet={qNet_m:.4f}"
-          f" dVdt={DVDT_m:.0f}  J1极差={J1_range:.3f}", flush=True)
+    print(f"[main arm] APD90={APD_m:.3f} APA={APA_m:.2f} RMP={RMP_m:.2f} qNet={qNet_m:.4f}"
+          f" dVdt={DVDT_m:.0f}  J1 range={J1_range:.3f}", flush=True)
 
-    # ===================== J3 回溯 =====================
-    print("\n[J3a] Kr 单换（G=0.2943，B2 锚，同 500 拍基准）...", flush=True)
+    # ===================== J3 back-checks =====================
+    print("\n[J3a] Kr-only swap (G=0.2943, B2 anchor, same 500-beat baseline) ...", flush=True)
     rhs = build_asm(b0, P_ctrl, {"Kr": tabs_kr}, {"Kr": B2_GKR}, ("Kr",))
-    apd1, apa1, qn1, _ = run_beats(b0, rhs, y0_alpha, J3A_BEATS, 1000.0, label="J3a-Kr单换")
+    apd1, apa1, qn1, _ = run_beats(b0, rhs, y0_alpha, J3A_BEATS, 1000.0, label="J3a-Kr-only")
     a1 = last_med(apd1)
     dev1 = abs(a1 - B2_CTRL_APD90) / B2_CTRL_APD90
     j3a = {"APD90": a1, "target": B2_CTRL_APD90, "dev": dev1, "pass": bool(dev1 <= 0.01)}
-    print(f"  APD90={a1:.2f} vs B2 {B2_CTRL_APD90:.2f} 偏={dev1 * 100:.2f}%  {'过' if j3a['pass'] else '不过'}", flush=True)
+    print(f"  APD90={a1:.2f} vs B2 {B2_CTRL_APD90:.2f}  dev={dev1 * 100:.2f}%  {'pass' if j3a['pass'] else 'fail'}", flush=True)
 
-    print("\n[J3b] Ks 单换（G_Ks 标定值）...", flush=True)
+    print("\n[J3b] Ks-only swap (calibrated G_Ks) ...", flush=True)
     rhs = build_asm(b0, P_ctrl, {"Ks": tabs_ks}, {"Ks": G_Ks}, ("Ks",))
-    apd3, apa3, qn3, out3 = run_beats(b0, rhs, y0_alpha, J3_BEATS, 1000.0, label="J3b-Ks单换", keep_last=True)
+    apd3, apa3, qn3, out3 = run_beats(b0, rhs, y0_alpha, J3_BEATS, 1000.0, label="J3b-Ks-only", keep_last=True)
     c3 = morph_check(last_med(apd3), last_med(apa3), float(np.min(out3["v"])), last_med(qn3))
     j3b = {"crit": c3, "steady": steady_range(apd3),
            "pass": bool(all(c["pass"] for c in c3.values()) and steady_range(apd3) < 0.5)}
     print(f"  APD90={last_med(apd3):.2f} APA={last_med(apa3):.2f} qNet={last_med(qn3):.4f}"
-          f"  {'过' if j3b['pass'] else '不过'}", flush=True)
+          f"  {'pass' if j3b['pass'] else 'fail'}", flush=True)
 
-    print("\n[J3c] N-arm：INa 换芯登记臂（G_Na∈{1,16}，预期失败签名）...", flush=True)
+    print("\n[J3c] N-arm: INa swap-in registry arm (G_Na in {1,16}, expected failure signature) ...", flush=True)
     narm = {}
     for gna in (1.0, 16.0):
         rhs = build_asm(b0, P_ctrl, {"Na": tabs_na}, {"Na": gna}, ("Na",))
@@ -471,7 +471,7 @@ def main():
     narm["registration"] = ("表观 m∞（Rs 伪影坐标）细胞级不可携带：AP 脚部 m³·h 窗口关闭，"
                             "无再生性上冲；G×16 饱和不变 -> 非电导问题，与 Nav15 模型卡 §3.4 登记一致")
     narm["pass"] = j3c_expected_fail
-    print(f"  ΔAPA(G16 vs G1)={dAPA:.2f}mV  饱和签名 {'成立' if j3c_expected_fail else '不成立——意外，升级重议'}", flush=True)
+    print(f"  delta APA(G16 vs G1)={dAPA:.2f}mV  saturation signature {'holds' if j3c_expected_fail else 'DOES NOT HOLD - unexpected, escalate'}", flush=True)
 
     J3 = bool(j3a["pass"] and j3b["pass"] and narm["pass"])
     log["J3"] = {"J3a_Kr_only": j3a, "J3b_Ks_only": j3b, "J3c_N_arm": narm}
@@ -481,8 +481,8 @@ def main():
     log["J4"] = {"dVdt_main": DVDT_m, "dVdt_ref": DVDT_ref,
                  "ratio": DVDT_m / DVDT_ref if DVDT_ref else None, "pass": J4}
 
-    # ===================== J5 频率 =====================
-    print("\n[J5 频率] 两臂 × CL ...", flush=True)
+    # ===================== J5 rate =====================
+    print("\n[J5 rate] two arms x CL ...", flush=True)
     j5 = {"ref": {}, "main": {}}
     for arm, rhs_a, y0_a in (("ref", rhs_ref, y_ss), ("main", rhs_main, y0_alpha)):
         for cl in J5_CLS:
@@ -498,7 +498,7 @@ def main():
     j5["pass"] = bool(mono(j5["ref"]) and mono(j5["main"]) and capture(j5["ref"]) and capture(j5["main"]))
     log["J5"] = j5
 
-    # ===================== J6 电流量级 =====================
+    # ===================== J6 current magnitudes =====================
     j6 = {}
     for i, nm in enumerate(("INa", "INaL", "Ito", "ICaL", "IKr", "IKs", "IK1")):
         pk_r = float(np.max(np.abs(out_r["cur"][i])))
@@ -509,20 +509,20 @@ def main():
     J6 = bool(j6["IKr"]["pass"] and j6["IKs"]["pass"])
     log["J6"] = j6
 
-    # ===================== 总判 =====================
+    # ===================== overall =====================
     overall = bool(J1 and J2 and J3 and J4)
     print("\n" + "=" * 76, flush=True)
-    print(f" J1 稳态: 极差 {J1_range:.3f}ms (<0.5) {'✓' if J1 else '✗'}", flush=True)
-    print(f" J2 形态: APD90 {APD_m:.2f}({'✓' if crit2['APD90_ms']['pass'] else '✗'})"
+    print(f" J1 steady: range {J1_range:.3f}ms (<0.5) {'v' if J1 else 'x'}", flush=True)
+    print(f" J2 morphology: APD90 {APD_m:.2f}({'v' if crit2['APD90_ms']['pass'] else 'x'})"
           f" APA {APA_m:.1f}({'✓' if crit2['APA_mV']['pass'] else '✗'})"
           f" RMP {RMP_m:.1f}({'✓' if crit2['RMP_mV']['pass'] else '✗'})"
-          f" qNet {qNet_m:.3f}({'✓' if crit2['qNet_uC_uF']['pass'] else '✗'}) -> {'过' if J2 else '不过'}", flush=True)
-    print(f" J3a Kr单换偏 {j3a['dev'] * 100:.2f}%({'✓' if j3a['pass'] else '✗'})"
-          f"  J3b Ks单换({'✓' if j3b['pass'] else '✗'})"
-          f"  J3c N-arm 饱和签名({'✓' if narm['pass'] else '✗'}) -> {'过' if J3 else '不过'}", flush=True)
-    print(f" J4 上冲: {DVDT_m:.0f} V/s∈[50,500] {'✓' if J4 else '✗'}（参考 {DVDT_ref:.0f}，比 {DVDT_m / DVDT_ref:.2f}）", flush=True)
-    print(f" J5 频率: {'过' if j5['pass'] else '不过'}（登记判）  J6 IKr/IKs 量级: {'过' if J6 else '带外登记'}（登记判）", flush=True)
-    print(f" 【总判 {'过线 —— Kr+Ks 双通道 α 化组装封卷 + INa 不可携带判词' if overall else '不过线 —— 按预注册 §六 登记'}】", flush=True)
+          f" qNet {qNet_m:.3f}({'v' if crit2['qNet_uC_uF']['pass'] else 'x'}) -> {'pass' if J2 else 'fail'}", flush=True)
+    print(f" J3a Kr-only dev {j3a['dev'] * 100:.2f}%({'v' if j3a['pass'] else 'x'})"
+          f"  J3b Ks-only ({'v' if j3b['pass'] else 'x'})"
+          f"  J3c N-arm saturation signature ({'v' if narm['pass'] else 'x'}) -> {'pass' if J3 else 'fail'}", flush=True)
+    print(f" J4 upstroke: {DVDT_m:.0f} V/s in [50,500] {'v' if J4 else 'x'} (ref {DVDT_ref:.0f}, ratio {DVDT_m / DVDT_ref:.2f})", flush=True)
+    print(f" J5 rate: {'pass' if j5['pass'] else 'fail'} (registry judgement)  J6 IKr/IKs magnitude: {'pass' if J6 else 'out-of-band registry'} (registry judgement)", flush=True)
+    print(f" [OVERALL {'PASS - Kr+Ks dual-channel alpha-ised assembly SEALED + INa not-portable verdict' if overall else 'FAIL - registered per preregistration section 6'}]", flush=True)
     print("=" * 76, flush=True)
 
     log["main"] = {"APD90_ms": APD_m, "APA_mV": APA_m, "RMP_mV": RMP_m, "qNet": qNet_m,
@@ -532,16 +532,16 @@ def main():
     log["verdict"] = {"J1": J1, "J2": J2, "J3": J3, "J4": J4, "J5": j5["pass"], "J6": J6,
                       "overall": overall}
 
-    # ===================== 敏感性臂（正式）=====================
+    # ===================== sensitivity arms (formal) =====================
     sens = {}
     if RUN_SENS:
         for arm_name, q10ks, tscale in (("S1_Q10Ks2.0", 2.0, 1.0),
                                         ("S2_Q10Ks3.0", 3.0, 1.0),
                                         ("S3_tauKs0.5", 2.5, 0.5)):
-            print(f"\n[敏感性臂 {arm_name}] Q10_Ks={q10ks} τ×{tscale} ...", flush=True)
+            print(f"\n[sensitivity arm {arm_name}] Q10_Ks={q10ks} tau x{tscale} ...", flush=True)
             tabs_ks_a = build_tabs_ks_scaled(q10ks, tscale)
             G_Ks_a, _, _, _ = cal_ks_on_charge(b0, P_ctrl, {"Ks": tabs_ks_a}, y0_alpha,
-                                               qKs_ref, f"{arm_name}-标定")
+                                               qKs_ref, f"{arm_name}-calib")
             tabs_a = {"Kr": tabs_kr, "Ks": tabs_ks_a}
             rhs_a = build_asm(b0, P_ctrl, tabs_a, {"Kr": G_Kr, "Ks": G_Ks_a}, ("Kr", "Ks"))
             apd_a, apa_a, qn_a, out_a = run_beats(b0, rhs_a, y0_alpha, S_BEATS, 1000.0,
@@ -552,18 +552,18 @@ def main():
                               "J2_pass": all(c["pass"] for c in c_a.values()),
                               "v_last": out_a["v"].tolist()}
             print(f"  {arm_name}: G_Ks={G_Ks_a:.4g} APD90={last_med(apd_a):.2f}"
-                  f"  J2 {'过' if sens[arm_name]['J2_pass'] else '不过'}", flush=True)
+                  f"  J2 {'pass' if sens[arm_name]['J2_pass'] else 'fail'}", flush=True)
     log["sensitivity"] = sens
 
-    # ===================== 落盘 =====================
+    # ===================== save =====================
     tag = "_冒烟" if SMOKE else "_结果"
     fjson = os.path.join(BASE, f"2026-09-15_ORd三通道α化组装{tag}.json")
     log["meta"]["runtime_s"] = time.time() - t_start
     with open(fjson, "w", encoding="utf-8") as fh:
         json.dump(log, fh, ensure_ascii=False)
-    print(f"\n 结果落盘: {fjson}", flush=True)
+    print(f"\n result saved: {fjson}", flush=True)
 
-    # ===================== 图 =====================
+    # ===================== figure =====================
     import matplotlib
     matplotlib.use("Agg")
     try:
@@ -576,20 +576,20 @@ def main():
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(3, 3, figsize=(17, 13))
-    fig.suptitle(f"ORd α 化组装 v1.1（Kr+Ks 主臂 + INa 登记臂）· {'冒烟' if SMOKE else '正式'}"
-                 f" · 总判 {'过' if overall else '不过'}", fontsize=14)
+    fig.suptitle(f"ORd alpha-ised assembly v1.1 (Kr+Ks main arm + INa registry arm) · {'smoke' if SMOKE else 'formal'}"
+                 f" · overall {'pass' if overall else 'fail'}", fontsize=14)
 
     ax = axes[0, 0]
-    ax.plot(out_r["t"], out_r["v"], "k-", lw=1.4, label=f"官方 ORd（APD90 {APD_ref:.1f}）")
+    ax.plot(out_r["t"], out_r["v"], "k-", lw=1.4, label=f"official ORd (APD90 {APD_ref:.1f})")
     ax.plot(out_m["t"], out_m["v"], "r--", lw=1.2, label=f"α Kr+Ks（APD90 {APD_m:.1f}）")
-    ax.set_title("末拍 AP 对拍（主臂）")
+    ax.set_title("last-beat AP comparison (main arm)")
     ax.set_xlabel("t (ms)"); ax.set_ylabel("v (mV)"); ax.legend(fontsize=8)
 
     ax = axes[0, 1]
-    ax.plot(out_r["t"], out_r["v"], "k-", lw=1.2, label="官方")
+    ax.plot(out_r["t"], out_r["v"], "k-", lw=1.2, label="official")
     for gna, col in (("G1", "tab:orange"), ("G16", "tab:red")):
         pass
-    ax.set_title("N-arm：INa 换芯失败签名（见 J3c）")
+    ax.set_title("N-arm: INa swap-in failure signature (see J3c)")
     ax.set_xlabel("t (ms)")
     for gna, col in ((1.0, "tab:orange"), (16.0, "tab:red")):
         rhs = build_asm(b0, P_ctrl, {"Na": tabs_na}, {"Na": gna}, ("Na",))
@@ -602,57 +602,57 @@ def main():
     ax.legend(fontsize=8)
 
     ax = axes[0, 2]
-    ax.plot(np.arange(1, len(apd_r) + 1), apd_r, "k.-", ms=3, lw=0.6, label="官方")
+    ax.plot(np.arange(1, len(apd_r) + 1), apd_r, "k.-", ms=3, lw=0.6, label="official")
     ax.plot(np.arange(1, len(apd_m) + 1), apd_m, "r.-", ms=3, lw=0.6, label="α Kr+Ks")
-    ax.set_title("APD90 逐拍轨迹")
-    ax.set_xlabel("拍"); ax.set_ylabel("APD90 (ms)"); ax.legend(fontsize=8)
+    ax.set_title("APD90 beat-by-beat trajectory")
+    ax.set_xlabel("beat"); ax.set_ylabel("APD90 (ms)"); ax.legend(fontsize=8)
 
     for k, (nm, idx) in enumerate((("IKr", 4), ("IKs", 5), ("ICaL", 3))):
         ax = axes[1, k]
-        ax.plot(out_r["t"], out_r["cur"][idx], "k-", lw=1.0, label="官方")
+        ax.plot(out_r["t"], out_r["cur"][idx], "k-", lw=1.0, label="official")
         ax.plot(out_m["t"], out_m["cur"][idx], "r--", lw=1.0, label="α")
-        ax.set_title(f"{nm} 末拍（峰比 {j6[nm]['ratio']:.2f}）")
+        ax.set_title(f"{nm} last beat (peak ratio {j6[nm]['ratio']:.2f})")
         ax.set_xlabel("t (ms)"); ax.set_ylabel("pA/pF"); ax.legend(fontsize=8)
 
     ax = axes[2, 0]
     msk = out_r["t"] <= 30.0
-    ax.plot(out_r["t"][msk], out_r["v"][msk], "k-", lw=1.4, label="官方")
+    ax.plot(out_r["t"][msk], out_r["v"][msk], "k-", lw=1.4, label="official")
     ax.plot(out_m["t"][msk], out_m["v"][msk], "r--", lw=1.2, label="α Kr+Ks")
-    ax.set_title(f"上冲前 30ms（dV/dt {DVDT_m:.0f} vs {DVDT_ref:.0f} V/s）")
+    ax.set_title(f"first 30 ms of upstroke (dV/dt {DVDT_m:.0f} vs {DVDT_ref:.0f} V/s)")
     ax.set_xlabel("t (ms)"); ax.legend(fontsize=8)
 
     ax = axes[2, 1]
     cls_sorted = sorted(J5_CLS, reverse=True)
     ax.plot([1000.0 / c for c in cls_sorted], [j5["ref"][f"{c:.0f}"]["APD90"] for c in cls_sorted],
-            "ko-", ms=5, label="官方")
+            "ko-", ms=5, label="official")
     ax.plot([1000.0 / c for c in cls_sorted], [j5["main"][f"{c:.0f}"]["APD90"] for c in cls_sorted],
             "r^--", ms=5, label="α Kr+Ks")
-    ax.set_title("频率恢复（APD90 vs Hz）")
+    ax.set_title("rate dependence (APD90 vs Hz)")
     ax.set_xlabel("Hz"); ax.set_ylabel("APD90 (ms)"); ax.legend(fontsize=8)
 
     ax = axes[2, 2]
     ax.axis("off")
-    txt = (f"J1 稳态极差 {J1_range:.3f}ms {'✓' if J1 else '✗'}\n"
+    txt = (f"J1 steady range {J1_range:.3f}ms {'v' if J1 else 'x'}\n"
            f"J2 APD90 {APD_m:.1f}({'✓' if crit2['APD90_ms']['pass'] else '✗'}) "
            f"APA {APA_m:.1f}({'✓' if crit2['APA_mV']['pass'] else '✗'})\n"
            f"   RMP {RMP_m:.1f}({'✓' if crit2['RMP_mV']['pass'] else '✗'}) "
            f"qNet {qNet_m:.3f}({'✓' if crit2['qNet_uC_uF']['pass'] else '✗'})\n"
-           f"J3a Kr偏 {j3a['dev'] * 100:.2f}%({'✓' if j3a['pass'] else '✗'}) "
+           f"J3a Kr dev {j3a['dev'] * 100:.2f}%({'v' if j3a['pass'] else 'x'}) "
            f"J3b {'✓' if j3b['pass'] else '✗'} J3c {'✓' if narm['pass'] else '✗'}\n"
            f"J4 dV/dt {DVDT_m:.0f}V/s({'✓' if J4 else '✗'})  J5 {'✓' if j5['pass'] else '✗'}  J6 {'✓' if J6 else '✗'}\n"
            f"G: Kr {G_Kr:.3g} Ks {G_Ks:.3g}\n"
-           f"用时 {time.time() - t_start:.0f}s\n"
-           f"【总判 {'过线' if overall else '不过线'}】")
+           f"elapsed {time.time() - t_start:.0f}s\n"
+           f"[overall {'PASS' if overall else 'FAIL'}]")
     ax.text(0.02, 0.95, txt, transform=ax.transAxes, va="top", fontsize=10)
 
     fpng = os.path.join(BASE, f"2026-09-15_ORd三通道α化组装{tag}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
     plt.close(fig)
-    print(f" 图落盘: {fpng}", flush=True)
+    print(f" figure saved: {fpng}", flush=True)
 
     if SMOKE:
-        print("\n[冒烟完] 正式跑指令（Spyder）：\n"
+        print("\n[smoke done] formal-run command (Spyder):\n"
               "  %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/"
               "2026-09-15_ORd三通道α化组装.py' --wdir", flush=True)
 

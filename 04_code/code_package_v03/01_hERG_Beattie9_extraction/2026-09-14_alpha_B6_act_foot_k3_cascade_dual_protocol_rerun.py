@@ -1,49 +1,49 @@
-# 2026-09-14_α模型_B6激活足_k3级联判决_双协议换形重跑.py
-# 目的（B6 主攻：单门 m 无激活延迟 vs 实测 sigmoid 足 50-150ms —— 模型形态修补）：
-#   二审指定靶点（收官文档 §11/§13）：去极化头 ~100ms 单门 m 系统性高估 m，是
-#   AP A1 定量散布机制之一。本脚本两件事一次做：
-#   B6a 足确认+形态判决（数据源：已封卷的激活 envelope 判决 JSON 六点，不再碰原始
-#       数据；007/047 按 D11 登记排除，有效池 7/9）。
-#       三形态（全部带自由基线列 c + 线性 A，统一六点等权）：
-#         single:  A(1-exp(-t/τ))            —— 无足单门（B6 否掉对象）
-#         corner:  A(1-exp(-max(t-d,0)/τ))   —— 显式角延迟（envelope 封卷拟合形）
-#         k3:      A·P3(t/τc)                —— 等τ三级串联级联（可实现候选）
-#       【足确认群体门·跑前钉死】median(k3_SSE/single_SSE) <= 0.5 -> 足必需成立。
-#       【形态政策 P-FORM·跑前钉死】角延迟在时变电压下不可连续实现（"阶跃"无定义），
-#         k3 为与角延迟最近的可实现形；角延迟对比照实登记（ratio + 绝对 RMS），
-#         形态近似不确定度 ±15-20%（m 轨迹，临界窗内）登记，靠前向判线吸收。
-#       【τc(+40) 锚】逐细胞 k3 拟合 τc；007/047（D11）<- 群体中位。
-#   B6b 换形重跑（判线与 hss实测表重跑版逐字相同，一字未动）：
-#       m 门换【整流三级级联】（冒烟定型 2026-09-14，见下）：
-#         激活方向（m_ss >= m3）：dm1/dt=(m_ss-m1)/τc, dm2/dt=(m1-m2)/τc,
-#           dm3/dt=(m2-m3)/τc，电流用 m3 —— 串联三级产生 sigmoid 足；
-#         去激活方向（m_ss < m3）：m3 以封卷单门 τ_m(V) 直接向 m_ss 弛豫
-#           （m1/m2 同步贴随）—— 去激活尾与封卷模型逐字一致，梯子不动。
-#       【冒烟定型登记】初版对称级联（级联级在去激活方向同样生效）冒烟即暴露
-#         胖尾伪影：-80 间期 m3 衰减比封卷单门慢 ~3.5 倍（(1+x+x²/2)e^-x 多项式尾），
-#         003 AP 间期累积 0.10->0.54、峰比 1.50->3.51 出窗 —— 与封卷去激活测量
-#         （离散指数白化、无足）矛盾。整流级联是唯一的双方向自洽形：激活串联
-#         慢（足），去激活单门快塌（梯子）——与 HH 式不对称协同一致，且方向
-#         不对称性本身可证伪（去激活无足已被 28/33 白化证实）。
-#       【τc(V) 表政策 P-TAUC·跑前钉死】τc 锚 = 封卷 τ_m 锚；V<=-30 不动（慢模=封卷
-#         去激活常数）；V>=-20 除以 K=3（该区 τ_m 锚原系单门有效值）；
-#         +40 档 <- 逐细胞 k3 τc（上覆）；+50/+60 = 0.29/3。
-#       级联每步更新用端点值一阶递推（DT=1e-4 vs τc>=30ms，误差登记可忽略，C3/C4 检验）。
-#       sine 判线 S1/S2/S3、AP 判线 A1/A2/A3、九细胞 >=7 —— 与封卷版逐字相同。
-# 【总判线·跑前钉死】B6a 群体门过 且 sine>=7/9 且 AP>=7/9 -> B6 封卷（k3 级联形+
-#   τc 表入模型）；任一不过 -> B6 留登记，单门保留为组装形，数字照实写。
-# 对照（跑前声明）：
-#   C-sing：20 合成单门真值包络（τ=200ms,A=3.7,σ=0.04），群体门不得触发
-#     （median>0.5），否则门作废停；
-#   C-k3：20 合成 k3 真值包络（τc=70ms），群体门必须触发（median<=0.5），否则门作废停；
-#   C1 DoE 反演 τr 误差 <15%（管道，同封卷版）；
-#   C2 sine/AP 结构解析（同封卷版）；
-#   C3 k3 积分器自洽：+40 恒压合成步，m3 数值 vs 解析 P3，max|差|<2e-3。
-# 预期登记（不是判线，跑前声明）：AP 复极峰比整体下移 ~10-30%（足压低短峰 m），
-#   003(1.50) 预期向 1.1-1.3；近下沿细胞（047:0.31）有出窗风险，照实登记；
-#   hook DoE 因 -120 级联胖尾 S1/A2 比可上移 <=40%；sine S2 近不变。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 时 B6a 照旧全群体（只读 JSON），
-#   前向仅 16713003 冒烟。
+# 2026-09-14_alpha_B6_act_foot_k3_cascade_dual_protocol_rerun.py
+# Purpose (B6 main attack: single-gate m has no activation delay vs measured sigmoid foot 50-150 ms - model-form repair):
+#   Target assigned by the second review (closing document section 11/13): in the first ~100 ms of depolarisation
+#   single-gate m systematically overestimates m, one of the mechanisms behind the AP A1 quantitative scatter.
+#   B6a foot confirmation + form verdict (data source: the six points of the sealed activation-envelope verdict JSON;
+#       raw data not touched again; 007/047 excluded per D11 registration, effective pool 7/9).
+#       Three forms (all with free baseline column c + linear A, six points equally weighted):
+#         single:  A(1-exp(-t/tau))            - footless single gate (the object B6 rejects)
+#         corner:  A(1-exp(-max(t-d,0)/tau))   - explicit corner delay (the envelope SEAL fit form)
+#         k3:      A*P3(t/tau_c)               - equal-tau three-stage serial cascade (realisable candidate)
+#       [Foot-confirmation population gate, pinned before run] median(k3_SSE/single_SSE) <= 0.5 -> foot necessity holds.
+#       [Form policy P-FORM, pinned before run] a corner delay is not continuously realisable under time-varying voltage
+#         ("step" undefined), so k3 is the realisable form closest to the corner delay; the corner-delay comparison is
+#         registered as-is (ratio + absolute RMS); form-approximation uncertainty +/-15-20% (m trajectory, inside the
+#       [tau_c(+40) anchor] per-cell k3-fitted tau_c; 007/047 (D11) <- population median.
+#   B6b form-swap rerun (criteria verbatim identical to the hss-measured-table rerun version, not one character moved):
+#       the m gate is swapped to a [rectified three-stage cascade] (smoke-fixed 2026-09-14, see below):
+#         activation direction (m_ss >= m3): dm1/dt=(m_ss-m1)/tau_c, dm2/dt=(m1-m2)/tau_c,
+#           dm3/dt=(m2-m3)/tau_c, current uses m3 - three serial stages produce the sigmoid foot;
+#         deactivation direction (m_ss < m3): m3 relaxes directly toward m_ss with the sealed single-gate tau_m(V)
+#           (m1/m2 follow in sync) - the deactivation tail is verbatim identical to the sealed model, ladder untouched.
+#       [Smoke-fixing registration] the initial symmetric cascade (stages active in the deactivation direction too)
+#         exposed a fat-tail artefact immediately in smoke: m3 decays ~3.5x slower than the sealed single gate at -80
+#         inter-beat ((1+x+x^2/2)e^-x polynomial tail); 003 AP inter-beat accumulation 0.10->0.54, peak ratio
+#         1.50->3.51 out of window - contradicting the sealed deactivation measurements (discrete exponential,
+#         whitened, footless). The rectified cascade is the only bidirectionally self-consistent form: serial and slow
+#         on activation (foot), single-gate fast collapse on deactivation (ladder) - consistent with HH-style
+#       [tau_c(V) table policy P-TAUC, pinned before run] tau_c anchor = sealed tau_m anchor; V <= -30 unchanged
+#         (slow mode = sealed deactivation constant); V >= -20 divided by K = 3 (the tau_m anchors there were
+#         single-gate effective values); +40 level <- per-cell k3 tau_c (override); +50/+60 = 0.29/3.
+#       Cascade updates use endpoint-value first-order recursion (DT=1e-4 vs tau_c >= 30 ms; error registered negligible, C3/C4 tested).
+#       sine criteria S1/S2/S3, AP criteria A1/A2/A3, nine cells >= 7 - verbatim identical to the sealed version.
+# [Overall criterion, pinned before run] B6a population gate passes AND sine >= 7/9 AND AP >= 7/9 -> B6 sealed
+#   (k3 cascade form + tau_c table enter the model); any failure -> B6 stays registered, single gate kept as the
+# Controls (declared pre-run):
+#   C-sing: 20 synthetic single-gate-truth envelopes (tau=200 ms, A=3.7, sigma=0.04); the population gate must NOT
+#     trigger (median > 0.5), else the gate is void and halt;
+#   C-k3: 20 synthetic k3-truth envelopes (tau_c=70 ms); the population gate MUST trigger (median <= 0.5), else void, halt;
+#   C1 DoE inversion tau_r error < 15% (pipeline, same as sealed version);
+#   C2 sine/AP structure parsing (same as sealed version);
+#   C3 k3 integrator self-consistency: +40 constant-voltage synthetic step, numerical m3 vs analytic P3, max|diff| < 2e-3.
+# Expected registration (not a criterion, declared pre-run): AP repolarisation peak ratio shifts down ~10-30% overall
+#   (the foot suppresses short-peak m); 003 (1.50) expected toward 1.1-1.3; cells near the lower edge (047: 0.31)
+#   risk falling out of window, registered as-is; hook DoE may shift up <= 40% on S1/A2 due to the -120 cascade fat tail;
+# Run: python this file (nine cells full); with SMOKE=1 B6a still runs the full population (JSON read-only),
+#   forward is smoke on 16713003 only.
 import os
 import json
 import numpy as np
@@ -60,12 +60,12 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SMOKE = os.environ.get("SMOKE", "0") == "1"
 CELLS_FWD = ["16713003"] if SMOKE else ["16704007", "16704047", "16707014", "16708016",
                                          "16708060", "16708118", "16713003", "16713110", "16715049"]
-D11_EXCLUDE = {"16704007", "16704047"}          # D11 激活协议记录失败（在案）
+D11_EXCLUDE = {"16704007", "16704047"}          # D11 activation-protocol recording failure (on record)
 DT = 1e-4
 E_REV = -88.33
 DF_M120 = abs(-120.0 - E_REV)
-NOISE3 = 3 * 0.0069                              # A1 峰门槛（同封卷版）
-K_STAGE = 3                                      # 级联级数（P-FORM 钉死）
+NOISE3 = 3 * 0.0069                              # A1 peak threshold (same as sealed version)
+K_STAGE = 3                                      # cascade stage count (pinned by P-FORM)
 
 F_ENV = os.path.join(HERE, "2026-09-13_α模型_激活envelope_τact封卷判决_结果.json")
 F_AMP = os.path.join(HERE, "2026-09-13_α模型_幅度表提取_结果.json")
@@ -131,7 +131,7 @@ def doe_fit(t, y, tr_grid=TR_GRID, td_grid=TD_GRID):
                 edge=bool(tr <= tr_grid[0] * 1.02 or tr >= tr_grid[-1] * 0.98))
 
 
-# ================= B6a：包络形态判决 =================
+# ================= B6a: envelope form verdict =================
 
 def env_shape(form, t, p):
     if form == "single":
@@ -146,7 +146,7 @@ def env_shape(form, t, p):
 
 
 def fit_env_form(dts, A, form):
-    """统一六点等权 + 自由基线列 c + 线性 A。返回 (sse, param, ainf, c)。"""
+    """Six points equally weighted + free baseline column c + linear A. Returns (sse, param, ainf, c)."""
     best = None
     combos = [(d, t1) for d in D_GRID for t1 in TAU_GRID] if form == "corner" \
         else [(None, tt) for tt in TAU_GRID]
@@ -161,10 +161,10 @@ def fit_env_form(dts, A, form):
 
 
 def b6a(rng):
-    """返回 (gate_ok, table, details)。table[cell] = τc(+40) s。"""
-    print("\n[B6a 包络形态判决]（数据源：封卷 envelope JSON 六点；D11 剔 007/047）", flush=True)
+    """Returns (gate_ok, table, details). table[cell] = tau_c(+40) in s."""
+    print("\n[B6a envelope form verdict] (data source: sealed envelope JSON six points; D11 excludes 007/047)", flush=True)
     env = json.load(open(F_ENV, encoding="utf-8"))
-    # ---- 对照 C-sing / C-k3（跑前钉死：门行为验证） ----
+    # ---- controls C-sing / C-k3 (pinned before run: gate-behaviour verification) ----
     dts = np.array([0.003, 0.010, 0.030, 0.100, 0.300, 1.000])
     rat_sing, rat_k3, rat_corn = [], [], []
     for k in range(20):
@@ -182,13 +182,13 @@ def b6a(rng):
         s3, *_ = fit_env_form(dts, Asyn, "k3")
         rat_corn.append(s3 / ss)
     ms_, mk_, mc_ = float(np.median(rat_sing)), float(np.median(rat_k3)), float(np.median(rat_corn))
-    print(f"  对照 C-sing: k3/single 中位 {ms_:.2f}（要求>0.5，门不滥杀）"
-          f" | C-k3: {mk_:.3f}（要求<=0.5，门不漏杀）"
-          f" | C-corner: {mc_:.3f}（登记）", flush=True)
+    print(f"  control C-sing: k3/single median {ms_:.2f} (require >0.5, gate must not over-kill)"
+          f" | C-k3: {mk_:.3f} (require <=0.5, gate must not under-kill)"
+          f" | C-corner: {mc_:.3f} (registered)", flush=True)
     if not (ms_ > 0.5 and mk_ <= 0.5):
-        print("  对照门行为不符 -> 群体门作废，停。", flush=True)
+        print("  control gate behaviour wrong -> population gate void, halt.", flush=True)
         return False, {}, {}
-    # ---- 真实包络 ----
+    # ---- real envelopes ----
     details = {}
     for c, r in env["cells"].items():
         if c in D11_EXCLUDE:
@@ -211,30 +211,30 @@ def b6a(rng):
     rats = [d["ratio_k3_single"] for d in details.values()]
     med_rat = float(np.median(rats))
     gate = bool(med_rat <= 0.5)
-    print(f"  {'细胞':>9} | SSE_sing | SSE_corn | SSE_k3 | k3/sing | k3/corn | "
-          f"RMS_k3 | τc(k3) | 角延迟(d,τ)", flush=True)
+    print(f"  {'cell':>9} | SSE_sing | SSE_corn | SSE_k3 | k3/sing | k3/corn | "
+          f"RMS_k3 | tau_c(k3) | corner(d,tau)", flush=True)
     for c, d in details.items():
         print(f"  {c} | {d['sse_single']:8.4f} | {d['sse_corner']:8.4f} | {d['sse_k3']:8.4f}"
               f" | {d['ratio_k3_single']:7.3f} | {d['ratio_k3_corner']:7.2f}"
               f" | {d['rms_k3']:.4f} | {d['tauc'] * 1e3:4.0f}ms"
               f" | ({d['corner_d'] * 1e3:.0f}ms,{d['corner_tau'] * 1e3:.0f}ms)", flush=True)
-    print(f"  群体门: k3/single 中位 = {med_rat:.3f}（判线 <=0.5）-> "
-          f"{'足必需成立' if gate else '足必需不成立'}", flush=True)
+    print(f"  population gate: k3/single median = {med_rat:.3f} (criterion <=0.5) -> "
+          f"{'foot necessity holds' if gate else 'foot necessity fails'}", flush=True)
     tauc_med = float(np.median([d["tauc"] for d in details.values()]))
     table = {c: d["tauc"] for c, d in details.items()}
     for c in D11_EXCLUDE:
         table[c] = tauc_med
-    print(f"  τc(+40) 逐细胞锚（D11 两细胞 <- 中位 {tauc_med * 1e3:.0f}ms）: "
+    print(f"  tau_c(+40) per-cell anchors (D11 two cells <- median {tauc_med * 1e3:.0f} ms): "
           + " ".join(f"{c[-3:]}:{table[c] * 1e3:.0f}" for c in sorted(table)), flush=True)
-    print(f"  形态登记: k3/corner 中位比 {float(np.median([d['ratio_k3_corner'] for d in details.values()])):.2f}"
-          f"（角延迟拟合更优，P-FORM 政策选可实现 k3，绝对 RMS 均噪声量级）", flush=True)
+    print(f"  form registration: k3/corner median ratio {float(np.median([d['ratio_k3_corner'] for d in details.values()])):.2f}"
+          f" (corner delay fits better; P-FORM policy selects the realisable k3; absolute RMS at noise level)", flush=True)
     return gate, table, details
 
 
-# ================= B6b：换形前向（四表与封卷版同一份，逐字复制） =================
+# ================= B6b: form-swap forward (same four tables as the sealed version, copied verbatim) =================
 
 class Tab:
-    """对数-线性插值锚表（x 线性、y 对数，越界取端点）。与 sine 冒烟同一份。"""
+    """Log-linear interpolation anchor table (x linear, y log, endpoints out of range). Same copy as the sine smoke."""
     def __init__(self, anchors, log_y=True):
         self.xs = np.array(sorted(anchors), dtype=float)
         ys = np.array([anchors[x] for x in self.xs], dtype=float)
@@ -248,9 +248,9 @@ class Tab:
 
 def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
                sine_mea40=None):
-    """每细胞五表：m_ss, τ_m（仅作 τc 原料）, τc（B6 新增）, h_ss, τ_h + G。
-    与 hss实测表重跑版同一份四表逐字复制；唯一改动：新增 τc 表（政策 P-TAUC）。"""
-    # ---- h_ss 实测剥离表（P3：每细胞 qc 过 -> 每细胞值；否 -> 群体中位） ----
+    """Per-cell five tables: m_ss, tau_m (only as tau_c raw material), tau_c (new in B6), h_ss, tau_h + G.
+    Same four tables copied verbatim from the hss-measured-table rerun; the only change: the new tau_c table (policy P-TAUC)."""
+    # ---- h_ss measured strip table (P3: per-cell qc pass -> per-cell value; else population median) ----
     hc = hss["cells"].get(cell, {}).get("curve", {})
     hB1, h_pop = {}, []
     for v in (-80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30):
@@ -260,7 +260,7 @@ def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
         else:
             hB1[v] = float(hss["gears"][str(v)]["med"])
             h_pop.append(v)
-    # ---- m_ss 锚（每细胞 y_ss，缺档用中位；换表重分裂 m_ss=y_ss/h_ss） ----
+    # ---- m_ss anchors (per-cell y_ss, missing levels use median; table-swap re-split m_ss = y_ss/h_ss) ----
     yss = {}
     for r in amp["rows"]:
         if r["v"] in (-70, -60, -50):
@@ -278,7 +278,7 @@ def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
                  -20: 1.0, 0: 1.0, 20: 1.0, 40: 1.0, 60: 1.0}
     m_ss = Tab(m_anchors, log_y=True)
 
-    # ---- τ_m 锚（封卷中位 + 登记慢分量；仅作 τc 原料） ----
+    # ---- tau_m anchors (sealed medians + registered slow component; only as tau_c raw material) ----
     hs = hook["summary"]
     tm_anchors = {-130: hs["-120"]["td_med"], -120: hs["-120"]["td_med"],
                   -110: hs["-110"]["td_med"], -100: hs["-100"]["td_med"],
@@ -287,15 +287,15 @@ def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
                   -50: amp["tau_used"]["TAU_L"]["-50"], -40: amp["tau_used"]["TAU_L"]["-40"],
                   -30: 9.8, -20: 4.0, -10: 2.8, 0: 2.0, 10: 1.2,
                   20: 0.71, 30: 0.45, 40: 0.29, 50: 0.29, 60: 0.30}
-    # ---- τc 锚（B6 新增，政策 P-TAUC：V<=-30 不动；V>=-20 除 K=3；+40 逐细胞上覆） ----
+    # ---- tau_c anchors (new in B6, policy P-TAUC: V <= -30 unchanged; V >= -20 divided by K=3; +40 per-cell override) ----
     tc_anchors = {v: (a if v <= -30 else a / K_STAGE) for v, a in tm_anchors.items()}
-    tc_anchors[40] = tauc40                       # 逐细胞 k3 τc（B6a）
+    tc_anchors[40] = tauc40                       # per-cell k3 tau_c (B6a)
     tc_anchors[50] = 0.29 / K_STAGE
     tc_anchors[60] = 0.30 / K_STAGE
     tau_c = Tab(tc_anchors, log_y=True)
-    tau_m = Tab(tm_anchors, log_y=True)      # 封卷去激活 τ（整流级联去激活分支用）
+    tau_m = Tab(tm_anchors, log_y=True)      # sealed deactivation tau (used by the rectified-cascade deactivation branch)
 
-    # ---- G：R1 回退链（posthoc 旗帜，逐字） ----
+    # ---- G: R1 fallback chain (posthoc flags, verbatim) ----
     ci = inact["cells"].get(cell, {})
     G = None
     gflag = None
@@ -317,7 +317,7 @@ def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
             G = float(np.median(cands))
             gflag = "posthoc_G_degraded"
 
-    # ---- h_ss（B1 退役：实测剥离表；+40 端 R3 回退链保留，逐字） ----
+    # ---- h_ss (B1 retired: measured strip table; +40-end R3 fallback chain kept, verbatim) ----
     h50 = None
     if ci.get("h_ss50") and ci["h_ss50"] > 0:
         h50 = float(ci["h_ss50"])
@@ -347,7 +347,7 @@ def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
     h_anchors[60] = h50 if h50 else h40
     h_ss = Tab(h_anchors, log_y=True)
 
-    # ---- τ_h（B2，逐字） ----
+    # ---- tau_h (B2, verbatim) ----
     tr90 = ci.get("m90", {}).get("tau_r") if ci.get("m90", {}).get("valid") else None
     th_anchors = {-130: hs["-120"]["tr_med"], -120: hs["-120"]["tr_med"],
                   -110: hs["-110"]["tr_med"], -100: hs["-100"]["tr_med"],
@@ -359,10 +359,11 @@ def build_tabs(cell, amp, hook, inact, hss, tauc40, I_inact=None, V_inact=None,
 
 
 def forward_k3(V, tabs):
-    """B6 整流三级级联（冒烟定型）：
-      激活方向（m_ss>=m3）：dm1=(m_ss-m1)/τc, dm2=(m1-m2)/τc, dm3=(m2-m3)/τc，电流 m3；
-      去激活方向（m_ss<m3）：m3 以封卷 τ_m(V) 单门弛豫（m1/m2 同步贴随，再激活时
-      级联从同步态重启）。h 门同封卷版。端点值一阶递推（C3/C4 检验）。"""
+    """B6 rectified three-stage cascade (smoke-fixed):
+      activation direction (m_ss >= m3): dm1=(m_ss-m1)/tau_c, dm2=(m1-m2)/tau_c, dm3=(m2-m3)/tau_c, current uses m3;
+      deactivation direction (m_ss < m3): m3 relaxes with the sealed tau_m(V) single gate (m1/m2 follow in sync;
+      the cascade restarts from the synced state on reactivation). h gate same as the sealed
+      version. Endpoint-value first-order recursion (tested by C3/C4)."""
     v = V.astype(float)
     ms = np.exp(np.interp(v, tabs["m_ss"].xs, tabs["m_ss"].ly))
     tc = np.exp(np.interp(v, tabs["tau_c"].xs, tabs["tau_c"].ly))
@@ -378,11 +379,11 @@ def forward_k3(V, tabs):
     m1 = m2 = m3_ = ms[0]
     h0 = hss[0]
     for i in range(n):
-        if ms[i] >= m3_:                            # 激活方向：级联足
+        if ms[i] >= m3_:                            # activation direction: cascade foot
             m1 = ms[i] + (m1 - ms[i]) * ec[i]
             m2 = m1 + (m2 - m1) * ec[i]
             m3_ = m2 + (m3_ - m2) * ec[i]
-        else:                                       # 去激活方向：封卷单门
+        else:                                       # deactivation direction: sealed single gate
             m3_ = ms[i] + (m3_ - ms[i]) * em[i]
             m1 = m3_
             m2 = m3_
@@ -392,7 +393,7 @@ def forward_k3(V, tabs):
     return m3, h
 
 
-# ---- sine 结构/评分（与封卷版逐字相同，仅 forward 换 k3） ----
+# ---- sine structure/scoring (verbatim identical to the sealed version, only forward swapped to k3) ----
 
 def find_sine_structure(V):
     info = segments(V)
@@ -444,7 +445,7 @@ def score_sine(cell, V, I, tabs, meas):
     return out
 
 
-# ---- AP 结构/评分（与封卷版逐字相同，仅 forward 换 k3） ----
+# ---- AP structure/scoring (verbatim identical to the sealed version, only forward swapped to k3) ----
 
 def find_ap_structure(V):
     n = len(V)
@@ -525,23 +526,23 @@ def score_ap(cell, V, I, tabs):
 def main():
     rng = np.random.default_rng(17)
     print("=" * 88)
-    print(" α模型 B6 激活足判决：k3 级联 vs 单门 vs 角延迟 + 双协议换形重跑"
-          + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 总判线: B6a 群体门(median k3/single<=0.5) 且 sine>=7 且 AP>=7 -> B6 封卷")
+    print(" alpha model B6 activation-foot verdict: k3 cascade vs single gate vs corner delay + dual-protocol form-swap rerun"
+          + (" (smoke 16713003)" if SMOKE else " (nine cells full)"))
+    print(" overall criterion: B6a population gate (median k3/single<=0.5) AND sine>=7 AND AP>=7 -> B6 sealed")
     print("=" * 88, flush=True)
 
     gate, tauc_tab, b6a_det = b6a(rng)
 
-    # ---------- B6b 对照 ----------
-    print("\n[B6b 对照]", flush=True)
+    # ---------- B6b controls ----------
+    print("\n[B6b controls]", flush=True)
     t_c = np.arange(int(0.4 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) \
         + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τ_r: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> "
-          f"{'过' if c1 else '不过'}", flush=True)
-    # C3 整流级联激活分支：-130 预置零态 -> +40 恒压步，m3 数值 vs 解析 P3
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f} ms (truth 3.5) -> "
+          f"{'pass' if c1 else 'fail'}", flush=True)
+    # C3 rectified-cascade activation branch: -130 preset zero state -> +40 constant step, numerical m3 vs analytic P3
     tc3 = 0.090
     npre = 100
     Vc = np.concatenate([np.full(npre, -130.0), np.full(int(1.0 / DT), 40.0)])
@@ -554,9 +555,9 @@ def main():
     p3 = 1 - np.exp(-x0) * (1 + x0 + x0 * x0 / 2)
     err = float(np.max(np.abs(m3n[npre:] - p3)))
     c3ok = bool(err < 2e-3)
-    print(f"  C3 激活分支积分器 vs 解析 P3: max|差|={err:.2e}（要求<2e-3）-> "
-          f"{'过' if c3ok else '不过'}", flush=True)
-    # C4 整流级联去激活分支：+40x1s 预激活 -> -80x0.8s，m3 须按封卷 τ_m 单门衰减
+    print(f"  C3 activation-branch integrator vs analytic P3: max|diff|={err:.2e} (require <2e-3) -> "
+          f"{'pass' if c3ok else 'fail'}", flush=True)
+    # C4 rectified-cascade deactivation branch: +40 x1s pre-activation -> -80 x0.8s, m3 must decay with the sealed tau_m single gate
     Vc4 = np.concatenate([np.full(int(1.0 / DT), 40.0), np.full(int(0.8 / DT), -80.0)])
     tabs_d = dict(m_ss=Tab({-140: 1e-4, -60: 1e-4, 40: 1.0, 60: 1.0}),
                   tau_c=Tab({-140: tc3, 60: tc3}),
@@ -568,32 +569,32 @@ def main():
     ref4 = 1e-4 + (seg[0] - 1e-4) * np.exp(-tt4 / 0.24)
     err4 = float(np.max(np.abs(seg - ref4)))
     c4ok = bool(err4 < 2e-3)
-    print(f"  C4 去激活分支 vs 封卷单门 e^(-t/0.24): max|差|={err4:.2e}（要求<2e-3）-> "
-          f"{'过' if c4ok else '不过'}", flush=True)
-    # C2 结构解析（两协议，同封卷版）
+    print(f"  C4 deactivation branch vs sealed single gate e^(-t/0.24): max|diff|={err4:.2e} (require <2e-3) -> "
+          f"{'pass' if c4ok else 'fail'}", flush=True)
+    # C2 structure parsing (both protocols, same as sealed version)
     V0s = load_mat("sine_wave_protocol.mat", "16713003", "sine_wave")[0]
     st0 = find_sine_structure(V0s)
     ok_s = st0["chirp"] is not None and len(st0["long40"]) >= 1 and len(st0["rebs"]) >= 2
     V0a = load_mat("ap_protocol.mat", "16713003", "ap")[0]
     st0a = find_ap_structure(V0a)
     ok_a = len(st0a["cycles"]) >= 14 and st0a["hook"] is not None
-    print(f"  C2 sine 结构: +40段 {len(st0['long40'])} 反弹 {len(st0['rebs'])} "
-          f"chirp {'有' if st0['chirp'] else '无'} | AP 结构: 峰 {len(st0a['cycles'])} "
-          f"hook {'有' if st0a['hook'] else '无'} -> {'过' if (ok_s and ok_a) else '不过'}",
+    print(f"  C2 sine structure: +40 segment {len(st0['long40'])} rebounds {len(st0['rebs'])} "
+          f"chirp {'yes' if st0['chirp'] else 'no'} | AP structure: peaks {len(st0a['cycles'])} "
+          f"hook {'yes' if st0a['hook'] else 'no'} -> {'pass' if (ok_s and ok_a) else 'fail'}",
           flush=True)
     if not (c1 and c3ok and c4ok and ok_s and ok_a):
-        print("  对照未归位 -> 停。", flush=True)
+        print("  controls not seated -> halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls seated.", flush=True)
     if not gate:
-        print("  B6a 群体门未过 -> 足必需不成立；仍按登记跑完前向供参考。", flush=True)
+        print("  B6a population gate failed -> foot necessity fails; forward still run to completion, registered for reference.", flush=True)
 
-    # ---------- B6b 真实数据 ----------
+    # ---------- B6b real data ----------
     amp = json.load(open(F_AMP, encoding="utf-8"))
     hook = json.load(open(F_HOOK, encoding="utf-8"))
     inact = json.load(open(F_INACT, encoding="utf-8"))
     hss = json.load(open(F_HSS, encoding="utf-8"))
-    # 实测 sine 双反弹靶值（R2 降级回填，逐字）
+    # measured sine dual-rebound targets (R2 degraded backfill, verbatim)
     meas = {}
     for r in hook["B_rows"]:
         if r["valid"] and r["A"] > 0:
@@ -607,7 +608,7 @@ def main():
     meas = {c: (d[0], d[1]) for c, d in meas.items() if 0 in d and 1 in d}
 
     res_s, res_a = {}, {}
-    print("\n[B6b sine 换形前向]", flush=True)
+    print("\n[B6b sine form-swap forward]", flush=True)
     for c in CELLS_FWD:
         V, I = load_mat("sine_wave_protocol.mat", c, "sine_wave")
         Vi, Ii = load_mat("inactivation_protocol.mat", c, "inactivation")
@@ -624,13 +625,13 @@ def main():
         res_s[c] = r
         print(f"  {c}: G={r['G']:.4f} | S1{'✓' if r.get('S1') else '×'} "
               f"simA1={r['simA'][0] if r['simA'] else np.nan:.2f}"
-              f"(实测{r.get('A1_meas', np.nan):.2f}) | "
-              f"S2{'✓' if r.get('S2') else '×'} 模拟比{r.get('sim_ratio', np.nan):.2f}"
-              f"(实测{r.get('mea_ratio', np.nan):.2f}) | "
+              f"(meas {r.get('A1_meas', np.nan):.2f}) | "
+              f"S2{'v' if r.get('S2') else 'x'} sim ratio {r.get('sim_ratio', np.nan):.2f}"
+              f"(meas {r.get('mea_ratio', np.nan):.2f}) | "
               f"S3{'✓' if r.get('S3') else '×'} sim40={r.get('sim40', np.nan):.3f}"
-              f"(实测{r.get('mea40', np.nan):.3f}) -> "
-              f"{'过' if r['pass'] else '不过'}", flush=True)
-    print("\n[B6b AP 换形前向]", flush=True)
+              f"(meas {r.get('mea40', np.nan):.3f}) -> "
+              f"{'pass' if r['pass'] else 'fail'}", flush=True)
+    print("\n[B6b AP form-swap forward]", flush=True)
     for c in CELLS_FWD:
         V, I = load_mat("ap_protocol.mat", c, "ap")
         Vi, Ii = load_mat("inactivation_protocol.mat", c, "inactivation")
@@ -639,45 +640,45 @@ def main():
         r["h_pop"] = tabs["h_pop"]
         res_a[c] = r
         print(f"  {c}: G={r['G']:.4f} | A1{'✓' if r.get('A1') else '×'} "
-              f"峰{r.get('repol_npeak')}/{r.get('repol_ncy')} "
-              f"比中位{r.get('repol_ratio_med', np.nan):.2f} | "
-              f"A2{'✓' if r.get('A2') else '×'} hook 模拟{r.get('hook_simA', np.nan):.2f}"
-              f"/实测{r.get('hook_meaA', np.nan):.2f} | "
-              f"A3{'✓' if r.get('A3') else '×'} 间期{r.get('inter_first', np.nan):.4f}"
+              f"peaks {r.get('repol_npeak')}/{r.get('repol_ncy')} "
+              f"ratio med {r.get('repol_ratio_med', np.nan):.2f} | "
+              f"A2{'v' if r.get('A2') else 'x'} hook sim {r.get('hook_simA', np.nan):.2f}"
+              f"/meas {r.get('hook_meaA', np.nan):.2f} | "
+              f"A3{'v' if r.get('A3') else 'x'} inter {r.get('inter_first', np.nan):.4f}"
               f"->{r.get('inter_last', np.nan):.4f} -> "
-              f"{'过' if r['pass'] else '不过'}", flush=True)
+              f"{'pass' if r['pass'] else 'fail'}", flush=True)
 
     ns_ = sum(1 for r in res_s.values() if r["pass"])
     na_ = sum(1 for r in res_a.values() if r["pass"])
     need = 1 if SMOKE else 7
     print("\n" + "-" * 88, flush=True)
-    print(f" sine 换形: {ns_}/{len(res_s)} 过 | AP 换形: {na_}/{len(res_a)} 过"
-          f"（判线 >={need}）", flush=True)
-    # 与封卷版基线对比（换形前）
+    print(f" sine form-swap: {ns_}/{len(res_s)} pass | AP form-swap: {na_}/{len(res_a)} pass"
+          f" (criterion >={need})", flush=True)
+    # comparison against the sealed-version baseline (before the swap)
     if not SMOKE and os.path.exists(F_SINE_BASE) and os.path.exists(F_AP_BASE):
         sb = json.load(open(F_SINE_BASE, encoding="utf-8"))
         ab = json.load(open(F_AP_BASE, encoding="utf-8"))
-        print("  [对比封卷版基线]", flush=True)
+        print("  [vs sealed-version baseline]", flush=True)
         for c in CELLS_FWD:
             b_s = sb["cells"].get(c, {})
             b_a = ab["cells"].get(c, {})
-            print(f"   {c}: sine 比 {b_s.get('sim_ratio', np.nan):.2f}->"
-                  f"{res_s[c].get('sim_ratio', np.nan):.2f} | AP峰比 "
+            print(f"   {c}: sine ratio {b_s.get('sim_ratio', np.nan):.2f}->"
+                  f"{res_s[c].get('sim_ratio', np.nan):.2f} | AP peak ratio "
                   f"{b_a.get('repol_ratio_med', np.nan):.2f}->"
                   f"{res_a[c].get('repol_ratio_med', np.nan):.2f} | "
                   f"hook {b_a.get('hook_simA', np.nan):.2f}->{res_a[c].get('hook_simA', np.nan):.2f}",
                   flush=True)
     sealed = bool(gate and ns_ >= need and na_ >= need)
-    print(" 总判词：",
-          ("B6 封卷——足必需成立（群体门），k3 级联换形双协议过判线，"
-           "τc 表与级联形入模型" if sealed else
-           "B6 未封卷——" + ("群体门未过；" if not gate else "")
-           + (f"sine {ns_}/9 未过线；" if ns_ < need else "")
-           + (f"AP {na_}/9 未过线；" if na_ < need else "")
-           + "照实登记，单门保留为组装形"), flush=True)
+    print(" overall verdict:",
+          ("B6 SEALED: foot necessity holds (population gate), k3 cascade form-swap passes criteria on both protocols, "
+           "tau_c table and cascade form enter the model" if sealed else
+           "B6 NOT sealed: " + ("population gate failed; " if not gate else "")
+           + (f"sine {ns_}/9 below criterion; " if ns_ < need else "")
+           + (f"AP {na_}/9 below criterion; " if na_ < need else "")
+           + "registered as-is, single gate kept as the assembly form"), flush=True)
 
-    # ---------- 图 ----------
-    # 图1 B6a 包络
+    # ---------- figure ----------
+    # figure 1 B6a envelopes
     if b6a_det:
         n1 = len(b6a_det)
         fig, axes = plt.subplots(n1, 1, figsize=(9, 2.4 * n1), squeeze=False)
@@ -685,16 +686,16 @@ def main():
         for ax, (c, d) in zip(axes[:, 0], b6a_det.items()):
             env = json.load(open(F_ENV, encoding="utf-8"))
             pts = env["cells"][c]["k2_+40"]["pts"]
-            ax.scatter([p[0] for p in pts], [p[1] for p in pts], c="k", s=30, label="包络点")
+            ax.scatter([p[0] for p in pts], [p[1] for p in pts], c="k", s=30, label="envelope points")
             x = env_shape("k3", dd, d["tauc"])
             ax.plot(dd * 1e3, d["c_k3"] + d["ainf_k3"] * x, "tab:red",
                     label=f"k3 τc={d['tauc'] * 1e3:.0f}ms")
             xs = env_shape("single", dd, d["single_tau"])
             ax.plot(dd * 1e3, d["c_k3"] + d["ainf_k3"] * xs, "tab:blue", ls="--",
-                    label="单门(参考)")
+                    label="single gate (reference)")
             xc = env_shape("corner", dd, (d["corner_d"], d["corner_tau"]))
             ax.plot(dd * 1e3, d["c_k3"] + d["ainf_k3"] * xc, "tab:green", ls=":",
-                    label="角延迟(参考)")
+                    label="corner delay (reference)")
             ax.set_xscale("log")
             ax.set_title(f"{c}  k3/single={d['ratio_k3_single']:.3f}", fontsize=9)
             ax.set_xlabel("Δt (ms)")
@@ -702,8 +703,8 @@ def main():
         fig.tight_layout()
         f1 = os.path.join(HERE, "2026-09-14_α模型_B6激活足_包络形态判决.png")
         fig.savefig(f1, dpi=120, bbox_inches="tight")
-        print(f"\n  图落盘: {f1}", flush=True)
-    # 图2/3 前向叠图
+        print(f"\n  figure saved: {f1}", flush=True)
+    # figures 2/3 forward overlays
     for tag, res, proto, tname in (("sine", res_s, "sine_wave", "sine"),
                                    ("AP", res_a, "ap", "AP")):
         nfig = len(res)
@@ -714,18 +715,18 @@ def main():
             V, I = load_mat(f"{proto}_protocol.mat", c, proto if proto != "sine_wave" else "sine_wave")
             tt = np.arange(len(V)) * DT
             if I is not None:
-                ax.plot(tt, I, lw=0.3, color="0.6", label="实测")
-            ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="模拟(k3)")
-            ax.set_title(f"{c} {tname} 换形  pass={'过' if r['pass'] else '未'}", fontsize=9)
+                ax.plot(tt, I, lw=0.3, color="0.6", label="measured")
+            ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="simulated (k3)")
+            ax.set_title(f"{c} {tname} form-swap  pass={'pass' if r['pass'] else 'fail'}", fontsize=9)
             ax.set_xlabel("t (s)")
             ax.set_ylabel("I (nA)")
             ax.legend(fontsize=7, loc="upper right")
         fig.tight_layout()
         fx = os.path.join(HERE, f"2026-09-14_α模型_B6激活足_{tag}换形前向.png")
         fig.savefig(fx, dpi=120, bbox_inches="tight")
-        print(f"  图落盘: {fx}", flush=True)
+        print(f"  figure saved: {fx}", flush=True)
 
-    out = dict(note="B6 激活足判决+换形重跑：k3 等τ三级级联；判线与封卷版逐字相同",
+    out = dict(note="B6 activation-foot verdict + form-swap rerun: k3 equal-tau three-stage cascade; criteria verbatim identical to the sealed version",
                gate_b6a=gate, tauc40={c: tauc_tab.get(c) for c in tauc_tab},
                b6a=b6a_det, sine_npass=ns_, ap_npass=na_, sealed_b6=sealed,
                sine={c: {k: v for k, v in r.items() if not k.startswith("_")}
@@ -735,7 +736,7 @@ def main():
     fjson = os.path.join(HERE, "2026-09-14_α模型_B6激活足_k3级联判决_双协议换形重跑_结果.json")
     with open(fjson, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1, default=float)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

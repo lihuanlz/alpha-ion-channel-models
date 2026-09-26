@@ -1,4 +1,4 @@
-# kv43_biexp_check.py — 双指数重拟合检验"τ 变慢是否成分假象" + Imax 组间对拍
+# kv43_biexp_check.py - double-exponential refit testing "is the slower tau a component artifact?" + Imax between-group comparison
 import scipy.io as sio, numpy as np, glob, os, csv
 from scipy.optimize import curve_fit
 

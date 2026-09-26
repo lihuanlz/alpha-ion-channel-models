@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_慢层主曲线判决P1.py   (P1.2：形状比 ρ*=t50/t25，免对齐免拟合)
-# P1.0/P1.1 时间缩放对齐的结构性死亡：优化器钻重叠窗空子（r 越大窗越窄 rms 越小），
-#   异形对照反而对齐更好。放弃对齐，换标度天然统计量：
-#   ρ* = t50/t25（走完自身窗内落差 50% / 25% 的时刻比）
-#   单指数恒=2（恒等式）；拉伸指数=2^(1/β)（β=0.5 -> 4.0）；时间缩放由构造消掉。
-# 判线对照锚定：对照N 双指数对 ρ*≈2 vs 2；对照B 指数 vs 拉伸 = 2 vs 4。
-#   可分性 ratioB > 1.3*ratioN；判线 TOL = sqrt(ratioN*ratioB)；对照挂则停。
-# 诚实条款：窗内落差 D<0.35 log 的尾巴标"不可测"（超慢尾近似常数，不携带形状信息）。
-# 检验A：细胞内跨电压 ρ* 极差比 <=TOL；检验B：同电压跨细胞同理。
-# 运行：python 本文件
+# 2026-09-13_slow-layer_master-curve_verdict_P1.py   (P1.2: shape ratio rho*=t50/t25, alignment-free and fit-free)
+# P1.0/P1.1 time-scaled alignment died structurally: the optimizer exploits overlapping windows (larger r -> narrower window -> smaller rms),
+#   and dissimilar controls aligned even better. Alignment abandoned; switched to a scale-natural statistic:
+#   rho* = t50/t25 (ratio of the times to cover 50% / 25% of the curve's own in-window drop)
+#   single exponential: identically 2 (identity); stretched exponential: 2^(1/beta) (beta=0.5 -> 4.0); time scaling cancels by construction.
+# Criterion anchored by controls: control N double exponential pair rho*~2 vs 2; control B exponential vs stretched = 2 vs 4.
+#   separability requires ratioB > 1.3*ratioN; criterion TOL = sqrt(ratioN*ratioB); if controls fail, stop.
+# Honesty clause: tails with in-window drop D<0.35 log are marked "not measurable" (ultra-slow tails are near-constant, carrying no shape information).
+# Test A: within-cell cross-voltage rho* range ratio <=TOL; Test B: same-voltage cross-cell likewise.
+# Run: python this_file
 import os
 import json
 import numpy as np
@@ -35,14 +35,14 @@ BASE_MS = 200.0
 SLOW_START_S = 0.5
 WIN_MIN_S = 1.0
 AMP0_MIN = 0.10
-D_MIN = 0.35          # 窗内落差下限（log 单位）
+D_MIN = 0.35          # in-window drop lower bound (log units)
 
 
 def load(cell):
     V = sio.loadmat(f"{DATA}/data/protocols/deactivation_protocol.mat")['T'].flatten().astype(float)
     fp = f"{DATA}/data/cells/{cell}/deactivation_{cell}_dofetilide_subtracted_leak_subtracted.mat"
     if not os.path.exists(fp):
-        return V, None, "文件缺失"
+        return V, None, "file missing"
     I = sio.loadmat(fp)['T'].flatten().astype(float)
     diag = f"lenI={len(I)} lenV={len(V)} NaN={int(np.isnan(I).sum())}"
     n = min(len(I), len(V))
@@ -67,7 +67,7 @@ def find_tails(V):
 
 
 def slow_curve(I, tl):
-    """分箱中位 log 曲线（P1.1 同款，已验证件）"""
+    """Binned-median log curve (same as P1.1, a verified component)"""
     s0 = tl["start"] + int(SKIP_MS / 1000.0 / DT)
     y = I[s0: s0 + tl["n"]].astype(float)
     b0, b1 = tl["base_idx"]
@@ -112,7 +112,7 @@ def slow_curve(I, tl):
 
 
 def shape_ratio(bt, bl):
-    """ρ* = t50/t25（自身落差分数）。D 太浅返回 None。另返回 ρ38=t75/t25 作旁证"""
+    """rho* = t50/t25 (fractions of the curve's own drop). Returns None if D is too shallow. Also returns rho38=t75/t25 as supporting evidence"""
     D = bl[0] - bl[-1]
     if D < D_MIN:
         return None
@@ -159,35 +159,35 @@ def spread_of(rhos):
 
 def main():
     print("=" * 66)
-    print(" 慢层主曲线判决 P1.2 · 形状比 ρ*=t50/t25（免对齐免拟合）")
-    print(" 单指数恒=2；拉伸β=0.5 -> 4.0；判线由对照锚定")
+    print(" slow-layer master-curve verdict P1.2 · shape ratio rho*=t50/t25 (alignment-free, fit-free)")
+    print(" single exponential identically 2; stretched beta=0.5 -> 4.0; criterion anchored by controls")
     print("=" * 66, flush=True)
 
     rng = np.random.default_rng(11)
     c = controls(rng)
-    print("\n[对照]")
+    print("\n[controls]")
     for k, v in c.items():
         if v is None:
-            print(f"  {k}: 窗内太浅，对照设计错误 -> 停")
+            print(f"  {k}: in-window drop too shallow, control design error -> stop")
             return
         print(f"  {k}: ρ*={v['rho']:.3f} (ρ38={v['rho3']:.3f}, D={v['D']:.2f})")
     ratioN = c["N1_exp_tau3"]["rho"] / c["N2_exp_tau8"]["rho"]
     ratioN = max(ratioN, 1 / ratioN)
     ratioB = c["B2_stretch_b0.5"]["rho"] / c["B1_exp_tau8"]["rho"]
     ratioB = max(ratioB, 1 / ratioB)
-    print(f"  ratioN(同形)={ratioN:.3f}  ratioB(异形)={ratioB:.3f}")
+    print(f"  ratioN(same shape)={ratioN:.3f}  ratioB(different shapes)={ratioB:.3f}")
     if not (ratioB > 1.3 * ratioN):
-        print("\n  对照不可分（需要 ratioB > 1.3×ratioN）-> 统计量作废，停。")
+        print("\n  controls not separable (need ratioB > 1.3x ratioN) -> statistic void, stop.")
         return
     TOL = float(np.sqrt(ratioN * ratioB))
-    print(f"  对照过。判线 TOL = sqrt(ratioN×ratioB) = {TOL:.3f}")
+    print(f"  controls pass. criterion TOL = sqrt(ratioN x ratioB) = {TOL:.3f}")
 
-    # ---------- 真实数据 ----------
+    # ---------- real data ----------
     per_cell = {}
     for cell in CELLS:
         V, I, diag = load(cell)
         if I is None:
-            print(f"\n  细胞 {cell}: {diag}")
+            print(f"\n  cell {cell}: {diag}")
             continue
         rows = []
         for tl in find_tails(V):
@@ -200,29 +200,29 @@ def main():
                 continue
             rows.append(dict(v=sc["v"], shallow=False, win=sc["win"], **sr))
         per_cell[cell] = rows
-        txt = " ".join(f"{r['v']:+.0f}:" + ("浅" if r["shallow"] else "%.2f" % r["rho"]) for r in rows)
-        print(f"\n  细胞 {cell}: 曲线 {len(rows)} 条 [{txt}]  [{diag}]")
+        txt = " ".join(f"{r['v']:+.0f}:" + ("shallow" if r["shallow"] else "%.2f" % r["rho"]) for r in rows)
+        print(f"\n  cell {cell}: {len(rows)} curves [{txt}]  [{diag}]")
 
-    # ---------- 检验 A ----------
+    # ---------- test A ----------
     print("\n" + "-" * 66)
-    print(f"[检验 A] 细胞内跨电压 ρ* 一致性（极差比 ≤ {TOL:.3f}）")
+    print(f"[test A] within-cell cross-voltage rho* consistency (range ratio <= {TOL:.3f})")
     resA = {}
     for cell, rows in per_cell.items():
         good = [r for r in rows if not r["shallow"]]
         if len(good) < 3:
             resA[cell] = dict(verdict="不足", n=len(good))
-            print(f"  {cell}: 可测曲线不足（{len(good)} 条）")
+            print(f"  {cell}: too few measurable curves ({len(good)})")
             continue
         sp, rs = spread_of([r["rho"] for r in good])
         verdict = "过" if sp <= TOL else "不过"
         resA[cell] = dict(verdict=verdict, spread=float(sp),
                           rhos={f"{r['v']:+.0f}": round(r["rho"], 3) for r in good})
         txt = " ".join(f"{r['v']:+.0f}:{r['rho']:.2f}" for r in good)
-        print(f"  {cell}: {verdict}  极差比={sp:.2f}  [{txt}]")
+        print(f"  {cell}: {verdict}  range ratio={sp:.2f}  [{txt}]")
 
-    # ---------- 检验 B ----------
+    # ---------- test B ----------
     print("-" * 66)
-    print(f"[检验 B] 同电压跨细胞 ρ* 一致性（极差比 ≤ {TOL:.3f}）")
+    print(f"[test B] same-voltage cross-cell rho* consistency (range ratio <= {TOL:.3f})")
     voltages = sorted({r["v"] for rows in per_cell.values() for r in rows if not r["shallow"]})
     resB = {}
     for vv in voltages:
@@ -237,16 +237,16 @@ def main():
         verdict = "过" if sp <= TOL else "不过"
         resB[vv] = dict(verdict=verdict, spread=float(sp), rhos={k: round(v, 3) for k, v in rs.items()})
         txt = " ".join(f"{k[-4:]}:{v:.2f}" for k, v in rs.items())
-        print(f"  {vv:+.0f} mV: {verdict}  极差比={sp:.2f}  [{txt}]")
+        print(f"  {vv:+.0f} mV: {verdict}  range ratio={sp:.2f}  [{txt}]")
 
     va = [r for r in resA.values() if r["verdict"] in ("过", "不过")]
     vb = list(resB.values())
     nAp = sum(1 for r in va if r["verdict"] == "过")
     nBp = sum(1 for r in vb if r["verdict"] == "过")
     print("\n" + "=" * 66)
-    print(" 总判词：")
-    print(f"  检验A（跨电压）: {nAp}/{len(va)} 细胞过")
-    print(f"  检验B（跨细胞）: {nBp}/{len(vb)} 电压档过")
+    print(" overall verdict:")
+    print(f"  test A (cross-voltage): {nAp}/{len(va)} cells pass")
+    print(f"  test B (cross-cell): {nBp}/{len(vb)} voltage bands pass")
     a_good = len(va) > 0 and nAp >= len(va) * 2 / 3
     b_good = len(vb) > 0 and nBp >= len(vb) * 2 / 3
     if a_good and b_good:
@@ -258,15 +258,15 @@ def main():
     print("  " + final)
     print("=" * 66)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, axes = plt.subplots(1, 3, figsize=(17, 5.5))
     ax = axes[0]
     names = list(c.keys())
     ax.bar([n[:10] for n in names], [c[n]["rho"] for n in names],
            color=["steelblue", "steelblue", "darkorange", "darkorange"])
-    ax.axhline(2.0, color="gray", ls="--", label="单指数=2")
-    ax.axhline(4.0, color="red", ls="--", label="拉伸β0.5=4")
-    ax.set_title(f"对照（TOL={TOL:.2f}）", fontweight="bold")
+    ax.axhline(2.0, color="gray", ls="--", label="single exp=2")
+    ax.axhline(4.0, color="red", ls="--", label="stretched beta0.5=4")
+    ax.set_title(f"controls (TOL={TOL:.2f})", fontweight="bold")
     ax.legend(fontsize=8); ax.grid(alpha=0.3); ax.tick_params(axis='x', rotation=20)
 
     ax = axes[1]
@@ -276,8 +276,8 @@ def main():
             ax.plot([r["v"] for r in good], [r["rho"] for r in good], "o-", ms=4, lw=1,
                     alpha=0.7, label=cell[-4:])
     ax.axhline(TOL, color="red", ls="--", label=f"TOL={TOL:.2f}")
-    ax.set_title("ρ*(电压) 每细胞", fontweight="bold")
-    ax.set_xlabel("尾电压 mV"); ax.set_ylabel("ρ*")
+    ax.set_title("rho*(voltage) per cell", fontweight="bold")
+    ax.set_xlabel("tail voltage mV"); ax.set_ylabel("rho*")
     ax.legend(fontsize=7, ncol=2); ax.grid(alpha=0.3)
 
     ax = axes[2]
@@ -298,8 +298,8 @@ def main():
                testA=resA, testB={str(k): v for k, v in resB.items()}, final=final)
     fjson = os.path.join(HERE, "2026-09-13_慢层主曲线判决P1_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 
 if __name__ == "__main__":

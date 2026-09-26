@@ -1,6 +1,6 @@
 # make_EDFig345_channel_cards_2026-09-21.py
-# 稿件 ED3/ED4/ED5 通道卡：Nav1.5 / CaV1.2 / IKs，各 2×2，box+strip 风格同 ED8 v04。
-# 数据：逐细胞主表 + 加药臂表 + 各判决 JSON/CSV（全部已封卷/登记来源，图只读不改）。
+# Manuscript ED3/ED4/ED5 channel cards: Nav1.5 / CaV1.2 / IKs, each 2x2, box+strip style same as ED8 v04.
+# Data: per-cell master table + drug-arm table + verdict JSONs/CSVs (all from sealed/registered sources; the figure only reads).
 import os, sys, json
 import numpy as np
 import pandas as pd
@@ -57,7 +57,7 @@ NAVC, CAVC, IKSC = "#DD8452", "#8172B3", "#55A868"
 fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.4))
 fig.subplots_adjust(left=0.09, right=0.98, top=0.93, bottom=0.13, hspace=0.52, wspace=0.38)
 
-# a: τ_h(V) 全细胞逐细胞曲线（Lei-Nav-HEK35，4 细胞 × −20..+40）
+# a: tau_h(V) per-cell curves, all cells (Lei-Nav-HEK35, 4 cells x -20..+40)
 ax = axes[0, 0]
 th = df[(df.channel == "Nav1.5") & (df.parameter == "tau_h") & (df.dataset == "Lei-Nav-HEK35")]
 for cid, sub in th.groupby("cell_id"):
@@ -69,7 +69,7 @@ ax.set_xlabel("voltage (mV)")
 ax.set_ylabel(r"per-cell $\tau_h$(V) (ms)")
 ax.set_title("Nav1.5 · $\\tau_h$(V) mid-band constant, per-cell (n=4)", fontsize=6.8)
 
-# b: V½h 逐构型（G1_WT/G2_BC2/G3_dKPQ）
+# b: V1/2,h per construct (G1_WT/G2_BC2/G3_dKPQ)
 ax = axes[0, 1]
 gs_ = ["G1_WT", "G2_BC2", "G3_dKPQ"]
 data = [df[(df.channel == "Nav1.5") & (df.parameter == "V_half_inact") & (df.group == g)].value.to_numpy(float)
@@ -82,8 +82,8 @@ ax.set_xticklabels([f"{g.replace('G1_','').replace('G2_','').replace('G3_','')}\
 ax.set_ylabel(r"per-cell $V_{1/2}$ inact (mV)")
 ax.set_title("Nav1.5 · availability $V_{1/2}$: per-cell, not constant (Nα-2 C2)", fontsize=6.8)
 
-# c: s_ref 判1池（WT+BC2, n=12, 封卷 CV=0.184）+ 不可携带对照组（dKPQ/myo/Lei）
-# 直接读 Nα-3 判决 JSON，数字与判词卡逐字一致；P10–P90 带 = 判3 的封卷区间
+# c: s_ref criterion-1 pool (WT+BC2, n=12, sealed CV=0.184) + not-portable controls (dKPQ/myo/Lei)
+# read the Nα-3 verdict JSON directly, numbers verbatim identical to the verdict card; P10-P90 band = criterion-3 sealed interval
 ax = axes[1, 0]
 n3 = json.load(open(os.path.join(AM, "2026-09-16_Nα3_Nav15激活脚部可携带性判决_结果.json"),
                     encoding="utf-8"))
@@ -107,7 +107,7 @@ ax.set_title(f"Nav1.5 · activation foot: pool* n=12, CV=0.184 real dispersion "
              f"(Q=77.9 >> chi2=19.7);\nnot portable: dKPQ −34.9%, Lei 0/3 in band (Nα-3)",
              fontsize=6.2)
 
-# d: τ(−40) vs late_pct 散点（61 膜片，负结果面板）
+# d: tau(-40) vs late_pct scatter (61 patches, negative-result panel)
 ax = axes[1, 1]
 td = df[(df.channel == "Nav1.5") & (df.parameter == "tau_decay") & (df.group == "多通道膜片")]
 lp = df[(df.channel == "Nav1.5") & (df.parameter == "late_pct") & (df.group == "多通道膜片")]
@@ -134,7 +134,7 @@ c3 = json.load(open(os.path.join(AM, "2026-09-15_Cα3v12_CDI结构形式判决_�
 fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.4))
 fig.subplots_adjust(left=0.09, right=0.98, top=0.93, bottom=0.11, hspace=0.52, wspace=0.38)
 
-# a: f_inact 表征批 Ca²⁺ vs Ba²⁺
+# a: f_inact characterization batch Ca2+ vs Ba2+
 ax = axes[0, 0]
 fca = list(c1b["verdict"]["f_inact_cells"]["Ca2"].values())
 fba = list(c1b["verdict"]["f_inact_cells"]["Ba2"].values())
@@ -145,7 +145,7 @@ ax.set_ylabel(r"pre-drug $f_{inact}$(+17 mV, 40 ms)")
 ax.set_ylim(0, 1.0)
 ax.set_title("CaV1.2 · inactivation fraction by carrier (Cα-1b)", fontsize=6.8)
 
-# b: w_fast 逐可分离细胞 + 群体线 + Δf 虚线
+# b: w_fast per separable cell + population line + delta-f dashed line
 ax = axes[0, 1]
 ws, taus_f = [], []
 for cell, v in c3["cells"]["Ca2"].items():
@@ -165,7 +165,7 @@ ax.set_ylim(0.15, 0.45)
 ax.set_ylabel(r"$w_{fast}$")
 ax.set_title("CaV1.2 · CDI additive fast component (Cα-3)", fontsize=6.8)
 
-# c: τf 逐细胞 + τ_slow 群体两点
+# c: tau_f per cell + tau_slow population two points
 ax = axes[1, 0]
 box_strip(ax, taus_f, 1, CAVC)
 gb = c3["verdict"]["group_Ba2"]["H1"]
@@ -178,7 +178,7 @@ ax.set_xticklabels([f"$\\tau_f$\n({len(taus_f)})", "$\\tau_{slow}$\nCa$^{2+}$", 
 ax.set_ylabel("ms")
 ax.set_title("CaV1.2 · CDI kinetics: fast 6–12 ms, slow 50.0/41.6 ms", fontsize=6.8)
 
-# d: 药物效应 Δf 逐细胞按载子（VeraRT 标红）
+# d: drug effect delta-f per cell by carrier (VeraRT highlighted in red)
 ax = axes[1, 1]
 sub = arm[arm.parameter.isin(["f_inact", "f_inact_drug"]) & (arm.group != "表征对照_Ca2") & (arm.group != "表征对照_Ba2")]
 fc = sub[sub.parameter == "f_inact"].set_index(["group", "cell_id"])["value"]
@@ -216,7 +216,7 @@ pool = k1[k1.in_pool == 1]
 fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.4))
 fig.subplots_adjust(left=0.09, right=0.98, top=0.93, bottom=0.11, hspace=0.52, wspace=0.38)
 
-# a: V½ / k WT 池 + Chan 锚星
+# a: V1/2 / k WT pool + Chan anchor star
 ax = axes[0, 0]
 box_strip(ax, pool.Vh.to_numpy(float), 1, IKSC)
 box_strip(ax, pool.k.to_numpy(float), 2, IKSC)
@@ -229,7 +229,7 @@ ax.text(0.03, 0.95, "red star: Chan 2023 anchor 25.4 (Kα-1 J0 PASS)", transform
         fontsize=5.5, color="#B22222", va="top")
 ax.set_title("IKs · WT pool G–V parameters (n=8)", fontsize=6.8)
 
-# b: 瞬时分量 inst_med 逐细胞 + β=0.30 线
+# b: instantaneous component inst_med per cell + beta=0.30 line
 ax = axes[0, 1]
 box_strip(ax, pool.inst_med.to_numpy(float), 1, IKSC)
 ax.axhline(0.30, color=IKSC, lw=1.2, ls="--", zorder=5)
@@ -240,7 +240,7 @@ ax.set_xlim(0.4, 2.0)
 ax.set_ylabel("instantaneous fraction")
 ax.set_title("IKs · instantaneous component, per cell (Kα-1)", fontsize=6.8)
 
-# c: Kα3 arm A 激活前向 R² 逐细胞 + 0.80 判线
+# c: Kα3 arm A activation forward R2 per cell + 0.80 criterion line
 ax = axes[1, 0]
 cellsA = k3["arms"]["A"]["cells"]
 r2 = [c["r2_act"] for c in cellsA]
@@ -255,7 +255,7 @@ ax.set_ylim(0.5, 1.02)
 ax.set_ylabel(r"activation forward $R^2$")
 ax.set_title(f"IKs · activation forward: {npass}/{len(r2)} pass (Kα-3 arm A)", fontsize=6.8)
 
-# d: τ_app 表观否决：存证逐文件表 n=8 按协议着色（红），封卷 J2 数字入文不入点；锚定带 2–3 s
+# d: tau_app apparent rejection: archived per-file table n=8 colored by protocol (red); sealed J2 numbers in text, not plotted; anchor band 2-3 s
 ax = axes[1, 1]
 ta_pool = pool.dropna(subset=["tau_app_s"])
 for proto, mk, lab in [("KCNQ act 4sec - low to high", "o", "4-s protocol"),

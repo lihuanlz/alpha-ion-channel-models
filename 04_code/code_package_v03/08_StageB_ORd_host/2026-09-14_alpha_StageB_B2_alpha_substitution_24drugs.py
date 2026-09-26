@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-2026-09-14 · α模型 Stage B · B2 α替换臂（24 药）
+2026-09-14 · alpha-model Stage B · B2 alpha-substitution arm (24 drugs)
 ====================================================
-ORd 宿主中官方 hERG Markov（态 39–48）冻结，IKr 换 α 模型四表乘积门：
+In the ORd host the official hERG Markov (states 39-48) is frozen and IKr is replaced by the alpha-model four-table product gate:
   IKr_α = G_α · m · h · (1−D) · (v − EK_Nernst)
   dm/dt = (m_ss(v)−m)/τ_m(v)   dh/dt = (h_ss(v)−h)/τ_h(v)
-  dD/dt = k_on·C·(1−h)·(1−D) − k_off·D      （失活态偏好结合，卡6 路线）
-其余六通道静态 Hill 乘子与 B1 同口径。双臂：
-  dyn  = B2 动态结合（卡3 k_on/k_off 表）；
-  stat = B2s 静态对照（D≡0，IKr_α × mult_hERG 官方表）——2×2 解混。
+  dD/dt = k_on*C*(1-h)*(1-D) - k_off*D      (inactivated-state-preferring binding, card-6 route)
+The other six channels use static Hill multipliers with the same convention as B1. Two arms:
+  dyn  = B2 dynamic binding (card-3 k_on/k_off tables);
+  stat = B2s static control (D=0, IKr_alpha x mult_hERG official table) - 2x2 demixing.
 
-判线（预注册 §六 + §11.7 v5 + §11.8 v6，跑前钉死）：
-  V1/V2 与 B1 逐字相同（qNet 符号 v5 钉死：高风险→qNet 下降）；
-  增量判：B2 的 V1 ρ 与 V2 AUC ≥ B1 对应值 -> "α 不劣于官方 Markov"；
-  C1 control APD90 与 B0 正式值 252.118ms 差 ≤2%（每臂 G_α 独立标定）；
-  C2 dofetilide 100×Cmax：APD90 延长 >40% 且 qNet **下降**（v6 勘误后口径）；
-  C3 nifedipine 100×Cmax：APD90 缩短（CaL 通路探针）。
-  τ_act 臂 {0.3,0.5,1,2}（只缩 τ_m 锚表 V≥−30 段，去激活阶梯不动）跑**全 24 药**
-  （预注册 §11.6.4/§11.6.11 钉死：臂间 V1 ρ 极差判线要求与基准同 n 可比）；
-  Q10 臂 {2.0,3.0}、IC50 臂 official 跑 6 药分层子集（§11.6.11）。
-  [v6.1 修] 此前 drug_list 条件误含 TAU_ARM==1.0，致 τ_act 三臂错跑 6 药子集，
-  三臂判读资格作废须重跑；Q10/IC50 三臂 6 药为设计内，有效。
+Criteria (preregistration section 6 + section 11.7 v5 + section 11.8 v6, pinned before the run):
+  V1/V2 verbatim identical to B1 (qNet sign pinned in v5: high risk -> qNet decrease);
+  increment criterion: B2 V1 rho and V2 AUC >= the corresponding B1 values -> "alpha not inferior to official Markov";
+  C1 control APD90 within 2% of the B0 formal value 252.118 ms (G_alpha calibrated independently per arm);
+  C2 dofetilide 100xCmax: APD90 prolongation >40% and qNet DECREASE (post-v6-erratum convention);
+  C3 nifedipine 100xCmax: APD90 shortening (CaL pathway probe).
+  tau_act arms {0.3,0.5,1,2} (only the tau_m anchor table V>=-30 segment is scaled; the deactivation ladder is untouched) run ALL 24 drugs
+  (preregistration section 11.6.4/11.6.11 pinned: the across-arm V1 rho range criterion requires same-n comparability with the baseline);
+  Q10 arms {2.0,3.0} and the IC50 official arm run a 6-drug stratified subset (section 11.6.11).
+  [v6.1 fix] the previous drug_list condition wrongly included TAU_ARM==1.0, so the three tau_act arms mistakenly ran the 6-drug subset;
+  those three arms lose eligibility and must be rerun; the Q10/IC50 three arms with 6 drugs are by design and valid.
 
-环境变量：SMOKE=1 冒烟；TAU_ACT_ARM∈{0.3,0.5,1,2}（默认 1）；
-  Q10（默认 2.5）；IC50_SRC∈{ka3,official}（默认 ka3）；
-  NWORKERS（默认 1 串行）；NBEATS_CTRL/NBEATS_DRUG/CAL_BEATS/CAL_ITERS。
+Environment variables: SMOKE=1 smoke; TAU_ACT_ARM in {0.3,0.5,1,2} (default 1);
+  Q10 (default 2.5); IC50_SRC in {ka3,official} (default ka3);
+  NWORKERS (default 1 serial); NBEATS_CTRL/NBEATS_DRUG/CAL_BEATS/CAL_ITERS.
 
-纪律：本侧仅 ast.parse + SMOKE=1 冒烟；正式跑用户 Spyder：
+Discipline: this side runs only ast.parse + SMOKE=1 smoke; the full run is done by the user in Spyder:
   %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/2026-09-14_α模型_StageB_B2_α替换_24药.py' --wdir
-输出：本脚本同目录 _结果.json/.csv/.png（冒烟带 _冒烟 后缀；文件名含臂标）。
+Output: _结果.json/.csv/.png next to this script (smoke carries the _冒烟 suffix; file names carry the arm tag).
 """
 
 import os
@@ -59,15 +59,15 @@ IC50_SRC = os.environ.get("IC50_SRC", "ka3")
 NWORKERS = int(os.environ.get("NWORKERS", "1"))
 CL = 1000.0
 DT_REC = 0.1
-B0_FORMAL_APD90 = 252.1181387725961   # B0 正式跑末拍（2026-09-14 14:51 在案）
-TEMP_SRC = 21.5                        # α 四表源数据温度 °C（Beattie 2018，v6 ②.3）
+B0_FORMAL_APD90 = 252.1181387725961   # B0 full-run last beat (on record 2026-09-14 14:51)
+TEMP_SRC = 21.5                        # alpha four-table source-data temperature in C (Beattie 2018, v6 item 2.3)
 TEMP_DST = 37.0
 QFAC = Q10 ** ((TEMP_DST - TEMP_SRC) / 10.0)
 
-assert TAU_ARM in (0.3, 0.5, 1.0, 2.0), f"TAU_ACT_ARM={TAU_ARM} 不在预注册臂集"
+assert TAU_ARM in (0.3, 0.5, 1.0, 2.0), f"TAU_ACT_ARM={TAU_ARM} not in the preregistered arm set"
 assert IC50_SRC in ("ka3", "official")
 
-# 24 药（卡4 预注册 §三，与 B1 逐字相同）
+# 24 drugs (card-4 preregistration section 3, verbatim identical to B1)
 DRUGS_HIGH = ["azimilide", "bepridil", "disopyramide", "dofetilide", "ibutilide", "sotalol", "vandetanib"]
 DRUGS_MID = ["astemizole", "chlorpromazine", "cisapride", "clarithromycin", "clozapine",
              "domperidone", "droperidol", "ondansetron", "pimozide", "risperidone", "terfenadine"]
@@ -76,7 +76,7 @@ DRUGS_24 = DRUGS_HIGH + DRUGS_MID + DRUGS_LOW
 SENS_6 = ["dofetilide", "sotalol", "cisapride", "ondansetron", "verapamil", "ranolazine"]  # v6 ②.11
 SMOKE_DRUGS = ["dofetilide", "cisapride", "verapamil"]
 
-# 通道 → (csv IC50 列, csv h 列, pars 下标)；hERG 不走 fc（B2 换成 α），单列供 stat 臂
+# channel -> (csv IC50 column, csv h column, pars index); hERG does not go through fc (B2 replaces it with alpha), listed separately for the stat arm
 CHANNELS_FC = [("LateNa", "Late_sodiumIC50", "Late_sodiumh", 2),
                ("PeakNa", "Peak_sodiumIC50", "Peak_sodiumh", 3),
                ("IKs", "IKsIC50", "IKsh", 4),
@@ -87,7 +87,7 @@ HERG_CSV = ("hERGIC50", "hERGh")
 
 
 # ----------------------------------------------------------------------------
-# 引擎加载（importlib；B0/α 两文件一字不动）
+# engine loading (importlib; the B0/alpha files are used byte-for-byte unchanged)
 # ----------------------------------------------------------------------------
 def load_mod(name, filename):
     spec = importlib.util.spec_from_file_location(name, os.path.join(BASE, filename))
@@ -105,8 +105,8 @@ def load_cipa(path):
 
 
 # ----------------------------------------------------------------------------
-# 卡3 动态结合参数（v6 ②.8 钉死：可证数据集 k_obs~conc 分层中位回归，逐药中位；
-# 无可证 -> 库级中位默认；k_off = k_on × IC50，IC50 取 ic50_self 中位 或 官方表）
+# card-3 dynamic-binding parameters (v6 item 2.8 pinned: per-drug median of stratified-median regression of k_obs vs conc over provable datasets;
+# if not provable -> library-level median default; k_off = k_on x IC50, IC50 from the ic50_self median or the official table)
 # ----------------------------------------------------------------------------
 def ka3_params():
     d = json.load(open(KA3_JSON, encoding="utf-8"))
@@ -146,7 +146,7 @@ def ka3_params():
 
 
 # ----------------------------------------------------------------------------
-# α 四表（16713003；τ 秒→毫秒 ×1000，温度桥 ÷QFAC；τ_act 臂只缩 V≥−30 锚）
+# alpha four tables (16713003; tau seconds -> milliseconds x1000, temperature bridge /QFAC; tau_act arm scales only the V>=-30 anchors)
 # ----------------------------------------------------------------------------
 def build_alpha_tabs(eng):
     amp = json.load(open(eng.F_AMP, encoding="utf-8"))
@@ -171,37 +171,37 @@ def build_alpha_tabs(eng):
 
 
 # ----------------------------------------------------------------------------
-# B2 rhs：B0 移植件 + IKr 置换（GKrfc=inf -> GKr=0.0 精确；Markov 态冻结）
+# B2 rhs: B0 port + IKr replacement (GKrfc=inf -> GKr=0.0 exact; Markov states frozen)
 # ----------------------------------------------------------------------------
 def build_b2(b0, P_ctrl, atabs, G_alpha, kon_per_nM_s, koff_per_s, C_nM, mode):
     P2 = list(P_ctrl)
-    P2[1] = float("inf")                      # GKrfc -> GKr = 0.046/inf = 0.0（精确）
+    P2[1] = float("inf")                      # GKrfc -> GKr = 0.046/inf = 0.0 (exact)
     rhs0 = b0.build_model(P2)
     ko = P_ctrl[b0.PARS_NAMES.index("ko")]
-    RT_F = 8314.0 * 310.0 / 96485.0           # 物理常数用 310K（与 B0 同；pars 的 T=37 是摄氏，仅供 Markov Q10）
-    # Acap/(F·vmyo)（B0 build_model 内同式照抄，供 dy[3] 修正）
+    RT_F = 8314.0 * 310.0 / 96485.0           # physical constants at 310 K (same as B0; the pars T=37 is Celsius, only for the Markov Q10)
+    # Acap/(F*vmyo) (same formula copied from B0 build_model, for the dy[3] correction)
     rad, L = 0.0011, 0.01
     vcell = 1000 * 3.14 * rad * rad * L
     Ageo = 2 * 3.14 * rad * rad + 2 * 3.14 * rad * L
     Acap_Fvmyo = 2 * Ageo / (96485.0 * 0.68 * vcell)
     m_ss, h_ss = atabs["m_ss"], atabs["h_ss"]
     tm_ms, th_ms = atabs["tau_m_ms"], atabs["tau_h_ms"]
-    kon_ms = kon_per_nM_s * C_nM / 1000.0     # 1/ms（浓度已乘）
+    kon_ms = kon_per_nM_s * C_nM / 1000.0     # 1/ms (concentration already multiplied in)
     koff_ms = koff_per_s / 1000.0
 
     def rhs(t, y):
         dy, cur = rhs0(t, y)
         v = y[0]
         ma, ha, Da = y[50], y[51], y[52]
-        for i in range(39, 49):               # 官方 Markov hERG 六态+结合态+D 冻结
+        for i in range(39, 49):               # official Markov hERG six states + bound states + D frozen
             dy[i] = 0.0
         dy_a = list(dy) + [0.0, 0.0, 0.0]
         dy_a[50] = (m_ss(v) - ma) / tm_ms(v)
         dy_a[51] = (h_ss(v) - ha) / th_ms(v)
         if mode == "dyn":
             dy_a[52] = kon_ms * (1.0 - ha) * (1.0 - Da) - koff_ms * Da
-        # stat 臂 D 恒 0（初值 0 且 dy=0）
-        EK = RT_F * math.log(ko / y[3])       # 宿主 Nernst（ki 动态，v6 ②.7）
+        # stat arm: D identically 0 (initial value 0 and dy=0)
+        EK = RT_F * math.log(ko / y[3])       # host Nernst (ki dynamic, v6 item 2.7)
         IKr_a = G_alpha * ma * ha * (1.0 - Da) * (v - EK)
         dy_a[0] -= IKr_a
         dy_a[3] -= IKr_a * Acap_Fvmyo
@@ -235,8 +235,8 @@ def run_beats(b0, rhs, y0, nbeats, keep_last=True, label=""):
             v_last = v.copy()
         if (b + 1) % 20 == 0 or b == 0:
             el = time.time() - t0
-            print(f"    {label} 拍 {b + 1}/{nbeats}  APD90={apd[b]:7.2f}ms  "
-                  f"qNet={qnet[b]:.4f}  用时{el:.0f}s", flush=True)
+            print(f"    {label} beat {b + 1}/{nbeats}  APD90={apd[b]:7.2f}ms  "
+                  f"qNet={qnet[b]:.4f}  took {el:.0f}s", flush=True)
     return apd, qnet, apa, v_last, y
 
 
@@ -254,7 +254,7 @@ def last_valid(x):
 
 
 def last_med(x, k=5):
-    """末 k 个有效值中位（标定读数，抗瞬态噪声）。"""
+    """Median of the last k valid values (calibration reading, robust to transient noise)."""
     ok = x[~np.isnan(x)]
     if len(ok) == 0:
         return float("nan")
@@ -262,17 +262,17 @@ def last_med(x, k=5):
 
 
 # ----------------------------------------------------------------------------
-# G_α 标定（C1：control 末拍 APD90 与 B0 差 ≤2%；log 空间二分）
+# G_alpha calibration (C1: control last-beat APD90 within 2% of B0; bisection in log space)
 # ----------------------------------------------------------------------------
 def calibrate_G(b0, atabs, P_ctrl, y0):
-    """两相标定：先固定网格找健康区（APA≥90mV），再在其中对 APD90 目标二分。
-    物理先验：G_α 健康量级 ~0.1–1 (pA/pF)/mV（复极期需 ~1.5pA/pF@−40mV）。
-    网格外无可括弧健康点 -> 取 |APD90−目标| 最小的健康点，ok=False 登记贴线。"""
+    """Two-phase calibration: first a fixed grid to find the healthy region (APA>=90 mV), then bisection on the APD90 target inside it.
+    Physical prior: healthy G_alpha magnitude ~0.1-1 (pA/pF)/mV (repolarization needs ~1.5 pA/pF at -40 mV).
+    If no bracketable healthy point on the grid -> take the healthy point with min |APD90-target|, ok=False, registered as borderline."""
     target, tol = B0_FORMAL_APD90, 0.02 * B0_FORMAL_APD90
 
     def probe(lg):
         rhs = build_b2(b0, P_ctrl, atabs, 10.0 ** lg, 0.0, 0.0, 0.0, "stat")
-        apd, qnet, apa, _, _ = run_beats(b0, rhs, y0, CAL_BEATS, keep_last=False, label="标定")
+        apd, qnet, apa, _, _ = run_beats(b0, rhs, y0, CAL_BEATS, keep_last=False, label="calib")
         return last_med(apd, 10), last_med(apa, 10), last_valid(qnet)
 
     grid = [-1.0, -0.5, 0.0, 0.5]
@@ -280,8 +280,8 @@ def calibrate_G(b0, atabs, P_ctrl, y0):
     for lg in grid:
         a, pa, qn = probe(lg)
         pts.append((lg, a, pa, qn))
-        print(f"  [标定·网格] G=10^{lg:+.1f}={10 ** lg:.3g}  APD90={a:.2f}ms  APA={pa:.1f}mV"
-              f"  qNet={qn:.4f}  {'健康' if pa >= 90 else '病理(APA<90)'}", flush=True)
+        print(f"  [calib·grid] G=10^{lg:+.1f}={10 ** lg:.3g}  APD90={a:.2f}ms  APA={pa:.1f}mV"
+              f"  qNet={qn:.4f}  {'healthy' if pa >= 90 else 'pathological(APA<90)'}", flush=True)
     healthy = [(lg, a) for lg, a, pa, qn in pts if pa >= 90.0 and not math.isnan(a)]
     bracket = None
     for (l1, a1), (l2, a2) in zip(healthy, healthy[1:]):
@@ -293,10 +293,10 @@ def calibrate_G(b0, atabs, P_ctrl, y0):
         for it in range(CAL_ITERS):
             mid = 0.5 * (lo + hi)
             a, pa, qn = probe(mid)
-            print(f"  [标定·二分 {it + 1}/{CAL_ITERS}] G=10^{mid:.3f}={10 ** mid:.4g}"
+            print(f"  [calib·bisect {it + 1}/{CAL_ITERS}] G=10^{mid:.3f}={10 ** mid:.4g}"
                   f"  APD90={a:.2f}ms  APA={pa:.1f}mV  qNet={qn:.4f}", flush=True)
             if pa < 90.0 or math.isnan(a) or a > target:
-                lo = mid                       # 复极不足 -> G 太小
+                lo = mid                       # insufficient repolarization -> G too small
             else:
                 hi = mid
             if pa >= 90.0 and not math.isnan(a) and abs(a - target) <= tol:
@@ -306,15 +306,15 @@ def calibrate_G(b0, atabs, P_ctrl, y0):
                                                   and abs(a - target) <= tol)
     if healthy:
         lg, a = min(healthy, key=lambda p: abs(p[1] - target))
-        print(f"  [标定] 网格无可括弧区，取最贴线健康点 G=10^{lg:+.1f}", flush=True)
+        print(f"  [calib] no bracketable region on the grid; taking the closest healthy point G=10^{lg:+.1f}", flush=True)
         return 10.0 ** lg, a, bool(abs(a - target) <= tol)
     lg, a, pa, qn = min(pts, key=lambda p: abs((p[1] if not math.isnan(p[1]) else 9e3) - target))
-    print(f"  [标定] 无健康点（APA 全 <90mV）——α 置换在本宿主标不出正常 AP，照实登记", flush=True)
+    print(f"  [calib] no healthy point (all APA <90 mV) - the alpha replacement cannot produce a normal AP in this host; registered as-is", flush=True)
     return 10.0 ** lg, a, False
 
 
 # ----------------------------------------------------------------------------
-# AUC（Mann-Whitney，与 B1 同式）
+# AUC (Mann-Whitney, same formula as B1)
 # ----------------------------------------------------------------------------
 def auc_pos(pos, neg):
     n_g, n_t = 0.0, 0
@@ -350,7 +350,7 @@ def judge(results, APD_ctrl, qNet_ctrl):
 
 
 # ----------------------------------------------------------------------------
-# 单药任务（双臂共用；NWORKERS 并行的 worker）
+# single-drug task (shared by both arms; worker for NWORKERS parallelism)
 # ----------------------------------------------------------------------------
 def one_drug(task):
     (drug, mode, C_scale, G_alpha) = task
@@ -385,10 +385,10 @@ def one_drug(task):
     v0 = y_ss[0]
     y0 = list(y_ss) + [atabs["m_ss"](v0), atabs["h_ss"](v0), 0.0]
 
-    G_alpha = task[3]   # 标定后传入
+    G_alpha = task[3]   # passed in after calibration
     rhs = build_b2(b0, P_d, atabs, G_alpha, kon, koff, C, mode)
     if mode == "stat":
-        # B2s：D≡0，IKr_α × mult_hERG —— 等效实现：G_alpha × mult
+        # B2s: D=0, IKr_alpha x mult_hERG - equivalent implementation: G_alpha x mult
         rhs = build_b2(b0, P_d, atabs, G_alpha * mult_herg, 0.0, 0.0, 0.0, "stat")
     apd, qnet, _, v_last, _ = run_beats(b0, rhs, y0, N_DRUG, label=f"{drug}/{mode}")
     nd = int(np.sum(~np.isnan(apd)))
@@ -407,14 +407,14 @@ def main():
     t_start = time.time()
     arm_tag = f"tauA{TAU_ARM:g}_Q{Q10:g}_{IC50_SRC}"
     print("=" * 74, flush=True)
-    print(" α模型 Stage B · B2 α替换臂（α hERG + 六通道静态 Hill，24 药，dyn/stat 双臂）", flush=True)
-    print(f" 模式: {'冒烟 SMOKE' if SMOKE else '正式'}  臂标: {arm_tag}"
+    print(" alpha-model Stage B · B2 alpha-substitution arm (alpha hERG + six-channel static Hill, 24 drugs, dyn/stat two arms)", flush=True)
+    print(f" mode: {'smoke SMOKE' if SMOKE else 'full'}  arm tag: {arm_tag}"
           f"  TAU_ACT_ARM={TAU_ARM} Q10={Q10}(÷{QFAC:.3f}) IC50_SRC={IC50_SRC} NWORKERS={NWORKERS}", flush=True)
-    print(f" control {N_CTRL} 拍 + 标定({CAL_BEATS}拍×≤{CAL_ITERS}) + 药 {N_DRUG} 拍", flush=True)
+    print(f" control {N_CTRL} beats + calibration ({CAL_BEATS} beats x <={CAL_ITERS}) + drug {N_DRUG} beats", flush=True)
     print("=" * 74, flush=True)
 
     if not os.path.exists(B0_SS):
-        raise RuntimeError("缺 StageB_B0稳态_CL1000.json —— 需 B1 正式跑先落盘（v6 ②.5）")
+        raise RuntimeError("StageB_B0稳态_CL1000.json missing - the B1 full run must save it first (v6 item 2.5)")
     b0 = load_mod("b0_engine", "2026-09-14_α模型_StageB_B0_ORd移植地基复核.py")
     P_ctrl = b0.load_named_values(b0.PARS_FILE, b0.PARS_NAMES)
     with open(B0_SS, encoding="utf-8") as fh:
@@ -424,11 +424,11 @@ def main():
     atabs = build_alpha_tabs(eng)
     ka3, lib_med = ka3_params()
     n_def = sum(1 for d in DRUGS_24 if ka3[d]["k_on_default"])
-    print(f"[卡3] k_on 库级中位默认 {lib_med:.3e} 1/(nM·s)；默认化药数 {n_def}/24"
+    print(f"[card-3] k_on library-level median default {lib_med:.3e} 1/(nM*s); defaulted drugs {n_def}/24"
           f"（{[d for d in DRUGS_24 if ka3[d]['k_on_default']]}）", flush=True)
 
     rows = load_cipa(CIPA_CSV)
-    # v6.1：全 24 药条件只看 Q10/IC50_SRC（τ_act 任意臂均须全量，预注册 §11.6.4/11）
+    # v6.1: the all-24-drug condition only checks Q10/IC50_SRC (every tau_act arm must run the full set, preregistration section 11.6.4/11)
     drug_list = SMOKE_DRUGS if SMOKE else (DRUGS_24 if Q10 == 2.5 and IC50_SRC == "ka3"
                                            else SENS_6)
     if not SMOKE and drug_list == DRUGS_24:
@@ -436,34 +436,34 @@ def main():
         n1 = sum(1 for d in DRUGS_24 if int(float(rows[d]["CiPA"])) == 1)
         n0 = sum(1 for d in DRUGS_24 if int(float(rows[d]["CiPA"])) == 0)
         assert (n2, n1, n0) == (7, 11, 6)
-        print(f"[清单] 24 药到位，标签 高7/中11/低6 与卡4 §三 一致", flush=True)
+        print(f"[list] 24 drugs in place; labels high 7 / intermediate 11 / low 6 match card-4 section 3", flush=True)
     else:
-        print(f"[清单] 本臂药单（{len(drug_list)}）: {drug_list}", flush=True)
+        print(f"[list] this arm's drug list ({len(drug_list)}): {drug_list}", flush=True)
 
-    # ---------- G_α 标定 + control ----------
+    # ---------- G_alpha calibration + control ----------
     v0 = y_ss[0]
     y0 = list(y_ss) + [atabs["m_ss"](v0), atabs["h_ss"](v0), 0.0]
-    print(f"\n[G_α 标定] 初值 m={y0[50]:.4f} h={y0[51]:.4f} @v={v0:.2f}mV", flush=True)
+    print(f"\n[G_alpha calib] initial m={y0[50]:.4f} h={y0[51]:.4f} @v={v0:.2f}mV", flush=True)
     G_alpha, apd_cal, cal_ok = calibrate_G(b0, atabs, P_ctrl, y0)
-    print(f"[G_α 标定] G_α={G_alpha:.4g}  标定末拍 APD90={apd_cal:.2f}ms  "
-          f"C1(≤2%) -> {'过' if cal_ok else '贴线/不过——登记'}", flush=True)
+    print(f"[G_alpha calib] G_alpha={G_alpha:.4g}  calibration last-beat APD90={apd_cal:.2f}ms  "
+          f"C1(<=2%) -> {'pass' if cal_ok else 'borderline/fail - registered'}", flush=True)
 
-    print(f"\n[control] {N_CTRL} 拍 ...", flush=True)
+    print(f"\n[control] {N_CTRL} beats ...", flush=True)
     rhs_c = build_b2(b0, P_ctrl, atabs, G_alpha, 0.0, 0.0, 0.0, "stat")
     apd_c, qnet_c, _, v_c, _ = run_beats(b0, rhs_c, y0, N_CTRL, label="control")
     APD_ctrl, qNet_ctrl = last_valid(apd_c), last_valid(qnet_c)
     r_c, ok_c = steady_flag(apd_c)
     c1 = abs(APD_ctrl - B0_FORMAL_APD90) / B0_FORMAL_APD90
     C1 = bool(c1 <= 0.02)
-    print(f"  control 末拍 APD90={APD_ctrl:.3f}ms qNet={qNet_ctrl:.4f}µC/µF  "
-          f"稳态极差={r_c:.3f}ms  C1 |Δ|={c1 * 100:.2f}% -> {'过' if C1 else '不过'}", flush=True)
+    print(f"  control last-beat APD90={APD_ctrl:.3f}ms qNet={qNet_ctrl:.4f}uC/uF  "
+          f"steady range={r_c:.3f}ms  C1 |diff|={c1 * 100:.2f}% -> {'pass' if C1 else 'fail'}", flush=True)
 
-    # ---------- C2 / C3 自检（§七，v6 勘误口径）----------
+    # ---------- C2 / C3 self-checks (section 7, post-v6-erratum convention) ----------
     checks = {}
-    for tagc, drugc, expect in [("C2", "dofetilide", "APD90 +40% 且 qNet 下降"),
-                                ("C3", "nifedipine", "APD90 缩短")]:
+    for tagc, drugc, expect in [("C2", "dofetilide", "APD90 +40% and qNet decrease"),
+                                ("C3", "nifedipine", "APD90 shortening")]:
         if drugc not in rows:
-            print(f"  [{tagc}] {drugc} 不在 newCiPA.csv，跳过（登记）", flush=True)
+            print(f"  [{tagc}] {drugc} not in newCiPA.csv, skipped (registry)", flush=True)
             checks[tagc] = {"skip": True}
             continue
         rec = one_drug((drugc, "dyn", 100.0, G_alpha))
@@ -476,18 +476,18 @@ def main():
         checks[tagc] = {"drug": drugc, "C": "100xCmax", "APD90_ratio": r_apd,
                         "qNet_ratio": r_q, "pass": ok, "expect": expect}
         print(f"  [{tagc}] {drugc} 100×Cmax: APD90 {r_apd:.3f}×  qNet {r_q:.3f}×  "
-              f"（要求{expect}）-> {'过' if ok else '不过'}", flush=True)
+              f"(required: {expect}) -> {'pass' if ok else 'fail'}", flush=True)
 
-    # ---------- 24 药 × 双臂 ----------
+    # ---------- 24 drugs x two arms ----------
     tasks = [(d, mode, 1.0, G_alpha) for mode in ("dyn", "stat") for d in drug_list]
-    print(f"\n[24药双臂] 任务 {len(tasks)} 个 × {N_DRUG} 拍，NWORKERS={NWORKERS}", flush=True)
+    print(f"\n[24 drugs two arms] {len(tasks)} tasks x {N_DRUG} beats, NWORKERS={NWORKERS}", flush=True)
     results = []
     if NWORKERS > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(max_workers=NWORKERS) as ex:
             for rec in ex.map(one_drug, tasks):
                 results.append(rec)
-                print(f"  [完] {rec['drug']}/{rec['mode']} APD90={rec['APD90_ms']:.2f}  "
+                print(f"  [done] {rec['drug']}/{rec['mode']} APD90={rec['APD90_ms']:.2f}  "
                       f"qNet={rec['qNet_uC_uF']:.4f}", flush=True)
     else:
         for i, tk in enumerate(tasks):
@@ -497,14 +497,14 @@ def main():
             print(f"  [{i + 1}/{len(tasks)}] {rec['drug']:15s}/{rec['mode']:4s} "
                   f"CiPA={rec['CiPA']} C={rec['C_nM']:9.3f}nM  "
                   f"APD90={rec['APD90_ms']:8.2f}  qNet={rec['qNet_uC_uF']:.4f}  "
-                  f"稳态{rec['steady_range_ms']:.2f}ms{'✓' if rec['steady_ok'] else '×'}  "
+                  f"steady {rec['steady_range_ms']:.2f}ms{'v' if rec['steady_ok'] else 'x'}  "
                   f"{time.time() - t0:.0f}s", flush=True)
 
     for rec in results:
         rec["APD90_ratio"] = rec["APD90_ms"] / APD_ctrl if not math.isnan(rec["APD90_ms"]) else float("nan")
         rec["qNet_ratio"] = rec["qNet_uC_uF"] / qNet_ctrl if not math.isnan(rec["qNet_uC_uF"]) else float("nan")
 
-    # ---------- 判线（逐臂；冒烟=同代码路径演练，不出判词）----------
+    # ---------- criteria (per arm; smoke = same code path rehearsal, no verdict) ----------
     verdicts = {}
     for mode in ("dyn", "stat"):
         sub = [r for r in results if r["mode"] == mode and r["drug"] in drug_list]
@@ -512,17 +512,17 @@ def main():
             continue
         vd = judge(sub, APD_ctrl, qNet_ctrl)
         verdicts[mode] = vd
-        lab = "判线路径演练（冒烟/敏感性臂，非判词）" if (SMOKE or drug_list != DRUGS_24) else "判线"
-        arm_name = "B2动态" if mode == "dyn" else "B2s静态"
+        lab = "criterion-path rehearsal (smoke/sensitivity arm, not a verdict)" if (SMOKE or drug_list != DRUGS_24) else "criteria"
+        arm_name = "B2 dynamic" if mode == "dyn" else "B2s static"
         print("\n" + "-" * 74, flush=True)
-        print(f" [{arm_name}·{lab}] V1 ρ(qNet_ratio,风险序)={vd['V1_rho_qNet']:.3f}(p={vd['V1_p']:.2e})"
-              f" ≤−0.60 且 p<0.01 -> {'过' if vd['V1_pass'] else '不过'}", flush=True)
-        print(f" [{arm_name}·{lab}] V2 AUC(qNet抑制率,高vs低)={vd['V2_AUC_qNetSupp_hi_lo']:.3f}"
-              f" ≥0.80 -> {'过' if vd['V2_pass'] else '不过'}", flush=True)
-        print(f" [{arm_name}·登记] APD90: ρ={vd['reg_APD90_rho']:.3f} AUC高低={vd['reg_AUC_APD90_hi_lo']:.3f}；"
-              f"EAD/失败 {vd['reg_n_EAD_or_fail']} 稳态未达 {vd['reg_n_steady_fail']}", flush=True)
+        print(f" [{arm_name}·{lab}] V1 rho(qNet_ratio, risk order)={vd['V1_rho_qNet']:.3f}(p={vd['V1_p']:.2e})"
+              f" <=-0.60 and p<0.01 -> {'pass' if vd['V1_pass'] else 'fail'}", flush=True)
+        print(f" [{arm_name}·{lab}] V2 AUC(qNet suppression, high vs low)={vd['V2_AUC_qNetSupp_hi_lo']:.3f}"
+              f" >=0.80 -> {'pass' if vd['V2_pass'] else 'fail'}", flush=True)
+        print(f" [{arm_name}·registry] APD90: rho={vd['reg_APD90_rho']:.3f} AUC high-low={vd['reg_AUC_APD90_hi_lo']:.3f}; "
+              f"EAD/failure {vd['reg_n_EAD_or_fail']} steady-not-reached {vd['reg_n_steady_fail']}", flush=True)
 
-    # ---------- 增量判：B2 vs B1（预注册 §六，B1 结果在案才判）----------
+    # ---------- increment criterion: B2 vs B1 (preregistration section 6, judged only when B1 result on record) ----------
     incr = None
     if os.path.exists(B1_JSON) and "dyn" in verdicts:
         b1v = json.load(open(B1_JSON, encoding="utf-8"))["verdict"]
@@ -531,21 +531,21 @@ def main():
                 "B2_dyn_V2_AUC": verdicts["dyn"]["V2_AUC_qNetSupp_hi_lo"]}
         incr["not_inferior"] = bool(verdicts["dyn"]["V1_rho_qNet"] <= b1v["V1_rho_qNet"]
                                     and verdicts["dyn"]["V2_AUC_qNetSupp_hi_lo"] >= b1v["V2_AUC_qNetSupp_hi_lo"])
-        # ρ 越负越好：B2 ρ ≤ B1 ρ 即不劣；AUC 越大越好
-        print(f"\n [增量判] B2dyn vs B1: ρ {incr['B2_dyn_V1_rho']:.3f} vs {incr['B1_V1_rho']:.3f}；"
+        # more negative rho is better: B2 rho <= B1 rho means not inferior; larger AUC is better
+        print(f"\n [increment] B2dyn vs B1: rho {incr['B2_dyn_V1_rho']:.3f} vs {incr['B1_V1_rho']:.3f}; "
               f"AUC {incr['B2_dyn_V2_AUC']:.3f} vs {incr['B1_V2_AUC']:.3f} -> "
-              f"{'不劣' if incr['not_inferior'] else '劣'}", flush=True)
+              f"{'not inferior' if incr['not_inferior'] else 'inferior'}", flush=True)
     else:
-        print("\n [增量判] B1 正式结果未落盘，增量判留待 B1 完成后补。", flush=True)
+        print("\n [increment] B1 formal result not yet saved; the increment criterion is deferred until B1 completes.", flush=True)
 
     overall = None
     if not SMOKE and drug_list == DRUGS_24 and "dyn" in verdicts:
         overall = bool(verdicts["dyn"]["V1_pass"] and verdicts["dyn"]["V2_pass"] and C1
                        and checks.get("C2", {}).get("pass") and checks.get("C3", {}).get("pass"))
-        print(f"\n B2 总判词（dyn 主线）：{'过线' if overall else '不过线'}"
-              f"（V1/V2 + C1 + C2 + C3 联判）", flush=True)
+        print(f"\n B2 overall verdict (dyn main line): {'PASS' if overall else 'FAIL'}"
+              f" (joint V1/V2 + C1 + C2 + C3)", flush=True)
 
-    # ---------- 落盘 ----------
+    # ---------- save ----------
     tag = "_冒烟" if SMOKE else "_结果"
     fjson = os.path.join(BASE, f"2026-09-14_α模型_StageB_B2_α替换_24药_{arm_tag}{tag}.json")
     out = {"meta": {"smoke": SMOKE, "arm": {"TAU_ACT_ARM": TAU_ARM, "Q10": Q10, "QFAC": QFAC,
@@ -573,9 +573,9 @@ def main():
                         r["k_on_default"], r["ic50_used"], r["mult_hERG"], r["APD90_ms"],
                         r["APD90_ratio"], r["qNet_uC_uF"], r["qNet_ratio"],
                         r["steady_range_ms"], r["steady_ok"], r["EAD_or_fail"]])
-    print(f"\n 结果落盘: {fjson}\n 逐药CSV: {fcsv}", flush=True)
+    print(f"\n result saved: {fjson}\n per-drug CSV: {fcsv}", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     import matplotlib
     matplotlib.use("Agg")
     try:
@@ -588,7 +588,7 @@ def main():
     import matplotlib.pyplot as plt
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-    ttl = f"B2 α替换 · {arm_tag} · {'冒烟' if SMOKE else '24药'}"
+    ttl = f"B2 alpha-substitution · {arm_tag} · {'smoke' if SMOKE else '24 drugs'}"
     if "dyn" in verdicts:
         ttl += (f" · dyn V1 ρ={verdicts['dyn']['V1_rho_qNet']:.3f}"
                 f"{'✓' if verdicts['dyn']['V1_pass'] else '×'}"
@@ -607,7 +607,7 @@ def main():
                 ax.scatter(xs, ys, c=col, s=30, marker=mk, zorder=3,
                            label=f"{mode}" if cls == 0 else None, alpha=0.85)
         ax.axhline(1.0, color="k", lw=0.7, ls="--")
-        ax.set_xticks([0, 1, 2]); ax.set_xticklabels(["低", "中", "高"])
+        ax.set_xticks([0, 1, 2]); ax.set_xticklabels(["low", "intermediate", "high"])
         ax.set_ylabel(ylab); ax.grid(alpha=0.3)
     axes[0, 0].legend(fontsize=8)
 
@@ -628,7 +628,7 @@ def main():
             ax.plot(fprs, tprs, "o-", ms=3, color=col,
                     label=f"{mode} AUC={verdicts[mode]['V2_AUC_qNetSupp_hi_lo']:.3f}")
     ax.plot([0, 1], [0, 1], "k--", lw=0.7)
-    ax.set_xlabel("FPR"); ax.set_ylabel("TPR"); ax.set_title("ROC 高 vs 低（qNet 抑制率）")
+    ax.set_xlabel("FPR"); ax.set_ylabel("TPR"); ax.set_title("ROC high vs low (qNet suppression)")
     ax.legend(fontsize=9); ax.grid(alpha=0.3)
 
     ax = axes[1, 1]
@@ -638,21 +638,21 @@ def main():
     for r in results:
         if r["drug"] in SMOKE_DRUGS[:1] and r["trace"]:
             ax.plot(t_rec, r["trace"], lw=1.0, label=f"{r['drug']}/{r['mode']}", alpha=0.8)
-    ax.set_title("末拍 AP"); ax.set_xlabel("t (ms)"); ax.set_ylabel("v (mV)")
+    ax.set_title("last-beat AP"); ax.set_xlabel("t (ms)"); ax.set_ylabel("v (mV)")
     ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
     fpng = os.path.join(BASE, f"2026-09-14_α模型_StageB_B2_α替换_24药_{arm_tag}{tag}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
     plt.close(fig)
-    print(f" 图落盘: {fpng}", flush=True)
+    print(f" figure saved: {fpng}", flush=True)
 
     if SMOKE:
-        print("\n[冒烟完] 正式跑指令（Spyder；主线约 3h，敏感性臂每臂约 45min）：\n"
+        print("\n[smoke done] full-run commands (Spyder; main line about 3h, each sensitivity arm about 45 min):\n"
               "  主线:  %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/"
               "2026-09-14_α模型_StageB_B2_α替换_24药.py' --wdir\n"
-              "  τ_act 臂: 先设环境变量 TAU_ACT_ARM=0.3 / 0.5 / 2 再同指令\n"
-              "  Q10 臂: Q10=2.0 / 3.0；IC50 臂: IC50_SRC=official", flush=True)
+              "  tau_act arm: set env TAU_ACT_ARM=0.3 / 0.5 / 2 first, then the same command\n"
+              "  Q10 arm: Q10=2.0 / 3.0; IC50 arm: IC50_SRC=official", flush=True)
 
 
 if __name__ == "__main__":

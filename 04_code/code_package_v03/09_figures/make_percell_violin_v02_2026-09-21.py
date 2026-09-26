@@ -1,7 +1,7 @@
 # make_percell_violin_v02_2026-09-21.py
-# ED8 v02：小样本面板去小提琴化（n<20 只画点+中位/IQR），全部改线性轴，
-# IKs 加 Chan 源锚星（25.4 mV），CaV 加文献 E_rev +46 mV 虚线。
-# 数据源：结果\逐细胞参数总表_四通道_2026-09-21.csv（单一事实源，保证图表一致）
+# ED8 v02: small-sample panels de-violinized (n<20 plots points + median/IQR only), all linear axes,
+# IKs gains the Chan source anchor star (25.4 mV), CaV gains the literature E_rev +46 mV dashed line.
+# Data source: 结果\逐细胞参数总表_四通道_2026-09-21.csv (single source of truth, figure-table consistency guaranteed)
 import os, sys
 import numpy as np
 import pandas as pd
@@ -40,11 +40,11 @@ def L(channel, param, voltage=None, group=None, temp=None, dataset=None):
         d = d[d.dataset == dataset]
     return d["value"].to_numpy(float)
 
-VIOLIN_MIN_N = 20   # 规则：n>=20 才画密度小提琴，否则只画点
+VIOLIN_MIN_N = 20   # rule: density violin only for n>=20, otherwise points only
 
 def panel(ax, data_list, labels, color, star=None, star_label="", tick_fs=6.0,
           special_marker=None):
-    """data_list: list of arrays; special_marker: dict {index: marker_dict} 用于整组换标记"""
+    """data_list: list of arrays; special_marker: dict {index: marker_dict} to swap markers for a whole group"""
     pos = np.arange(1, len(data_list) + 1)
     for i, d in enumerate(data_list):
         d = np.asarray(d, float)
@@ -95,7 +95,7 @@ ax.set_ylabel("per-cell $h_{ss}$")
 ax.set_xlabel("voltage (mV)")
 ax.set_title("hERG · $h_{ss}$ negative limb, 25 °C", fontsize=7)
 
-# c: hERG τ_rec(−120) × T —— 线性轴
+# c: hERG tau_rec(-120) x T - linear axis
 ax = axes[0, 2]
 panel(ax, [L("hERG", "tau_rec", voltage=-120, temp=t) for t in TEMPS],
       [str(t) for t in TEMPS], "#4C72B0", star=(3.04, 5.0), star_label="Beattie HEK 3.04 ms", tick_fs=5.5)
@@ -105,7 +105,7 @@ ax.set_ylim(0, 18)
 ax.set_yticks([0, 3, 6, 9, 12, 15, 18])
 ax.set_title("hERG · recovery τ travels: $Q_{10}$=2.84, $R^2$=0.991", fontsize=7)
 
-# d: Nav1.5 τ(−40) by modality —— 线性轴；whole-cell 3 点用红菱形
+# d: Nav1.5 tau(-40) by modality - linear axis; whole-cell 3 points as red diamonds
 ax = axes[1, 0]
 d1 = L("Nav1.5", "tau_decay", group="多通道膜片")
 d2 = L("Nav1.5", "tau_decay", group="单通道膜片")
@@ -119,7 +119,7 @@ ax.set_title(f"Nav1.5 · τ(−40 mV): a distribution (CV={cv1:.2f})", fontsize=
 ax.set_ylabel("per-patch / per-cell τ (ms)")
 ax.set_xlabel("recording modality")
 
-# e: IKs V½ / k / τ_app —— 8 细胞全点；Chan 源锚星 25.4 mV
+# e: IKs V1/2 / k / tau_app - all 8 cells; Chan source anchor star 25.4 mV
 ax = axes[1, 1]
 e1 = L("IKs", "V_half_act"); e2 = L("IKs", "k_act")
 panel(ax, [e1, e2], ["$V_{1/2}$ act", "$k$ act"], "#55A868", tick_fs=6.5)
@@ -140,7 +140,7 @@ ax.set_xticklabels([f"$V_{{1/2}}$\n({len(e1)})", f"$k$\n({len(e2)})",
                     f"$\\tau_{{app}}$\n({len(e3)})"], fontsize=6.2)
 ax.set_title("IKs · Chan 2023 WT pool, complete record", fontsize=6.5)
 
-# f: CaV1.2 E_chord / Q10(τ_slow) —— 全点；文献锚 +46 mV 虚线
+# f: CaV1.2 E_chord / Q10(tau_slow) - all points; literature anchor +46 mV dashed line
 ax = axes[1, 2]
 f1 = L("CaV1.2", "E_chord")
 panel(ax, [f1], ["$E_{chord}$"], "#8172B3", tick_fs=6.5)
@@ -166,7 +166,7 @@ for i, ax in enumerate(axes.flat):
             fontsize=9, fontweight="bold", va="top")
 fig.tight_layout(w_pad=2.2, h_pad=1.6)
 
-# 图底注记
+# figure footnote
 fig.text(0.01, 0.005,
          "Violin density shown only for groups with n ≥ 20; smaller groups show every cell/patch. "
          "d–f display the complete QC-passed public record for each channel (SI S9).",

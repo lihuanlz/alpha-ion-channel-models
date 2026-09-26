@@ -1,19 +1,19 @@
-# 2026-09-14_α模型_药物卡1_阻断动力学与状态偏好.py
+# 2026-09-14_alpha-model_drug-card1_block-kinetics-and-state-preference.py
 # ============================================================================
-# 药物卡1：dofetilide/pimozide 阻断动力学与状态偏好（判线跑前钉死，见
-#   预注册_α模型_药物卡1_阻断动力学与状态偏好_2026-09-14.md）
+# Drug card 1: dofetilide/pimozide block kinetics and state preference (criteria pinned before the run, see
+#   预注册_α模型_药物卡1_阻断动力学与状态偏好_2026-09-14.md)
 #
-# 数据：a6k5t ted.xlsx（ResultsWide 逐扫 Ramp 游标 + LiquidAdditions 加药轴）
-#   池A dofetilide lab3（15 细胞，排除 v6 定罪 57_A/61_E），浓度 3/10/30/100 nM
-#   池B pimozide lab4（16 细胞），浓度 0.2/1/2.4 nM
+# Data: a6k5t ted.xlsx (ResultsWide per-sweep Ramp cursors + LiquidAdditions dosing axis)
+#   pool A dofetilide lab3 (15 cells, excluding the v6-convicted 57_A/61_E), concentrations 3/10/30/100 nM
+#   pool B pimozide lab4 (16 cells), concentrations 0.2/1/2.4 nM
 #
-# 判线（钉死）：
-#   L1  Hill 自提 IC50、n 与实验室 ic50nh 比 ∈ [0.7,1.4]
-#   L1b 自有游标 vs ResultsWide Ramp 逐扫相关，子样本中位 r ≥ 0.98
-#   L2  k_obs~C 线性 R² ≥ 0.7 且 k_on>0
-#   L3  b(-60..-40)/b(+20..+40) 中位 ≥0.7 捕获型 / ≤0.3 缓解型 / 中间登记
+# Criteria (pinned):
+#   L1  self-extracted Hill IC50, n vs laboratory ic50nh ratio in [0.7,1.4]
+#   L1b own cursors vs ResultsWide Ramp per-sweep correlation, subsample median r >= 0.98
+#   L2  k_obs~C linear R2 >= 0.7 and k_on>0
+#   L3  b(-60..-40)/b(+20..+40) median >=0.7 trapping type / <=0.3 relieving type / in-between registered
 #
-# 运行：Spyder %runfile '...py' --wdir 。SMOKE=1 冒烟只跑 csv 子样本 1 细胞/药。
+# Run: Spyder %runfile '...py' --wdir. SMOKE=1 smoke runs only the csv subsample, 1 cell per drug.
 # ============================================================================
 import os, io, json, zipfile
 import numpy as np
@@ -68,7 +68,7 @@ def cell_records(la, rw, drug_liquid, conc_to_nM, exclude_prefix):
     ic = {k: hdr.index(k) for k in ("CELLID", "LIQUID", "CONC", "CONCU", "FIRST", "LAST", "ANL", "CTLFL")}
     rhdr = rw[0]
     rc = {k: rhdr.index(k) for k in ("CELLID", "ELTIME", "TRACENUM", "LIQUID", "Ramp")}
-    # ResultsWide 按细胞分组
+    # ResultsWide grouped by cell
     ramp = {}
     for r in rw[1:]:
         cid = str(r[rc["CELLID"]])
@@ -106,7 +106,7 @@ def analyze_pool(name, cfg):
     base = os.path.join(PACK, cfg["dir"], "subtracted", "ted")
     la, rw, cd = load_ted(os.path.join(base, "ted.xlsx"))
     cells = cell_records(la, rw, cfg["drug_liquid"], cfg["conc_to_nM"], cfg["exclude_prefix"])
-    print(f"\n=== 池 {name}（{cfg['dir']}）：候选细胞 {len(cells)}", flush=True)
+    print(f"\n=== pool {name} ({cfg['dir']}): candidate cells {len(cells)}", flush=True)
     recs = []
     for cid, ent in sorted(cells.items()):
         ramp = ent["ramp"]
@@ -172,7 +172,7 @@ def lin_fit(x, y):
     return float(coef[0]), float(coef[1]), r2
 
 
-# ------------------------------------------------------------ csv 子样本（L1b+L3）
+# ------------------------------------------------------------ csv subsample (L1b+L3)
 def csv_cols(hdr):
     m = {}
     for j, c in enumerate(hdr):
@@ -190,7 +190,7 @@ def csv_cols(hdr):
 
 
 def load_csv_subset(path, zipped, need_traces):
-    """只读需要的 trace 列 + t_ms。返回 t(s), {N: (i_pA, v_mV)}"""
+    """Read only the needed trace columns + t_ms. Returns t(s), {N: (i_pA, v_mV)}"""
     if zipped:
         z = zipfile.ZipFile(path)
         fh = z.open(z.namelist()[0])
@@ -233,7 +233,7 @@ def subset_cells(recs, per_conc):
 
 
 def csv_audit(name, cfg, base, cd, picks):
-    """L1b 逐扫相关 + L3 block(V)。"""
+    """L1b per-sweep correlation + L3 block(V)."""
     hdr_cd = [str(c).strip().upper() if c else "" for c in cd[0]]
     ix = {n: hdr_cd.index(n) for n in ("CURSOR", "STIME", "ETIME")}
     curs = {}
@@ -253,7 +253,7 @@ def csv_audit(name, cfg, base, cd, picks):
             out.append(dict(cell=cid, 判定="csv缺"));
             continue
         ent = r["_ent"]
-        # L1b: ANL 对照5 + ANL 药5 + wash-in 每10扫
+        # L1b: ANL control 5 + ANL drug 5 + wash-in every 10 sweeps
         wash = list(range(ent["drug_first"], ent["drug_last"] + 1, 10))
         need = sorted(set(ent["ctrl_anl"]) | set(ent["drug_anl"]) | set(wash))
         try:
@@ -271,7 +271,7 @@ def csv_audit(name, cfg, base, cd, picks):
                 ours.append(amp(tr[N][0]))
                 labs.append(ent["ramp"][N][1])
         r_corr = float(np.corrcoef(ours, labs)[0, 1]) if len(ours) >= 8 else np.nan
-        # L3: 复合对照/药扫 → b(V)
+        # L3: composite control/drug sweeps -> b(V)
         ratio = np.nan
         bV = None
         ci_tr = [tr[N] for N in ent["ctrl_anl"] if N in tr and tr[N][1] is not None]
@@ -298,17 +298,17 @@ def csv_audit(name, cfg, base, cd, picks):
             if m_neg.any() and m_pos.any():
                 num_ = float(np.median(bVv[m_neg]))
                 den_ = float(np.median(bVv[m_pos]))
-                # 守门（跑前钉死）：去极化档阻断 <0.10 时比值被噪声撑爆，判不可判
+                # gate (pinned before the run): when depolarized-band block <0.10 the ratio explodes with noise; judge as not judgeable
                 if den_ >= 0.10:
                     ratio = num_ / den_
         out.append(dict(cell=cid, conc_nM=r["conc_nM"], 判定="ok",
                         L1b_r=r_corr, L3_ratio=ratio, bV=bV))
-        print(f"  [csv] {cid}: L1b r={r_corr:.4f}  L3 比={ratio if np.isfinite(ratio) else float('nan'):.3f}",
+        print(f"  [csv] {cid}: L1b r={r_corr:.4f}  L3 ratio={ratio if np.isfinite(ratio) else float('nan'):.3f}",
               flush=True)
     return out
 
 
-# ------------------------------------------------------------ 主跑
+# ------------------------------------------------------------ main run
 result = {"预注册": "预注册_α模型_药物卡1_阻断动力学与状态偏好_2026-09-14.md",
           "判线": {"L1比": RATIO_LINE, "L1b_r": R1_LINE if False else R_LINE,
                    "L2_R2": R2_LINE, "L3": [TRAP_LINE, RELIEVE_LINE]},
@@ -330,11 +330,11 @@ for name, cfg in POOLS.items():
     if len(kk) >= 6:
         kon, koff, r2 = lin_fit([x[0] for x in kk], [x[1] for x in kk])
     L2_pass = bool(np.isfinite(r2) and r2 >= R2_LINE and kon > 0)
-    # L1b/L3 子样本
+    # L1b/L3 subsample
     picks = subset_cells(recs, 1 if SMOKE else 2)
-    for r in recs:  # 挂回 _ent 供 csv 用
+    for r in recs:  # re-attach _ent for csv use
         pass
-    # 重新挂 ent
+    # re-attach ent
     cells_ent = cell_records(*load_ted(os.path.join(base, "ted.xlsx"))[:2],
                              cfg["drug_liquid"], cfg["conc_to_nM"], cfg["exclude_prefix"])
     for p in picks:
@@ -343,7 +343,7 @@ for name, cfg in POOLS.items():
     L1b_rs = [c["L1b_r"] for c in csvs if c.get("L1b_r") is not None and np.isfinite(c["L1b_r"])]
     L1b_med = float(np.median(L1b_rs)) if L1b_rs else np.nan
     L1b_pass = bool(np.isfinite(L1b_med) and L1b_med >= R_LINE)
-    # L3 每浓度档中位（比值不可判的浓度档照实登记，不参与判型）
+    # L3 per-concentration medians (concentration bands with non-judgeable ratios are registered as-is and do not vote on the type)
     l3 = {}
     l3_nan = {}
     for c in csvs:
@@ -374,17 +374,17 @@ for name, cfg in POOLS.items():
     }
     fig_data[name] = dict(C=C, b=b, ic50=ic50, nh=nh, kk=kk, kon=kon, koff=koff,
                           bV={c["cell"]: c["bV"] for c in csvs if c.get("bV")})
-    print(f"\n[{name}] L1: IC50 {ic50:.2f}nM (比 {L1_ic:.2f}) nH {nh:.2f} (比 {L1_nh:.2f}) -> {'过' if L1_pass else '不过'}"
-          f"\n      L2: kon={kon:.2e}/nM/s koff={koff:.4f}/s R2={r2:.3f} -> {'过' if L2_pass else '不过'}"
-          f"\n      L1b: r_med={L1b_med:.4f} -> {'过' if L1b_pass else '不过'}"
+    print(f"\n[{name}] L1: IC50 {ic50:.2f}nM (ratio {L1_ic:.2f}) nH {nh:.2f} (ratio {L1_nh:.2f}) -> {'pass' if L1_pass else 'fail'}"
+          f"\n      L2: kon={kon:.2e}/nM/s koff={koff:.4f}/s R2={r2:.3f} -> {'pass' if L2_pass else 'fail'}"
+          f"\n      L1b: r_med={L1b_med:.4f} -> {'pass' if L1b_pass else 'fail'}"
           f"\n      L3: {l3_verdict}", flush=True)
 
-# ------------------------------------------------------------ 总判词
+# ------------------------------------------------------------ overall verdict
 P = result["pools"]
 lines = []
 for name in POOLS:
     p = P[name]
-    lines.append(f"{name}: L1 {'过' if p['L1']['过'] else '不过'} | L1b {'过' if p['L1b']['过'] else '不过'} | "
+    lines.append(f"{name}: L1 {'pass' if p['L1']['过'] else 'fail'} | L1b {'pass' if p['L1b']['过'] else 'fail'} | "
                  f"L2 {'过' if p['L2']['过'] else '不过'} | L3 {p['L3']['判']}")
 result["判词"] = lines
 print("\n" + "=" * 76, flush=True)
@@ -394,9 +394,9 @@ for s in lines:
 sfx = "_冒烟" if SMOKE else ""
 fjson = os.path.join(HERE, f"2026-09-14_α模型_药物卡1_阻断动力学与状态偏好{sfx}_结果.json")
 json.dump(result, open(fjson, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print("  结果落盘:", fjson, flush=True)
+print("  results saved:", fjson, flush=True)
 
-# ------------------------------------------------------------ 图
+# ------------------------------------------------------------ figure
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -415,9 +415,9 @@ for name, fd in fig_data.items():
         ax.plot(xs, ys, c=cols[name], lw=1.5)
         ax.axvline(fd["ic50"], c=cols[name], ls=":", lw=1)
 ax.set_xscale("log")
-ax.set_xlabel("浓度 (nM)")
-ax.set_ylabel("稳态阻断分数 b")
-ax.set_title("L1 浓度-抑制（点=逐细胞，线=自提 Hill）")
+ax.set_xlabel("concentration (nM)")
+ax.set_ylabel("steady-state block fraction b")
+ax.set_title("L1 concentration-inhibition (dots = per cell, line = self-extracted Hill)")
 ax.legend()
 
 ax = axes[0, 1]
@@ -432,9 +432,9 @@ for name, fd in fig_data.items():
         xs = np.linspace(0, C.max() * 1.1, 20)
         ax.plot(xs, fd["kon"] * xs + fd["koff"], c=cols[name], lw=1.5)
 ax.set_xscale("log")
-ax.set_xlabel("浓度 (nM)")
+ax.set_xlabel("concentration (nM)")
 ax.set_ylabel("k_obs (/s)")
-ax.set_title("L2 wash-in 速率 vs 浓度")
+ax.set_title("L2 wash-in rate vs concentration")
 ax.legend()
 
 ax = axes[1, 0]
@@ -445,7 +445,7 @@ for name, fd in fig_data.items():
 ax.axhline(TRAP_LINE, ls="--", c="gray", lw=0.8)
 ax.set_xlabel("V (mV)")
 ax.set_ylabel("b(V)")
-ax.set_title("L3 ramp 阻断电压剖面（子样本逐细胞）")
+ax.set_title("L3 ramp block voltage profile (subsample per cell)")
 ax.axvspan(-60, -40, color="orange", alpha=0.15)
 ax.axvspan(20, 40, color="green", alpha=0.15)
 
@@ -453,13 +453,13 @@ ax = axes[1, 1]
 txt = []
 for name in POOLS:
     p = P[name]
-    txt.append(f"{name}:  L1 {'✓' if p['L1']['过'] else '✗'}  L1b {'✓' if p['L1b']['过'] else '✗'}  "
+    txt.append(f"{name}:  L1 {'v' if p['L1']['过'] else 'x'}  L1b {'v' if p['L1b']['过'] else 'x'}  "
                f"L2 {'✓' if p['L2']['过'] else '✗'}  L3 {list(p['L3']['判'].values())}")
 ax.text(0.05, 0.7, "\n\n".join(txt), fontsize=12, family="Microsoft YaHei", va="top")
 ax.axis("off")
-ax.set_title("判词速览")
+ax.set_title("verdict overview")
 
 fig.tight_layout()
 fpng = os.path.join(HERE, f"2026-09-14_α模型_药物卡1_阻断动力学与状态偏好{sfx}.png")
 fig.savefig(fpng, dpi=130, bbox_inches="tight")
-print("  图落盘:", fpng, flush=True)
+print("  figure saved:", fpng, flush=True)

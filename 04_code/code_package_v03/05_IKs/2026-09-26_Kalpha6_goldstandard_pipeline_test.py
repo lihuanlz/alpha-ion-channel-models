@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# Kα-6 金标准管线测试: 作者Scheme V变构仿真电流(机制真相已知) 喂我方α提取口径
-# 提取: G-V (V1/2,k) / τ_act(V) / Δt(V) (延迟+单指数, 与我方真实数据口径一致)
-# 对拍: (a) 模型内部真相 Scheme VA G-V V1/2=+7.5,k=17.5 (论文Table 1)
-#       (b) 作者实验真值表 (Kα-4已核): τ_act峰8.912s@-10mV, Δt 1.23→0.42s
-#       (c) F2协同步 τ₂ (Kα-5)
+# Kα-6 gold-standard pipeline test: feed the authors' Scheme V allosteric simulated currents (mechanistic truth known) into our α extraction metric
+# Extraction: G-V (V1/2,k) / tau_act(V) / Dt(V) (delay + single exponential, same metric as our real-data pipeline)
+# Cross-check: (a) in-model truth Scheme VA G-V V1/2=+7.5, k=17.5 (paper Table 1)
+#              (b) authors' experimental truth tables (verified in Ka-4): tau_act peak 8.912s @-10mV, Dt 1.23->0.42s
+#              (c) F2 concerted-step tau2 (Ka-5)
 import sys, json
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.executable).parent.parent.parent))
@@ -17,7 +17,7 @@ BASE = Path(r"D:\Kimi_Agent_细胞仿真工具包扩展以及具身智能2026091
 ZEN = BASE / r"数据\Zenodo_10421153_IKs变构"
 RES = BASE / r"_归档\结果"
 
-# ---- 1. 读 Scheme V 仿真电流 (psQ+E1 块, 行=ms, 列=电压) ----
+# ---- 1. read Scheme V simulated currents (psQ+E1 block, rows=ms, columns=voltage) ----
 wb = openpyxl.load_workbook(ZEN / "Scheme V allosteric models_240116.xlsx", read_only=True)
 ws = wb["Scheme V currents"]
 rows = list(ws.iter_rows(max_row=12003, max_col=16, values_only=True))
@@ -27,21 +27,21 @@ volts = np.array([float(v) for v in hdr[1:16]])
 data = np.array([[float(x) if x is not None else np.nan for x in r[1:16]] for r in rows[1:]])
 t_ms = np.array([float(r[0]) for r in rows[1:]])
 print("shape", data.shape, "t range", t_ms[0], t_ms[-1])
-# 脉冲结束点: +100mV列电流突降处
+# pulse end point: where the +100mV column current drops sharply
 j = np.argmax(volts)
 dI = np.diff(data[:, j])
 t_end = int(t_ms[np.argmin(dI)])
 print("pulse end ~", t_end, "ms")
 
-# ---- 2. α提取 (与真实数据同口径) ----
-i0 = 5                       # 瞬时点后基线
+# ---- 2. α extraction (same metric as real data) ----
+i0 = 5                       # baseline after the instant point
 Iss_win = (t_ms >= t_end - 1000) & (t_ms <= t_end - 50)
 I0 = data[0, :].copy()
-# 瞬时电流线性拟合 -> Erev
+# instant-current linear fit -> Erev
 A_e = np.polyfit(volts, I0, 1)
 Erev = -A_e[1] / A_e[0]
 Iss = np.nanmean(data[Iss_win, :], axis=0) - data[i0, :]
-G_raw = Iss / (volts - Erev)          # 电导口径 G=I/(V-Erev), 与真实数据管线一致
+G_raw = Iss / (volts - Erev)          # conductance metric G=I/(V-Erev), same as the real-data pipeline
 G = G_raw / np.nanmax(G_raw)
 def boltz(V, Vh, k): return 1.0 / (1.0 + np.exp(-(V - Vh) / k))
 m = np.isfinite(G) & (volts >= -60)
@@ -50,7 +50,7 @@ Vh_ext, k_ext = popt
 print(f"Erev(instantaneous)={Erev:.1f} mV")
 
 def act_fit(tt, yy):
-    """延迟+单指数: I = Iss*(1-exp(-(t-d)/tau)), 返回 d, tau, relRMS"""
+    """delay + single exponential: I = Iss*(1-exp(-(t-d)/tau)); returns d, tau, relRMS"""
     yy = yy - yy[0]
     A = yy[-1]
     if A <= 1e-9:
@@ -75,7 +75,7 @@ for c in sel:
         ext[volts[c]] = r
         print(f"V={volts[c]:+5.0f}: d={r[0]:7.1f} ms  tau={r[1]:8.1f} ms  relRMS={r[2]:.4f}")
 
-# ---- 3. 实验真值表 (Kα-4) ----
+# ---- 3. experimental truth tables (Ka-4) ----
 wb = openpyxl.load_workbook(ZEN / "Scheme 1 time constant and deltat_240116.xlsx", read_only=True)
 tau_true, dt_true = {}, {}
 for row in wb["Extended tau to +180 mV Fig.3B"].iter_rows(values_only=True):
@@ -94,7 +94,7 @@ for row in wb["Fig.3 Fig.S3 data and models"].iter_rows(values_only=True):
         dt_true[v] = float(row[5])
 wb.close()
 
-# ---- 4. 对比量 ----
+# ---- 4. comparison quantities ----
 ev = sorted(ext)
 d_ms = np.array([ext[v][0] for v in ev]); tau_ms = np.array([ext[v][1] for v in ev])
 rms_fit = np.array([ext[v][2] for v in ev])
@@ -107,7 +107,7 @@ print(f"Δt extracted/expt ratio: median {np.median(dt_ratio):.2f} ({dt_ratio.mi
 print(f"τ_act extracted/expt ratio: median {np.median(tau_ratio):.2f} ({tau_ratio.min():.2f}-{tau_ratio.max():.2f})")
 print(f"fit relRMS on gold-standard traces: median {np.median(rms_fit):.4f} max {rms_fit.max():.4f}")
 
-# ---- 5. 图 ----
+# ---- 5. figure ----
 fig = plt.figure(figsize=(13.2, 4.2))
 axa = fig.add_subplot(131); axb = fig.add_subplot(132); axc = fig.add_subplot(133)
 for v, c in [(0, "0.75"), (40, "0.5"), (100, "C3")]:

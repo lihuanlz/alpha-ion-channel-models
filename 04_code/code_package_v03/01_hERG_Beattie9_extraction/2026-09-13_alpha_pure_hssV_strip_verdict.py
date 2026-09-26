@@ -1,33 +1,33 @@
-# 2026-09-13_α模型_纯hssV剥离判决.py
-# 目的（缺口 1 主攻：纯 h_ss(V) 曲线，剥离 m 污染）：
-#   失活协议每周期：+50x0.6s 全激活全失活 -> -90x0.06s 复位（h 全恢复、m 残留
-#   ~0.43）-> 测试档 Vx0.150s（-100..+50 家族）-> -120x0.5s 反弹 DoE。
-#   剥离推导（零 τ 依赖、G 精确抵消）：
-#     测试段末电流 I_test = G·m_T·h_T·(V-E_rev)（τ_h(V)<<150ms 档 h_T≈h_ss(V)，
-#       τ_h 较慢档 h_T 为 h_ss 上界，声明）；
-#     反弹 DoE 幅度 A = G·DF120·m_T（I_reb=G·m_T·DF·[e^{-t/τd}-(1-h_T)e^{-t/τr}]，
-#       DoE 拟合 A 对任意 h_T 均 ≈G·DF·m_T，已推导）；
-#     => h_ss(V) ≈ I_test·DF120 / (A·(V-E_rev))，DF120=31.67mV，G 抵消。
-#   -90 档 DF=-1.67mV 除零弃用（协议该档为 -90x0.21 连写，无 0.15s 测试段）。
+# 2026-09-13_alpha_pure_hssV_strip_verdict.py
+# Purpose (gap-1 main attack: pure h_ss(V) curve, m contamination stripped):
+#   Inactivation protocol per cycle: +50 x 0.6 s full activation + full inactivation
+#   -> -90 x 0.06 s reset (h fully recovered, m residual ~0.43) -> test level
+#   V x 0.150 s (family -100..+50) -> -120 x 0.5 s rebound DoE.
+#   Strip derivation (zero tau dependence, G cancels exactly):
+#     end-of-test current I_test = G * m_T * h_T * (V - E_rev) (for levels with
+#       tau_h(V) << 150 ms, h_T ~= h_ss(V); for slower tau_h levels h_T is an
+#       upper bound of h_ss, declared);
+#     rebound DoE amplitude A = G * DF120 * m_T (I_reb = G*m_T*DF*[e^{-t/tau_d} -
+#       (1-h_T) e^{-t/tau_r}]; DoE-fitted A ~= G*DF*m_T for any h_T, derived).
 #
-# 【协议结构（2026-09-13 程序化解析在案）】
-#   全长 46.41s；周期 = [-120x0.05, -80x0.2, +50x0.6, -90x0.06, 测试Vx0.150,
-#   -120x0.5, -80x1.34]；测试档家族 -100..+50（acurve 16 档，-100/-90/-80 n 少）。
+# [Protocol structure (programmatically parsed 2026-09-13, on record)]
+#   total length 46.41 s; cycle = [-120x0.05, -80x0.2, +50x0.6, -90x0.06,
+#   test V x 0.150, -120x0.5, -80x1.34]; test family -100..+50 (acurve 16 levels,
 #
-# 判线（跑前声明）：
-#   QC1（物理门）：h_ss(V) ∈ [-0.1, 1.3] 且 |I_test|>=4σ（σ=该细胞 -80x1.34s
-#     基线 std），否则该细胞该档剔除记旗（D1/D5 过减漏家族预期在正档中旗）。
-#   QC2（B1 生死判）：-100..-50 各有效档 h_ss 中位 ∈[0.7,1.3] -> B1（h_ss=1
-#     物理声明）支持；任一档中位 <0.7 -> B1 该档死亡，实测曲线替代声明。
-#   QC3（正档一致性）：+40 档剥离 h_ss 与 §3.2 h40 九细胞值（0.0023-0.0296）
-#     中位比 ∈ [0.3,3]。
-#   封卷判线（每档独立）：QC1 过细胞数 >=5 且 CV<0.3 -> 该档【封卷】；
-#     >=5 但 CV>=0.3 ->【登记】；<5 ->【数据不足】。
-# 对照（跑前声明）：
-#   C1 DoE 反演 τr 3.5ms 误差<15%；
-#   C2 合成周期（m_T=0.5, h_T=0.3, G=0.1, V=-20, 噪声=16713003 实测 σ）
-#     剥离公式回收 h_T 误差<10% -> 不过则统计量作废停。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 单细胞 16713003 冒烟。
+# Criteria (declared pre-run):
+#   QC1 (physics gate): h_ss(V) in [-0.1, 1.3] and |I_test| >= 4 sigma (sigma =
+#     baseline std of that cell's -80 x 1.34 s segment); else the cell-level point
+#   QC2 (B1 life-or-death): median h_ss of valid levels -100..-50 in [0.7, 1.3]
+#     -> B1 (h_ss = 1 physical claim) supported; any level median < 0.7 -> B1
+#   QC3 (positive-level consistency): +40 stripped h_ss vs section 3.2 h40
+#     nine-cell values (0.0023-0.0296), median ratio in [0.3, 3].
+#   SEAL criterion (per level, independent): QC1-passing cells >= 5 and CV < 0.3
+#     -> [SEAL]; >= 5 but CV >= 0.3 -> [REGISTER]; < 5 -> [INSUFFICIENT DATA].
+# Controls (declared pre-run):
+#   C1 DoE inversion of tau_r 3.5 ms, error < 15%;
+#   C2 synthetic cycle (m_T=0.5, h_T=0.3, G=0.1, V=-20, noise = measured sigma
+#     of 16713003): strip formula recovers h_T with error < 10% -> if failed,
+# Run: python this file (nine cells full); SMOKE=1 single-cell 16713003 smoke.
 import os
 import json
 import numpy as np
@@ -87,7 +87,7 @@ def doe_fit(t, y):
 
 
 def strip_cell(V, I):
-    """每细胞：逐测试档剥离 h_ss。返回 {gear: dict(I_test, A, h, qc, flag)}, σ。"""
+    """Per cell: strip h_ss at each test level. Returns {gear: dict(I_test, A, h, qc, flag)}, sigma."""
     info = segments(V)
     sig = []
     for v, s0, n in info:
@@ -96,17 +96,17 @@ def strip_cell(V, I):
     sigma = float(np.median(sig)) if sig else np.nan
     out = {}
     for i, (v, s0, n) in enumerate(info):
-        # 测试档：0.14-0.16s，后接 -120x0.5s，前两段内有 -90 复位
+        # test level: 0.14-0.16 s, followed by -120 x 0.5 s; -90 reset within prior two segments
         if not (0.14 < n * DT < 0.16):
             continue
         if i + 1 >= len(info) or not (abs(info[i + 1][0] + 120) < 2
                                       and info[i + 1][2] * DT > 0.4):
             continue
         prev90 = any(abs(info[j][0] + 90) < 2 for j in range(max(0, i - 2), i))
-        if not prev90 or abs(v + 90) < 2:                    # -90 档 DF≈0 弃用
+        if not prev90 or abs(v + 90) < 2:                    # -90 level DF ~= 0, dropped
             continue
-        i_test = float(np.mean(I[s0 + n - 2000: s0 + n]))  # 测试段末 20ms
-        a, b = info[i + 1][1], info[i + 1][1] + 3000       # 反弹前 300ms
+        i_test = float(np.mean(I[s0 + n - 2000: s0 + n]))  # last 20 ms of test segment
+        a, b = info[i + 1][1], info[i + 1][1] + 3000       # 300 ms before rebound
         r = doe_fit(np.arange(3000) * DT, -I[a:b])
         if r is None:
             continue
@@ -123,19 +123,19 @@ def strip_cell(V, I):
 def main():
     rng = np.random.default_rng(7)
     print("=" * 88)
-    print(" α模型 纯 h_ss(V) 剥离判决" + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 判线: 每档 QC1>=5 且 CV<0.3 封卷 | QC2 B1 生死（-100..-50 中位∈[0.7,1.3]）| QC3 +40 一致")
+    print(" alpha-model pure h_ss(V) strip verdict" + (" (smoke 16713003)" if SMOKE else " (nine cells full)"))
+    print(" criteria: per level QC1>=5 and CV<0.3 SEAL | QC2 B1 life-or-death (-100..-50 median in [0.7,1.3]) | QC3 +40 consistency")
     print("=" * 88, flush=True)
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     t_c = np.arange(int(0.3 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τr: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> {'过' if c1 else '不过'}",
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f} ms (truth 3.5) -> {'pass' if c1 else 'fail'}",
           flush=True)
-    # C2 合成周期：m_T=0.5 h_T=0.3 G=0.1 V=-20
+    # C2 synthetic cycle: m_T=0.5 h_T=0.3 G=0.1 V=-20
     G0, mT, hT, vt = 0.1, 0.5, 0.3, -20.0
     i_syn = G0 * mT * hT * (vt - E_REV) + rng.normal(0, 0.02)
     reb = G0 * DF120 * mT * (np.exp(-t_c / 0.030) - (1 - hT) * np.exp(-t_c / 0.003)) \
@@ -143,21 +143,21 @@ def main():
     rs = doe_fit(t_c, reb)
     h_rec = i_syn * DF120 / (rs["A"] * (vt - E_REV))
     c2 = bool(rs and abs(h_rec - hT) / hT < 0.10)
-    print(f"  C2 合成剥离: h_rec={h_rec:.3f}（真值0.300，A={rs['A']:.3f}）-> "
-          f"{'过' if c2 else '不过'}", flush=True)
+    print(f"  C2 synthetic strip: h_rec={h_rec:.3f} (truth 0.300, A={rs['A']:.3f}) -> "
+          f"{'pass' if c2 else 'fail'}", flush=True)
     if not (c1 and c2):
-        print("  对照未归位 -> 统计量作废，停。", flush=True)
+        print("  controls not seated -> statistics void, halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls seated.", flush=True)
 
-    # ---------- 真实数据 ----------
-    print("\n[真实数据]", flush=True)
+    # ---------- real data ----------
+    print("\n[real data]", flush=True)
     res = {}
     all_gears = set()
     for c in CELLS:
         V, I = load_mat("inactivation_protocol.mat", c, "inactivation")
         if I is None:
-            print(f"  {c}: 无数据", flush=True)
+            print(f"  {c}: no data", flush=True)
             continue
         cur, sigma = strip_cell(V, I)
         res[c] = dict(curve=cur, sigma=sigma)
@@ -168,7 +168,7 @@ def main():
 
     gears = sorted(all_gears)
     print("\n" + "-" * 88, flush=True)
-    print("[逐档判决]", flush=True)
+    print("[per-level verdict]", flush=True)
     gear_verdict = {}
     for g in gears:
         vals = [res[c]["curve"][g]["h"] for c in res
@@ -181,27 +181,27 @@ def main():
         else:
             med, cv = (float(vals[0]), np.inf) if n == 1 else (np.nan, np.inf)
         if n >= 5 and cv < 0.3:
-            v = "【封卷】"
+            v = "[SEAL]"
         elif n >= 5:
-            v = "【登记】"
+            v = "[REGISTER]"
         else:
-            v = "【数据不足】"
+            v = "[INSUFFICIENT DATA]"
         gear_verdict[g] = dict(n=n, med=med, cv=cv, verdict=v)
-        print(f"  {g:+5d}mV: n={n} 中位={med:.3f} CV={cv:.3f} {v}", flush=True)
+        print(f"  {g:+5d}mV: n={n} median={med:.3f} CV={cv:.3f} {v}", flush=True)
 
-    # ---------- QC2 B1 生死 ----------
+    # ---------- QC2 B1 life-or-death ----------
     b1_gears = [g for g in gears if -100 <= g <= -50 and gear_verdict[g]["n"] >= 5]
     b1_dead = []
     if not b1_gears:
         b1_ok = None
-        print("\n[QC2] B1: 有效档不足（n<5），不判", flush=True)
+        print("\n[QC2] B1: insufficient valid levels (n<5), not judged", flush=True)
     else:
         b1_dead = [g for g in b1_gears if gear_verdict[g]["med"] < 0.7]
         b1_ok = not b1_dead
-        print(f"\n[QC2] B1（h_ss(-100..-50)=1 物理声明）: "
-              f"{'支持（各档中位均∈[0.7,1.3]）' if b1_ok else f'死亡档 {b1_dead}'}", flush=True)
+        print(f"\n[QC2] B1 (h_ss(-100..-50)=1 physical claim): "
+              f"{'supported (all level medians in [0.7,1.3])' if b1_ok else f'dead levels {b1_dead}'}", flush=True)
 
-    # ---------- QC3 +40 一致性 ----------
+    # ---------- QC3 +40 consistency ----------
     h40_ref = {c: v for c, v in
                [("16704007", 0.0216), ("16704047", 0.0197), ("16707014", 0.0143),
                 ("16708016", 0.0042), ("16708060", 0.0022), ("16708118", 0.0296),
@@ -211,20 +211,20 @@ def main():
         ref = float(np.median(list(h40_ref.values())))
         ratio = gear_verdict[40]["med"] / ref if ref else np.nan
         qc3 = bool(0.3 <= ratio <= 3.0)
-        print(f"[QC3] +40 剥离中位={gear_verdict[40]['med']:.4f} vs h40 参考中位"
-              f"={ref:.4f} 比={ratio:.2f} -> {'一致' if qc3 else '不一致'}", flush=True)
+        print(f"[QC3] +40 stripped median={gear_verdict[40]['med']:.4f} vs h40 reference median"
+              f"={ref:.4f} ratio={ratio:.2f} -> {'consistent' if qc3 else 'inconsistent'}", flush=True)
     else:
-        print("[QC3] +40 档有效细胞不足，不判", flush=True)
+        print("[QC3] +40 level valid cells insufficient, not judged", flush=True)
 
-    n_seal = sum(1 for d in gear_verdict.values() if d["verdict"] == "【封卷】")
-    n_reg = sum(1 for d in gear_verdict.values() if d["verdict"] == "【登记】")
-    b1_txt = "支持" if b1_ok else ("死亡（见上）" if b1_ok is False else "未判")
-    print(f"\n 总判词：封卷 {n_seal} 档，登记 {n_reg} 档，"
-          f"数据不足 {sum(1 for d in gear_verdict.values() if d['verdict'] == '【数据不足】')} 档；"
+    n_seal = sum(1 for d in gear_verdict.values() if d["verdict"] == "[SEAL]")
+    n_reg = sum(1 for d in gear_verdict.values() if d["verdict"] == "[REGISTER]")
+    b1_txt = "supported" if b1_ok else ("dead (see above)" if b1_ok is False else "not judged")
+    print(f"\n overall verdict: SEAL {n_seal} levels, REGISTER {n_reg} levels, "
+          f"insufficient data {sum(1 for d in gear_verdict.values() if d['verdict'] == '[INSUFFICIENT DATA]')} levels; "
           f"B1 {b1_txt}；QC3 "
-          f"{'一致' if qc3 else ('不一致' if qc3 is False else '未判')}", flush=True)
+          f"{'consistent' if qc3 else ('inconsistent' if qc3 is False else 'not judged')}", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, ax = plt.subplots(figsize=(9, 6))
     for c in res:
         gs = sorted(res[c]["curve"])
@@ -235,12 +235,12 @@ def main():
         ax.plot([g for g, q in zip(gs, qc) if not q],
                 [h for h, q in zip(hs, qc) if not q], "x", ms=5, alpha=0.4)
     meds = [gear_verdict[g]["med"] for g in gears]
-    ax.plot(gears, meds, "k-s", lw=2.2, ms=7, label="跨细胞中位")
+    ax.plot(gears, meds, "k-s", lw=2.2, ms=7, label="cross-cell median")
     ax.axhline(1.0, color="0.6", ls="--", lw=0.8)
-    ax.axhspan(0.7, 1.3, color="tab:green", alpha=0.06, label="B1 判带")
+    ax.axhspan(0.7, 1.3, color="tab:green", alpha=0.06, label="B1 criterion band")
     ax.set_xlabel("V (mV)")
-    ax.set_ylabel("h_ss(V) 剥离值")
-    ax.set_title("纯 h_ss(V) 剥离（×=QC1 剔除点）")
+    ax.set_ylabel("h_ss(V) stripped value")
+    ax.set_title("pure h_ss(V) strip (x = QC1-rejected points)")
     ax.legend(fontsize=7, ncol=2)
     ax.grid(alpha=0.3)
     fig.tight_layout()
@@ -251,8 +251,8 @@ def main():
     with open(fjson, "w", encoding="utf-8") as f:
         json.dump(dict(cells=res, gears=gear_verdict, b1_ok=b1_ok, b1_dead=b1_dead,
                        qc3=qc3), f, ensure_ascii=False, indent=1, default=float)
-    print(f"\n  图落盘: {fpng}", flush=True)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"\n  figure saved: {fpng}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# kv43_judge.py — Kv4.3 探针判决与图版（登记层，非封卷）
+# kv43_judge.py - Kv4.3 probe judgement and figure (registry tier, not sealed)
 import os, sys
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ li = pd.read_csv(os.path.join(ROOT, "les_inact.csv"))
 va = pd.read_csv(os.path.join(ROOT, "veh_act.csv"))
 la = pd.read_csv(os.path.join(ROOT, "les_act.csv"))
 
-# QC: R2>=0.95 且 Vh 拟合误差 < 5 mV（失活）；脚部 R2>=0.9（激活）
+# QC: R2>=0.95 and Vh fit error < 5 mV (inactivation); foot R2>=0.9 (activation)
 viq = vi[(vi.R2 >= 0.95) & (vi.Vh_err < 5)]
 liq = li[(li.R2 >= 0.95) & (li.Vh_err < 5)]
 vaq = va[va.foot_R2 >= 0.9]
@@ -76,7 +76,7 @@ def box_strip(ax, d, x, color, w=0.52):
 fig, axes = plt.subplots(2, 2, figsize=(7.2, 5.2))
 fig.subplots_adjust(left=0.10, right=0.97, top=0.90, bottom=0.11, hspace=0.55, wspace=0.35)
 
-# a: 失活中位 V½ 两组
+# a: inactivation median V1/2, two groups
 ax = axes[0, 0]
 box_strip(ax, viq.Vh_inact, 1, VC); box_strip(ax, liq.Vh_inact, 2, LC)
 ax.set_xticks([1, 2])
@@ -86,7 +86,7 @@ q1, q2 = S["veh_Vh"], S["les_Vh"]
 ax.set_title(f"avail. $V_{{1/2}}$: CV {q1['cv']:.3f}/{q2['cv']:.3f}; "
              f"Δ med {dVh*100:.1f}% across groups", fontsize=6.6)
 
-# b: k_inact 两组
+# b: k_inact, two groups
 ax = axes[0, 1]
 box_strip(ax, viq.k_inact, 1, VC); box_strip(ax, liq.k_inact, 2, LC)
 ax.set_xticks([1, 2]); ax.set_xticklabels([f"vehicle\n({len(viq)})", f"6-OHDA\n({len(liq)})"], fontsize=6.5)
@@ -94,7 +94,7 @@ ax.set_ylabel(r"per-cell $k_{inact}$ (mV)")
 ax.set_title(f"avail. slope k: med {S['veh_k']['med']:.1f}/{S['les_k']['med']:.1f} mV, "
              f"CV {S['veh_k']['cv']:.2f}/{S['les_k']['cv']:.2f}", fontsize=6.6)
 
-# c: 激活脚部 s_ref 两组
+# c: activation foot s_ref, two groups
 ax = axes[1, 0]
 box_strip(ax, vaq.s_ref, 1, VC); box_strip(ax, laq.s_ref, 2, LC)
 ax.set_xticks([1, 2]); ax.set_xticklabels([f"vehicle\n({len(vaq)})", f"6-OHDA\n({len(laq)})"], fontsize=6.5)
@@ -102,7 +102,7 @@ ax.set_ylabel(r"activation-foot $s_{ref}$ (mV$^{-1}$)")
 ax.set_title(f"activation foot (−60..−15 mV): med {S['veh_s']['med']:.3f}/{S['les_s']['med']:.3f}, "
              f"Δ {ds*100:.0f}%", fontsize=6.6)
 
-# d: τ_inact(−20 mV) 两组
+# d: tau_inact(-20 mV), two groups
 ax = axes[1, 1]
 vt = viq.tau_inact_s.dropna() * 1e3; lt = liq.tau_inact_s.dropna() * 1e3
 box_strip(ax, vt, 1, VC); box_strip(ax, lt, 2, LC)

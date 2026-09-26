@@ -1,6 +1,6 @@
 # make_percell_violin_2026-09-21.py
-# 四通道逐细胞参数统一处理：长表 CSV + 小提琴图 + 失败细胞登记表
-# 数据全部来自已封卷判词卡对应的结果文件（口径与封卷一致）
+# Four-channel per-cell parameter unified processing: long-table CSV + violin figure + failure registry table
+# Data all come from the result files of the corresponding sealed verdict cards (same conventions as the seals)
 import os, json, csv, math
 import numpy as np
 import matplotlib
@@ -17,8 +17,8 @@ os.makedirs(FIGD, exist_ok=True)
 BATCH_T = {"herg25oc1": 25, "herg27oc1": 27, "herg30oc1": 30,
            "herg33oc1": 33, "herg37oc3": 37, "herg37oc4": 37}
 
-LONG = []   # 逐细胞参数长表
-FAIL = []   # 失败登记
+LONG = []   # per-cell parameter long table
+FAIL = []   # failure registry
 
 def add(channel, dataset, group, temp, cell, param, voltage, value, unit, ok=True, note=""):
     if value is None:
@@ -37,7 +37,7 @@ def fail(channel, dataset, cid, scope, item, cat, detail, source):
                      scope=scope, failed_item=item, category=cat,
                      detail=detail, source=source))
 
-# ============ 1. hERG · Lei 六批（670 孔） ============
+# ============ 1. hERG · Lei six batches (670 wells) ============
 SIN_V = [-140, -120, -100, -80, -60, -40, -20, 0, 20, 40]
 ACT_V = [-50, -35, -20, -5, 10, 25, 40]
 for batch, T in BATCH_T.items():
@@ -71,7 +71,7 @@ for batch, T in BATCH_T.items():
                 mv = c["J2"]["m"][i]
                 if mv == mv:
                     add("hERG", f"Lei-{batch}", "CHO", T, w, "m_ss", v, mv, "")
-        # τ_rec 逐孔
+        # tau_rec per well
         th = tauh.get(w, {})
         for v in [-140, -120, -100, -80, -60, -40, -20]:
             key = str(v)
@@ -92,9 +92,9 @@ for batch, T in BATCH_T.items():
                 add("hERG", f"Lei-{batch}", "CHO", T, w, "tau_inact", 40, bs["tau1"] * 1000.0, "ms")
             if bs.get("tau2"):
                 add("hERG", f"Lei-{batch}", "CHO", T, w, "tau_act", 40, bs["tau2"] * 1000.0, "ms")
-    # 批次级失败登记
+    # batch-level failure registry
     if n_erev_missing:
-        pass  # 逐细胞已登记
+        pass  # already registered per cell
     for v, cells in hss_fail_by_v.items():
         if cells:
             cat = "B 协议限制" if v == -80 else "A 数据质量"
@@ -108,7 +108,7 @@ for batch, T in BATCH_T.items():
                  "DoE 拟合幅度 <4σ（保持段噪声门），该孔该档不取值", "逐细胞重算（TAUH 逐孔 JSON）")
 
 # ============ 2. Nav1.5 ============
-# Nα-4 Tarasov 单通道/多通道膜片
+# Nα-4 Tarasov single-channel / multi-channel patches
 na4 = list(csv.DictReader(open(os.path.join(AM, "2026-09-16_Nα4_单通道负40单点锚定判决_结果.csv"), encoding="utf-8-sig")))
 files_tau, files_late = set(), set()
 for r in na4:
@@ -126,7 +126,7 @@ missing_late = sorted(f for f in files_tau if f[0] == "mult-ch" and f not in fil
 for mod, f in missing_late:
     fail("Nav1.5", "Tarasov2026-Dryad", f, "膜片", "late_pct", "A 数据质量",
          "多通道膜片有 τ_decay 但无 late% 提取值（论文提取表缺项）", "Nα4 结果 CSV 对账")
-# Nα-3 Tarasov/Lei 全细胞脚部
+# Nα-3 Tarasov/Lei whole-cell foot
 na3 = list(csv.DictReader(open(os.path.join(AM, "2026-09-16_Nα3_Nav15激活脚部可携带性判决_逐细胞.csv"), encoding="utf-8-sig")))
 for r in na3:
     if r["ok"] == "True":
@@ -140,7 +140,7 @@ for r in na3:
         cat = "A 数据质量" if "弦点低于" in r["reason"] else "C 方法边界"
         fail("Nav1.5", f"Nα3-{r['src']}", r["cell"], "细胞", "激活脚部 s_ref", cat,
              r["reason"], "Nα3 逐细胞 CSV")
-# Nα-1 Lei 全细胞 3 细胞 τ_h(V)
+# Nα-1 Lei whole-cell 3-cell tau_h(V)
 na1 = list(csv.DictReader(open(os.path.join(AM, "2026-09-15_Nα1_Nav15失活快分量恒定性判决_结果.csv"), encoding="utf-8-sig")))
 for r in na1:
     if r.get("skipped"):
@@ -151,7 +151,7 @@ for r in na1:
         continue
     add("Nav1.5", "Lei-Nav-HEK35", "全细胞", 35, r["cell"], "tau_h", v, ta, "ms")
 
-# Nα-2 全细胞 τ_h(−40)（判词卡 A4 表，三细胞）
+# Nα-2 whole-cell tau_h(-40) (verdict card A4 table, three cells)
 na2 = json.load(open(os.path.join(AM, "2026-09-15_Nα2_Nav15整通道一次验证_结果.json"), encoding="utf-8"))
 a4 = na2["A_verdicts"]["A4"]["table"]
 for vk, blk in a4.items():
@@ -201,7 +201,7 @@ for f, rec in ca4["groups"].get("Ca2", {}).items():
     if rec.get("E_chord_med") is not None:
         add("CaV1.2", "Ren2022-g3msb", "Ca2+ carrier", "31-37", f, "E_chord", "", rec["E_chord_med"], "mV")
 
-# ============ 5. 登记：判词卡级已知失败（非本次重算来源） ============
+# ============ 5. registry: verdict-card-level known failures (not recomputed here) ============
 fail("hERG", "Beattie2018-HEK9", "16704007", "细胞", "AP/sine 前向", "D 前向判决",
      "九细胞前向验证：sine 7/9、AP 8/9——007 为已知问题细胞（死 sweep/坏节段史，见病灶审计卡）", "四线总览 v5 §1")
 fail("hERG", "Lei-37°C批", "全体80/105孔", "电压档", "h_ss(−80)", "B 协议限制",
@@ -216,7 +216,7 @@ fail("Nav1.5", "Tarasov2026-Dryad", "池级", "参数", "τ_decay(−40)/Po_peak
      "池内散布 CV 0.77/0.60 失控但判4 ΔKPQ 方向 13× 正确——散布为 modal gating 真实涨落，非失败",
      "Nα4 判词卡 判1/2/4")
 
-# ============ 6. 写长表 CSV ============
+# ============ 6. write long-table CSV ============
 long_csv = os.path.join(RES, "逐细胞参数总表_四通道_2026-09-21.csv")
 with open(long_csv, "w", newline="", encoding="utf-8-sig") as f:
     w = csv.DictWriter(f, fieldnames=list(LONG[0].keys()))
@@ -232,7 +232,7 @@ with open(fail_csv, "w", newline="", encoding="utf-8-sig") as f:
         w.writerow(row)
 print("long rows:", len(LONG), "| fail rows:", len(FAIL))
 
-# ============ 7. 小提琴图 ============
+# ============ 7. violin figure ============
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.executable).parent.parent.parent))
@@ -370,7 +370,7 @@ print('PNG pixels:', Image.open(png).size)
 fig.savefig(pdf, bbox_inches="tight")
 print("saved:", png)
 
-# ============ 8. 失败登记 MD ============
+# ============ 8. failure registry MD ============
 CATS = ["A 数据质量", "B 协议限制", "C 方法边界", "D 前向判决", "E 真实物理"]
 md = ["# 失败细胞登记表 · 四通道（2026-09-21）",
       "",

@@ -1,5 +1,5 @@
-# kv43_pure_subtraction.py — 协议内减法纯化 Kv4.3：I(-120条件) − I(-30条件) ≈ 纯 Kv4.3
-# 裁决"表观失活变慢"是成分混杂还是真可塑性；并提 Kv4.3 激活 τ_act
+# kv43_pure_subtraction.py - within-protocol subtraction purifying Kv4.3: I(-120 cond) - I(-30 cond) ~ pure Kv4.3
+# adjudicates whether the "apparent slower inactivation" is component mixing or true plasticity; also extracts the Kv4.3 activation tau_act
 import scipy.io as sio, numpy as np, glob, os, csv
 from scipy.optimize import curve_fit
 
@@ -7,7 +7,7 @@ BASE = r"D:\data\doi_10_5061_dryad_76hdr7t6z\physiology_data\in_vitro\extracted"
 OUT = os.path.dirname(os.path.abspath(__file__))
 
 def test_segment_current(m, cond_target):
-    """找 cond≈cond_target 后接 -20 mV 测试段的迹，返回 (t, I-base) nA，t 以测试跳变为 0"""
+    """Find the trace with cond~cond_target followed by a -20 mV test segment; return (t, I-base) nA, t zeroed at the test step"""
     for k in m:
         if not k.startswith("Trace"):
             continue

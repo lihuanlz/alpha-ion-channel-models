@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_α模型_前向验证_尾巴与sine.py
-# 目的：α 模型（τ(V) 阶梯 + a(V) 幅度，2026-09-13 封卷）的前向验证，两部分：
-#   Part A 尾巴重建：封卷 τ + 每细胞线性幅度，重建 deactivation 长尾，原始 vs 拟合叠图。
-#           （与幅度表提取同口径，确定性复现：白化数应=28/33，作为回归检查）
-#   Part B sine 预测：把封卷表接成弛豫动力系统，对独立协议 sine_wave 做零拟合预测。
-#           动力学（电流单位，免 G_Kr 锚）：
+# 2026-09-13_alpha model_forward validation_tails and sine.py
+# Purpose: forward validation of the alpha model (tau(V) ladder + a(V) amplitudes, sealed 2026-09-13), two parts:
+#   Part A tail reconstruction: sealed taus + per-cell linear amplitudes, reconstruct the deactivation
+#           long tails, raw vs fitted overlay. (Same convention as the amplitude table extraction,
+#   Part B sine prediction: wire the sealed tables into a relaxation dynamical system and make a
+#           zero-fit prediction on the independent sine_wave protocol. Dynamics (current units, no G_Kr anchor):
 #             dJ_i/dt = ( f_i(V)·g(V)·(V-E_rev) − J_i ) / τ_i(V)，I = Σ J_i
-#             g(V)   = steady_activation 每细胞实测 I_ss(V)/(V-E_rev)（查表插值）
-#             f_i(V) = 封卷 w 表插值（-70..-40），外推规则见下
-#             τ_late(V) = 阶梯四点对数线性外推（封顶 500s）；τ_f=0.234s、τ_m=1.009s 常数
-#                        （仅有 -70/-60 实测，常数化是"恒定"封卷结论的直用）
-#           对照零模型：I_null = g(V)·(V-E_rev)（瞬态稳态，无动力学）。
-#           判据：动态模型 RMS 必须显著小于零模型，否则动力学不挣钱。
-#   已知外推假设（照实写进输出）：
-#     A1: τ_late 在 V>-40 外推为冻结（>100s），正压快激活/失活不在模型内 -> 正压段预期失败；
-#     A2: f_i(V) 在 V>-40 外推（w_s->0.95）是趋势外推，无实测锚；
-#     A3: g(V) 的 -60/-40 两点台阶 5-6s 未完全稳态（τ_late 4.4s/24s），负压 g 值偏低估；
-#     A4: τ_f/τ_m 全电压常数化，仅 -70/-60 有实测。
-# 运行：python 本文件        （全量九细胞）
-#       SMOKE=1 python 本文件（单细胞 16713003 冒烟）
+#             g(V)   = steady_activation per-cell measured I_ss(V)/(V-E_rev) (table lookup, interpolated)
+#             f_i(V) = sealed w-table interpolation (-70..-40); extrapolation rules below
+#             tau_late(V) = four-point ladder log-linear extrapolation (capped 500s); tau_f=0.234s, tau_m=1.009s constants
+#                        (only -70/-60 measured; making them constant directly applies the "constant" seal verdict)
+#           Null model for comparison: I_null = g(V)*(V-E_rev) (instantaneous steady state, no dynamics).
+#           Criterion: the dynamic model RMS must be significantly smaller than the null model, otherwise the dynamics earns nothing.
+#   Known extrapolation assumptions (written into the output as-is):
+#     A1: tau_late extrapolated as frozen at V>-40 (>100s); fast activation/inactivation at positive
+#     A2: f_i(V) extrapolated at V>-40 (w_s->0.95) is a trend extrapolation, no measured anchor;
+#     A3: the -60/-40 points of g(V) are 5-6s steps not fully at steady state (tau_late 4.4s/24s), so negative-voltage g is underestimated;
+#     A4: tau_f/tau_m constant across all voltages, measured only at -70/-60.
+# Run: python this file        (full nine-cell set)
+#       SMOKE=1 python this file (single-cell 16713003 smoke test)
 import os
 import json
 import numpy as np
@@ -50,20 +50,20 @@ VIOL_TOL = 2
 ENV = None
 E_REV = -80.0
 
-# ---- 封卷表值（2026-09-13 阶梯表/幅度表 JSON，勿改） ----
-TAU_F = {-70: 0.19105, -60: 0.27645, -50: 0.6, -40: 0.6}      # -50/-40 共享精修顶边（仅 PartA 复现用）
+# ---- sealed table values (2026-09-13 ladder table / amplitude table JSON, do not modify) ----
+TAU_F = {-70: 0.19105, -60: 0.27645, -50: 0.6, -40: 0.6}      # -50/-40 shared refinement at grid edge (Part A reproduction only)
 TAU_M = {-70: 0.81270, -60: 1.20549, -50: 1.8, -40: 0.8}
 TAU_L = {-70: 2.05505, -60: 4.41849, -50: 10.14073, -40: 24.0539}
 GEARS = [-70, -60, -50, -40]
-# sine 动力学的常数时间尺度（-70/-60 实测均值）
+# constant time scales for the sine dynamics (measured means at -70/-60)
 TF_C = 0.5 * (TAU_F[-70] + TAU_F[-60])   # 0.234 s
 TM_C = 0.5 * (TAU_M[-70] + TAU_M[-60])   # 1.009 s
-# f_i(V) 插值结点（w 表封卷值；-40 档负 w_f 截 0 后归一；-30 起外推封顶）
+# f_i(V) interpolation nodes (sealed w-table values; negative w_f at -40 clipped to 0 then renormalized; extrapolation capped from -30 up)
 F_V = np.array([-70.0, -60.0, -50.0, -40.0, -30.0])
 F_F = np.array([0.294, 0.144, 0.079, 0.000, 0.000])
 F_M = np.array([0.486, 0.439, 0.379, 0.275, 0.050])
 F_S = np.array([0.219, 0.418, 0.543, 0.725, 0.950])
-# τ_late(V) 对数线性外推
+# tau_late(V) log-linear extrapolation
 _pl = np.polyfit(np.array(GEARS, float), np.log([TAU_L[v] for v in GEARS]), 1)
 
 
@@ -71,7 +71,7 @@ def tau_late(V):
     return np.clip(np.exp(_pl[0] * np.asarray(V, float) + _pl[1]), 0.01, 500.0)
 
 
-# ================= Part A：尾巴重建（口径与幅度表提取脚本一致） =================
+# ================= Part A: tail reconstruction (same convention as the amplitude table extraction script) =================
 
 def load_deact(cell):
     V = sio.loadmat(f"{DATA}/data/protocols/deactivation_protocol.mat")['T'].flatten().astype(float)
@@ -195,7 +195,7 @@ def fit_tail(bt, by, vv):
                 rms=float(np.sqrt(np.mean(res ** 2))))
 
 
-# ================= Part B：sine 零拟合预测 =================
+# ================= Part B: sine zero-fit prediction =================
 
 def load_sine(cell):
     V = sio.loadmat(f"{DATA}/data/protocols/sine_wave_protocol.mat")['T'].flatten().astype(float)
@@ -208,7 +208,7 @@ def load_sine(cell):
 
 
 def g_of_V(cell):
-    """steady_activation -> g(V)=I_ss/(V-E_rev) 查表；结点 [-80:0, -60..+60, +60外持]"""
+    """steady_activation -> g(V)=I_ss/(V-E_rev) table; nodes [-80:0, -60..+60, held beyond +60]"""
     Vp = sio.loadmat(f"{DATA}/data/protocols/steady_activation_protocol.mat")['T'].flatten().astype(float)
     fp = f"{DATA}/data/cells/{cell}/steady_activation_{cell}_dofetilide_subtracted_leak_subtracted.mat"
     if not os.path.exists(fp):
@@ -221,8 +221,8 @@ def g_of_V(cell):
     for s in np.split(np.arange(len(Vp)), edges):
         vv = float(Vp[s[0]])
         dur = len(s) * DT
-        if dur >= 4.0 and vv > -70.0:          # 测试台阶（≥4s，非 -80 保持段）
-            m = s[int(0.8 * len(s)):]          # 末 20% 当稳态
+        if dur >= 4.0 and vv > -70.0:          # test step (>=4s, not the -80 holding segment)
+            m = s[int(0.8 * len(s)):]          # last 20% taken as steady state
             iss = float(np.mean(I[m]))
             knots.append(vv)
             gvals.append(iss / (vv - E_REV))
@@ -232,7 +232,7 @@ def g_of_V(cell):
 
 def simulate_sine(Vs, knots, gvals):
     gV = np.interp(Vs, knots, gvals)
-    drive = gV * (Vs - E_REV)                    # 稳态目标电流 g(V)(V-Erev)
+    drive = gV * (Vs - E_REV)                    # steady-state target current g(V)(V-Erev)
     f_f = np.interp(Vs, F_V, F_F)
     f_m = np.interp(Vs, F_V, F_M)
     f_s = np.interp(Vs, F_V, F_S)
@@ -249,32 +249,32 @@ def simulate_sine(Vs, knots, gvals):
         jm += (tm_t[k] - jm) * a_m
         js += (ts_t[k] - js) * a_s[k]
         Jf[k], Jm[k], Js[k] = jf, jm, js
-    return Jf + Jm + Js, drive                  # drive = 零模型（瞬态稳态）
+    return Jf + Jm + Js, drive                  # drive = null model (instantaneous steady state)
 
 
 def main():
     print("=" * 78)
-    print(" α 模型前向验证" + ("（冒烟：单细胞）" if SMOKE else "（全量九细胞）"))
-    print(" Part A 尾巴重建 = 封卷 τ + 每细胞线性幅度（复现检验：白化应=28/33）")
-    print(" Part B sine 零拟合预测（外推假设 A1-A4 见文件头）")
+    print(" alpha model forward validation" + (" (smoke: single cell)" if SMOKE else " (full nine-cell set)"))
+    print(" Part A tail reconstruction = sealed taus + per-cell linear amplitudes (reproduction check: whitening should be 28/33)")
+    print(" Part B sine zero-fit prediction (extrapolation assumptions A1-A4 see file header)")
     print("=" * 78, flush=True)
 
-    # ---------- 噪声包络门 ----------
+    # ---------- noise envelope gate ----------
     all_noise = []
-    for cell in CELLS_ALL:                        # 包络门恒用全量九细胞（与封卷口径一致）
+    for cell in CELLS_ALL:                        # the envelope gate always uses the full nine-cell set (same convention as the seal)
         V, I = load_deact(cell)
         if I is not None:
             all_noise.extend(noise_segments(V, I))
     nseg = build_envelope(all_noise)
-    print(f"  噪声包络门就绪（{nseg} 段静默段，全量口径）", flush=True)
+    print(f"  noise envelope gate ready ({nseg} silent segments, full-set convention)", flush=True)
 
     # ---------- Part A ----------
-    print("\n[Part A] 尾巴重建", flush=True)
+    print("\n[Part A] tail reconstruction", flush=True)
     recs = []
     for cell in CELLS:
         V, I = load_deact(cell)
         if I is None:
-            print(f"  细胞 {cell}: deactivation 文件缺失")
+            print(f"  cell {cell}: deactivation file missing")
             continue
         for tl in find_tails(V):
             vv = int(round(tl["v"]))
@@ -286,12 +286,12 @@ def main():
             bt, by, sgn = tb
             r = fit_tail(bt, by, vv)
             recs.append(dict(cell=cell, v=vv, bt=bt, by=by, **r))
-        print(f"  细胞 {cell}: 完成", flush=True)
+        print(f"  cell {cell}: done", flush=True)
     n_white = sum(r["white"] for r in recs)
     n_tot = len(recs)
     rms_med = float(np.median([r["rms"] for r in recs])) if recs else np.nan
-    print(f"  复现白化 {n_white}/{n_tot}（封卷值 28/33；不一致=代码口径漂移，需停查）")
-    print(f"  残差 RMS 中位 {rms_med*1000:.1f} pA")
+    print(f"  reproduced whitening {n_white}/{n_tot} (sealed value 28/33; mismatch = code-convention drift, halt and investigate)")
+    print(f"  residual RMS median {rms_med*1000:.1f} pA")
 
     fig, axes = plt.subplots(len(CELLS), 4, figsize=(17, 2.1 * len(CELLS)), squeeze=False)
     for i, cell in enumerate(CELLS):
@@ -304,32 +304,32 @@ def main():
             c, af, am, as_ = r["sol"]
             yrec = (c + af * np.exp(-r["bt"] / TAU_F[vv]) + am * np.exp(-r["bt"] / TAU_M[vv])
                     + as_ * (np.exp(-r["bt"] / TAU_L[vv]) - 1.0))
-            ax.semilogy(r["bt"], r["by"], ".", ms=2.5, color="black", alpha=0.6, label="数据")
-            ax.semilogy(r["bt"], yrec, "-", lw=1.4, color="crimson", label="α 模型")
-            ax.set_title(f"{cell[-4:]} @ {vv}mV  RMS={r['rms']*1000:.0f}pA  违约{r['viol']}",
+            ax.semilogy(r["bt"], r["by"], ".", ms=2.5, color="black", alpha=0.6, label="data")
+            ax.semilogy(r["bt"], yrec, "-", lw=1.4, color="crimson", label="alpha model")
+            ax.set_title(f"{cell[-4:]} @ {vv}mV  RMS={r['rms']*1000:.0f}pA  violations {r['viol']}",
                          fontsize=8)
             ax.grid(alpha=0.3)
             if i == 0 and j == 0:
                 ax.legend(fontsize=7)
-    fig.suptitle(f"Part A 尾巴重建：原始 vs α 模型（白化 {n_white}/{n_tot}）", fontweight="bold")
+    fig.suptitle(f"Part A tail reconstruction: raw vs alpha model (whitening {n_white}/{n_tot})", fontweight="bold")
     fig.tight_layout(rect=[0, 0, 1, 0.98])
     fpA = os.path.join(HERE, f"2026-09-13_α模型_前向验证_尾巴重建{'_冒烟' if SMOKE else ''}.png")
     fig.savefig(fpA, dpi=120, bbox_inches="tight")
     plt.close(fig)
 
     # ---------- Part B ----------
-    print("\n[Part B] sine 零拟合预测", flush=True)
-    print(f"  τ_f={TF_C:.3f}s τ_m={TM_C:.3f}s（常数） τ_late(V)=阶梯对数线性外推封顶500s")
+    print("\n[Part B] sine zero-fit prediction", flush=True)
+    print(f"  tau_f={TF_C:.3f}s tau_m={TM_C:.3f}s (constants) tau_late(V)=ladder log-linear extrapolation capped at 500s")
     srows = []
     traces = {}
     for cell in CELLS:
         Vs, Is = load_sine(cell)
         if Is is None:
-            print(f"  细胞 {cell}: sine 文件缺失")
+            print(f"  cell {cell}: sine file missing")
             continue
         knots, gvals = g_of_V(cell)
         if knots is None:
-            print(f"  细胞 {cell}: steady_activation 缺失")
+            print(f"  cell {cell}: steady_activation missing")
             continue
         Idyn, Inull = simulate_sine(Vs, knots, gvals)
         res_d = Is - Idyn
@@ -344,30 +344,30 @@ def main():
         row["ratio"] = row["rms_dyn"] / max(row["rms_null"], 1e-12)
         srows.append(row)
         traces[cell] = (Vs, Is, Idyn, Inull, knots, gvals)
-        print(f"  细胞 {cell}: RMS 动态 {row['rms_dyn']:.3f} / 零模型 {row['rms_null']:.3f} nA "
-              f"(比值 {row['ratio']:.2f})  负压段 {row['rms_dyn_neg']:.3f}/{row['rms_null_neg']:.3f}  "
-              f"正压段 {row['rms_dyn_pos']:.3f}/{row['rms_null_pos']:.3f}", flush=True)
+        print(f"  cell {cell}: RMS dynamic {row['rms_dyn']:.3f} / null {row['rms_null']:.3f} nA "
+              f"(ratio {row['ratio']:.2f})  negative-V segment {row['rms_dyn_neg']:.3f}/{row['rms_null_neg']:.3f}  "
+              f"positive-V segment {row['rms_dyn_pos']:.3f}/{row['rms_null_pos']:.3f}", flush=True)
 
     if srows:
         fig, axes = plt.subplots(4, 3, figsize=(19, 13))
         axp = axes[0, 0]
         Vs0 = traces[srows[0]["cell"]][0]
         axp.plot(np.arange(len(Vs0)) * DT, Vs0, lw=0.6, color="darkgreen")
-        axp.set_title("sine 协议 V(t)", fontweight="bold")
+        axp.set_title("sine protocol V(t)", fontweight="bold")
         axp.set_ylabel("mV"); axp.grid(alpha=0.3)
         axg = axes[0, 1]
         for cell, (_, _, _, _, knots, gvals) in traces.items():
             axg.plot(knots, gvals, "o-", ms=3, lw=1, alpha=0.7, label=cell[-4:])
-        axg.set_title("g(V)=I_ss/(V−E_rev) 每细胞实测", fontweight="bold")
+        axg.set_title("g(V)=I_ss/(V-E_rev) per-cell measured", fontweight="bold")
         axg.set_xlabel("mV"); axg.set_ylabel("µS")
         axg.legend(fontsize=6, ncol=3); axg.grid(alpha=0.3)
         axs = axes[0, 2]
         axs.axis("off")
         med_ratio = float(np.median([r["ratio"] for r in srows]))
-        lines = ["Part B 汇总", "",
-                 f"RMS 动态/零模型 中位比值: {med_ratio:.2f}",
-                 "（<1 动力学挣钱；≥1 动力学白搭）", "",
-                 "外推假设 A1-A4 见文件头"]
+        lines = ["Part B summary", "",
+                 f"RMS dynamic/null median ratio: {med_ratio:.2f}",
+                 "(<1 dynamics earns; >=1 dynamics wasted)", "",
+                 "extrapolation assumptions A1-A4 see file header"]
         for k, L in enumerate(lines):
             axs.text(0.02, 0.92 - 0.11 * k, L, fontsize=10,
                      fontweight="bold" if k in (0, 2) else "normal")
@@ -376,17 +376,17 @@ def main():
             Vs, Is, Idyn, Inull, _, _ = traces[r["cell"]]
             t = np.arange(len(Vs)) * DT
             dn = 20
-            ax.plot(t[::dn], Is[::dn], lw=0.5, color="black", alpha=0.75, label="数据")
-            ax.plot(t[::dn], Idyn[::dn], lw=0.8, color="crimson", label="α 动态")
-            ax.plot(t[::dn], Inull[::dn], lw=0.5, color="steelblue", alpha=0.6, ls="--", label="零模型")
+            ax.plot(t[::dn], Is[::dn], lw=0.5, color="black", alpha=0.75, label="data")
+            ax.plot(t[::dn], Idyn[::dn], lw=0.8, color="crimson", label="alpha dynamic")
+            ax.plot(t[::dn], Inull[::dn], lw=0.5, color="steelblue", alpha=0.6, ls="--", label="null model")
             ax.set_title(f"{r['cell'][-4:]}  RMS {r['rms_dyn']:.2f}/{r['rms_null']:.2f} nA "
-                         f"(比值 {r['ratio']:.2f})", fontsize=8)
+                         f"(ratio {r['ratio']:.2f})", fontsize=8)
             ax.grid(alpha=0.3)
             if idx == 0:
                 ax.legend(fontsize=7)
         for k in range(len(srows) + 3, 12):
             axes[k // 3][k % 3].axis("off")
-        fig.suptitle("Part B sine 协议：原始 vs α 动态 vs 零模型（零拟合预测）", fontweight="bold")
+        fig.suptitle("Part B sine protocol: raw vs alpha dynamic vs null model (zero-fit prediction)", fontweight="bold")
         fig.tight_layout(rect=[0, 0, 1, 0.98])
         fpB = os.path.join(HERE, f"2026-09-13_α模型_前向验证_sine{'_冒烟' if SMOKE else ''}.png")
         fig.savefig(fpB, dpi=120, bbox_inches="tight")
@@ -394,40 +394,40 @@ def main():
     else:
         fpB = None
 
-    # ---------- 判词（预先钉死） ----------
+    # ---------- verdict (fixed in advance) ----------
     print("\n" + "=" * 78)
-    print(" 总判词：")
+    print(" overall verdict:")
     okA = (not SMOKE and n_white == 28 and n_tot == 33) or (SMOKE and n_tot > 0)
-    print(f"  Part A: 白化复现 {n_white}/{n_tot} -> {'与封卷一致' if okA else '与封卷不符，先查代码口径'}")
+    print(f"  Part A: whitening reproduced {n_white}/{n_tot} -> {'consistent with the seal' if okA else 'inconsistent with the seal, check the code convention first'}")
     if srows:
         med_ratio = float(np.median([r["ratio"] for r in srows]))
         med_neg = float(np.median([r["rms_dyn_neg"] / max(r["rms_null_neg"], 1e-12) for r in srows]))
         med_pos = float(np.median([r["rms_dyn_pos"] / max(r["rms_null_pos"], 1e-12) for r in srows]))
-        print(f"  Part B: RMS 比值(动态/零模型) 全程中位 {med_ratio:.2f}，"
-              f"负压段 {med_neg:.2f}，正压段 {med_pos:.2f}")
+        print(f"  Part B: RMS ratio (dynamic/null) full-trace median {med_ratio:.2f}, "
+              f"negative-V segment {med_neg:.2f}, positive-V segment {med_pos:.2f}")
         if med_ratio < 0.8:
-            vB = "sine 全程预测成立：动力学显著优于瞬态稳态"
+            vB = "sine full-trace prediction holds: dynamics significantly better than instantaneous steady state"
         elif med_neg < 0.8 <= med_pos:
-            vB = "sine 分压成立：负压段动力学挣钱，正压段失败（A1 预期内：快激活/失活不在模型内）"
+            vB = "sine holds by voltage: dynamics earns in the negative-V segment, fails in the positive-V segment (within A1 expectation: fast activation/inactivation not in the model)"
         elif med_ratio < 1.0:
-            vB = "sine 弱成立：动力学略优于零模型，需逐细胞看残差定位"
+            vB = "sine weakly holds: dynamics slightly better than the null model; per-cell residual inspection needed"
         else:
-            vB = "sine 不成立：动态模型不优于瞬态稳态查表，α 模型外推失败"
+            vB = "sine fails: the dynamic model is no better than the instantaneous steady-state lookup; alpha model extrapolation failed"
         print("  " + vB)
     print("=" * 78)
 
     out = dict(partA=dict(n_white=n_white, n_tot=n_tot, rms_med=rms_med,
-                          expected="28/33（非冒烟）"),
+                          expected="28/33 (non-smoke)"),
                partB=dict(rows=srows,
-                          assumptions=["A1 τ_late V>-40 外推冻结", "A2 f_i V>-40 趋势外推",
-                                       "A3 g(V) -60/-40 未完全稳态", "A4 τ_f/τ_m 常数化"]),
+                          assumptions=["A1 tau_late frozen at V>-40", "A2 f_i trend extrapolation at V>-40",
+                                       "A3 g(V) -60/-40 not fully at steady state", "A4 tau_f/tau_m constant"]),
                figA=fpA, figB=fpB)
     fj = os.path.join(HERE, f"2026-09-13_α模型_前向验证{'_冒烟' if SMOKE else ''}_结果.json")
     json.dump(out, open(fj, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
-    print(f"\n  图A落盘: {fpA}")
+    print(f"\n  figure A saved: {fpA}")
     if fpB:
-        print(f"  图B落盘: {fpB}")
-    print(f"  结果落盘: {fj}")
+        print(f"  figure B saved: {fpB}")
+    print(f"  results saved: {fj}")
 
 
 if __name__ == "__main__":

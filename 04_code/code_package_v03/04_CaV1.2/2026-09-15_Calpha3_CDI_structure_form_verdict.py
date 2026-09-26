@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Cα-3 v1.2：CDI 结构形式判决——新增快分量 vs 整体加速（τf 网格选型嵌套）
-预注册 v1.2（2026-09-15，两轮冒烟驱动修订在案：自由M2截断简并废止→单锚敏感废止→网格选型）
+Cα-3 v1.2: CDI structural-form verdict -- added fast component vs global acceleration (tau_f grid nested model selection)
+Preregistration v1.2 (2026-09-15; two smoke-driven amendments on record: free-M2 truncation degeneracy abolished -> single-anchor sensitivity abolished -> grid selection)
 H0: d = C + A·e^(−t/τ)
-H1: d = C + A·[(1−w)·e^(−t/τ) + w·e^(−t/τf)]，τf ∈ {4,6,8,12,16}ms 网格 AICc 联合选型
-判线: 预注册 v1.1/v1.2（判1′ 快分量存在 / 判2′ H-add vs H-acc / 判3′ w 恒定）
-用法: 正式跑  %runfile 本文件 --wdir
-      冒烟    python 本文件 --smoke
+H1: d = C + A·[(1-w)·e^(-t/tau) + w·e^(-t/tau_f)], tau_f in {4,6,8,12,16}ms grid with joint AICc selection
+Criteria: preregistration v1.1/v1.2 (crit-1' fast component exists / crit-2' H-add vs H-acc / crit-3' w constancy)
+Usage: full run  %runfile this_file --wdir
+      smoke    python this_file --smoke
 """
 import os, sys, json, glob
 import numpy as np
@@ -41,7 +41,7 @@ def aicc(n, k, rss):
     return n * np.log(rss / n) + 2 * k + 2 * k * (k + 1) / (n - k - 1)
 
 def fit_grid(t, y):
-    """H0 vs H1（τf 网格联合选型）。返回 dict。"""
+    """H0 vs H1 (tau_f grid joint selection). Returns dict."""
     out = {"H0": None, "H1": None, "pick": None}
     try:
         p0, _ = curve_fit(h0, t, y, p0=[0.5, 0.5, 30.0],
@@ -111,7 +111,7 @@ def synth_warp(rng, noise, tau=25.0, C=0.40):
 
 def smoke():
     print("=" * 72, flush=True)
-    print(" [冒烟 Cα-3 v1.2] S1\" 网格回收 | S2\" warp对照 | S3\" 边界实测 | S4 潜伏门", flush=True)
+    print(" [smoke Ca-3 v1.2] S1\" grid recovery | S2\" warp control | S3\" boundary measurement | S4 latency gate", flush=True)
     print("=" * 72, flush=True)
     rng = np.random.default_rng(7)
     # S1"
@@ -121,15 +121,15 @@ def smoke():
         if fr["pick"] == "H1":
             pick += 1; werr.append(fr["H1"]["w"] - 0.30)
     ok = pick >= 18 and abs(np.median(werr)) <= 0.08
-    print(f"  S1\" add(τf=8): H1选中 {pick}/20（≥18） w偏差 {float(np.median(werr)):+.3f}（≤0.08，低估方向登记）", "过" if ok else "挂", flush=True)
+    print(f"  S1\" add(tauf=8): H1 selected {pick}/20 (>=18) w bias {float(np.median(werr)):+.3f} (<=0.08, underestimation direction registered)", "pass" if ok else "fail", flush=True)
     # S2"
     no1 = 0
     for _ in range(20):
         fr = fit_grid(TMS, synth_warp(rng, 0.003))
         if fr["pick"] != "H1":
             no1 += 1
-    print(f"  S2\" warp: H1不当选 {no1}/20（判线 ≥16）", "过" if no1 >= 16 else "挂", flush=True)
-    # S3" 边界：τf=5 可分 / τf=14 不可分（登记入档）
+    print(f"  S2\" warp: H1 not selected {no1}/20 (criterion >=16)", "pass" if no1 >= 16 else "fail", flush=True)
+    # S3" boundary: tauf=5 separable / tauf=14 not separable (registered on record)
     p5, w5, p14 = 0, [], 0
     for _ in range(10):
         fr = fit_grid(TMS, synth_add(rng, 0.003, tf=5.0))
@@ -140,24 +140,24 @@ def smoke():
         if fr["pick"] == "H1":
             p14 += 1
     ok = p5 >= 8 and abs(np.median(w5)) <= 0.08 and p14 <= 4
-    print(f"  S3\" 边界: τf=5 选中 {p5}/10 w偏差 {float(np.median(w5)):+.3f} | τf=14 选中 {p14}/10（判线 ≥8 且 ≤4）", "过" if ok else "挂", flush=True)
+    print(f"  S3\" boundary: tauf=5 selected {p5}/10 w bias {float(np.median(w5)):+.3f} | tauf=14 selected {p14}/10 (criterion >=8 and <=4)", "pass" if ok else "fail", flush=True)
     # S4
     lats = rng.integers(0, 300, 200)
     wrong = sum(1 for x in lats if x <= LAT_MAX and x > LAT_MAX)
-    print(f"  S4 潜伏门: 误纳 {wrong}（判线 0）", "过" if wrong == 0 else "挂", flush=True)
+    print(f"  S4 latency gate: false admissions {wrong} (criterion 0)", "pass" if wrong == 0 else "fail", flush=True)
 
 def main():
     if SMOKE:
         smoke(); return
     print("=" * 72, flush=True)
-    print(" Cα-3 v1.2：CDI 结构形式判决（τf 网格选型嵌套，预注册 v1.2 正式跑）", flush=True)
+    print(" Ca-3 v1.2: CDI structural-form verdict (tau_f grid nested selection, preregistration v1.2 full run)", flush=True)
     print("=" * 72, flush=True)
     result = {"cells": {}, "verdict": {}}
     grp_curves = {"Ca2": [], "Ba2": []}
     grp_fits = {"Ca2": {}, "Ba2": {}}
     for grp in ["Ca2", "Ba2"]:
         files = sorted(glob.glob(os.path.join(DATA, "Temperature_" + grp, "*.abf")))
-        print(f"\n[{grp} 组]", flush=True)
+        print(f"\n[{grp} group]", flush=True)
         for fpath in files:
             name = os.path.basename(fpath)
             trs, lats, n_qc = scan_file(fpath)
@@ -167,7 +167,7 @@ def main():
                    "lat_reject_frac": float(np.mean(lats > LAT_MAX)) if len(lats) else None}
             if len(trs) < MIN_SW:
                 rec["pooled"] = False
-                print(f"  {name}: QC过{n_qc} 形状池{len(trs)}<{MIN_SW} 未入池（潜伏中位 {rec['lat_med_ms']}ms 剔率 {rec['lat_reject_frac']:.2f}）", flush=True)
+                print(f"  {name}: QC-pass {n_qc}, shape pool {len(trs)}<{MIN_SW} not pooled (latency median {rec['lat_med_ms']}ms reject fraction {rec['lat_reject_frac']:.2f})", flush=True)
             else:
                 cc = np.mean(trs, axis=0)
                 fr = fit_grid(TMS, cc)
@@ -176,12 +176,12 @@ def main():
                 if primary:
                     grp_curves[grp].append(cc)
                     grp_fits[grp][name] = fr
-                msg = f"  {name}: 池{len(trs)} 潜伏{rec['lat_med_ms']:.1f}ms | {fr['pick']}"
+                msg = f"  {name}: pool {len(trs)} latency {rec['lat_med_ms']:.1f}ms | {fr['pick']}"
                 if fr["H1"]:
-                    msg += f" w={fr['H1']['w']:.3f} τf={fr['H1']['tauf']:.0f} τ慢={fr['H1']['tau']:.1f}"
+                    msg += f" w={fr['H1']['w']:.3f} tauf={fr['H1']['tauf']:.0f} tau_slow={fr['H1']['tau']:.1f}"
                 if fr["H0"]:
                     msg += f" (H0 τ={fr['H0']['tau']:.1f})"
-                print(msg + ("" if primary else "（登记剔除）"), flush=True)
+                print(msg + ("" if primary else " (registry-excluded)"), flush=True)
             result["cells"].setdefault(grp, {})[name] = rec
     v = {"pool_n": {g: len(grp_curves[g]) for g in grp_curves}}
     N = {}
@@ -226,15 +226,15 @@ def main():
             v["Hacc_branch"] = {"group_H0_tau_Ca": gc["H0"]["tau"] if gc["H0"] else None,
                                 "group_H0_tau_Ba": gb["H0"]["tau"] if gb["H0"] else None,
                                 "D_shape": v["D_shape_descriptive"],
-                                "note": "若实测 CDI τf≳14ms，本窗不可分（v1.2 登记边界），落此支路不硬判"}
+                                "note": "if the measured CDI tauf >= ~14ms, it is not separable in this window (v1.2 registered boundary); this branch must not be hard-verdicted"}
     result["verdict"] = v
     print("\n" + "=" * 72, flush=True)
-    print(" 判词组件", flush=True)
+    print(" verdict components", flush=True)
     print(json.dumps(v, ensure_ascii=False, indent=2, default=str), flush=True)
     with open(OUTJ, "w", encoding="utf-8") as fp:
         json.dump(result, fp, ensure_ascii=False, indent=1, default=str)
-    print("\n 结果落盘:", OUTJ, flush=True)
-    # ---- 图
+    print("\n results saved:", OUTJ, flush=True)
+    # ---- figure
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -250,10 +250,10 @@ def main():
             axes[0].plot(TMS, N["Ca2"], "tab:red", lw=2, label="Ca²⁺")
         if "Ba2" in N:
             axes[0].plot(TMS, N["Ba2"], "tab:blue", lw=2, label="Ba²⁺")
-        axes[0].set_xlabel("峰后时间 (ms)"); axes[0].set_ylabel("归一化电流"); axes[0].set_title("组平均衰减迹线"); axes[0].legend()
+        axes[0].set_xlabel("time after peak (ms)"); axes[0].set_ylabel("normalized current"); axes[0].set_title("group-mean decay traces"); axes[0].legend()
         if "Ca2" in N and "Ba2" in N:
             axes[1].plot(TMS, N["Ba2"] - N["Ca2"], "k", lw=2)
-            axes[1].set_xlabel("峰后时间 (ms)"); axes[1].set_ylabel("N_Ba − N_Ca"); axes[1].set_title("差值曲线 D(t)（纯描述）")
+            axes[1].set_xlabel("time after peak (ms)"); axes[1].set_ylabel("N_Ba - N_Ca"); axes[1].set_title("difference curve D(t) (purely descriptive)")
         labels, vals, cols = [], [], []
         for grp, mk, c in [("Ca2", "", "tab:red"), ("Ba2", "*", "tab:blue")]:
             for n, f in grp_fits[grp].items():
@@ -262,11 +262,11 @@ def main():
         axes[2].bar(range(len(vals)), vals, color=cols)
         axes[2].axhline(0.293, ls="--", c="gray", lw=1)
         axes[2].set_xticks(range(len(vals))); axes[2].set_xticklabels(labels, rotation=45, ha="right", fontsize=7)
-        axes[2].set_ylabel("w_fast"); axes[2].set_title("快分量权重 逐细胞（虚线=Cα-1 Δf）")
+        axes[2].set_ylabel("w_fast"); axes[2].set_title("fast-component weight per cell (dashed = Ca-1 Df)")
         fig.tight_layout(); fig.savefig(OUTP, dpi=140, bbox_inches="tight")
-        print(" 图落盘:", OUTP, flush=True)
+        print(" figure saved:", OUTP, flush=True)
     except Exception as e:
-        print(" 绘图失败（不影响判词）:", e, flush=True)
+        print(" plotting failed (verdicts unaffected):", e, flush=True)
 
 if __name__ == "__main__":
     main()

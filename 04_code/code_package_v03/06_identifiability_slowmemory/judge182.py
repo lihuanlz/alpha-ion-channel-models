@@ -1,7 +1,7 @@
-# judge182.py — 代码182 model62 可识别性谱卡·判官（预注册 2026-09-11）
-# 独立复算：本文件自含 expm 仿真（按模型卡 §3 重写，不 import judge179/de182 的任何函数）。
-# 只接受：参数正本、原始数据（de174.load174 管线）、执行侧最终落盘件。
-# 用法：python judge182.py            → 全量 A1–A5 复算 + 落盘判词 md
+# judge182.py — code-182 model62 identifiability spectrum card, judge (preregistration 2026-09-11)
+# Independent recomputation: this file is self-contained expm simulation (rewritten from model card section 3; imports no function from judge179/de182).
+# Accepts only: canonical parameters, raw data (de174.load174 pipeline), and the execution side's final saved artifacts.
+# Usage: python judge182.py            -> full A1-A5 recomputation + verdict md saved
 import json, math, os, sys, time
 import numpy as np
 from multiprocessing import Pool
@@ -11,7 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from de174 import load174, PROTOS
 from de173 import DT
-from de179 import EREV   # EREV 为数据管线常量（Nernst 非拟合），判官沿用同一数据口径
+from de179 import EREV   # EREV is a data-pipeline constant (Nernst, not fitted); the judge keeps the same data metric
 import scipy.linalg
 
 OUT = os.path.join(HERE, "model62_identifiability")
@@ -20,7 +20,7 @@ P6X = [0.180967466, -46.1749861, 22.4481177, 3.97337168, 0.00763900352, 0.074760
 
 
 def sim_judge(V, x16):
-    """判官自写 expm 通道（模型卡 §3 逐条实现：4 态环对边同率 + k43 双指数 + X 慢件）。"""
+    """Judge-written expm channel (model card section 3 implemented line by line: 4-state ring with equal opposite-edge rates + k43 double exponential + X slow component)."""
     P = 10.0 ** np.asarray(x16[:8], float)
     gkr = 10.0 ** x16[8]
     pf1, pf2 = 10.0 ** x16[9], x16[10]
@@ -38,7 +38,7 @@ def sim_judge(V, x16):
                       [0., k23, -(k32 + k34), k43], [k23, 0., k34, -(k43 + k32)]])
         y = expm(M * dt_ms) @ y
         out[i] = gkr * y[2] * (v - EREV)
-    # X 慢件：x_s 指数弛豫 + 负电位门控（模型卡 §3.3；步进与 de169.evolve_x 语义逐字对齐）
+    # X slow component: x_s exponential relaxation + negative-potential gating (model card section 3.3; stepping semantics aligned verbatim with de169.evolve_x)
     XMAX, TAU0, Z, ALPHA = P6X[0], P6X[3], P6X[4], P6X[5]
     TAU0S = TAU0 * tsc
     xs = np.empty(len(Vv))
@@ -71,18 +71,18 @@ def main():
     x16 = np.asarray(x16v["x16"], float)
     data2, keep = load174()
     base = {pr: sim_judge(data2[pr][0], x16) for pr in PROTOS}
-    # —— A0 前置：判官基线与正本 judge181 块逐位一致才开庭 ——
+    # -- A0 prerequisite: court opens only if the judge baseline is digit-identical to the canonical judge181 block --
     for pr in PROTOS:
         c_k = np.asarray(data2[pr][1], float)[keep[pr]]
         r2 = 1.0 - float(((base[pr] - np.asarray(data2[pr][1], float))[keep[pr]] ** 2).sum()) / float(c_k @ c_k)
         d = abs(r2 - x16v["judge181"]["r2"][pr])
-        print(f"[judge182-A0] {pr} 基线 R² Δ={d:.2e}", flush=True)
+        print(f"[judge182-A0] {pr} baseline R2 delta={d:.2e}", flush=True)
         if d > 1e-6:
-            diffs.append(f"A0 {pr}: 判官基线与正本差 {d:.2e}——停庭")
+            diffs.append(f"A0 {pr}: judge baseline differs from canonical by {d:.2e} -- court adjourned")
     if diffs:
-        print("[judge182] 基线不正，停庭", flush=True)
+        print("[judge182] baseline incorrect, court adjourned", flush=True)
         sys.exit(1)
-    # —— A1：独立重算 Fisher 13×13 ——
+    # -- A1: independent recomputation of the 13x13 Fisher --
     sig2 = {}
     for pr in PROTOS:
         c_ = np.asarray(data2[pr][1], float)
@@ -124,16 +124,16 @@ def main():
     eF = np.array(eF, float)
     scale = np.abs(F).max()
     a1 = float(np.abs(F - eF).max() / scale)
-    print(f"[judge182-A1] Fisher 最大相对差={a1:.2e}（判据<1e-6）", flush=True)
-    # —— A2：独立对角化（scipy.linalg.eigh，与执行侧 np.linalg.eigh 不同调用路径）——
+    print(f"[judge182-A1] Fisher max relative diff={a1:.2e} (criterion <1e-6)", flush=True)
+    # -- A2: independent diagonalization (scipy.linalg.eigh, a different call path from the execution side's np.linalg.eigh) --
     lam_j, _ = scipy.linalg.eigh(F)
     eigs = json.load(open(os.path.join(OUT, "fisher_eigen.json"), encoding='utf-8'))
     lam_e = np.array(eigs["特征值_升序"], float)
     a2 = float(np.max(np.abs(lam_j - lam_e) / np.maximum(np.abs(lam_e), 1e-30)))
     cond_j = float(lam_j[-1] / lam_j[0]) if lam_j[0] > 0 else float("inf")
     a2c = abs(cond_j - eigs["条件数χ"]) / abs(eigs["条件数χ"])
-    print(f"[judge182-A2] 特征值最大相对差={a2:.2e}，χ 相对差={a2c:.2e}（判据<1e-6）", flush=True)
-    # —— A3：独立重算 Δ_s（s∈1.01/1.1/1.5）——
+    print(f"[judge182-A2] eigenvalue max relative diff={a2:.2e}, chi relative diff={a2c:.2e} (criterion <1e-6)", flush=True)
+    # -- A3: independent recomputation of Delta_s (s in 1.01/1.1/1.5) --
     a3 = 0.0
     jobs = []
     for s in [1.01, 1.1, 1.5]:
@@ -152,8 +152,8 @@ def main():
             dj = float(np.sqrt(d @ d) / np.sqrt(base[pr][km] @ base[pr][km]))
             eD = json.load(open(os.path.join(OUT, f"scale_group_A_{pr}.json"), encoding='utf-8'))["读数"][str(s)]["Delta_s"]
             a3 = max(a3, abs(dj - eD) / max(abs(eD), 1e-30))
-    print(f"[judge182-A3] Δ_s 最大相对差={a3:.2e}（判据<1e-4）", flush=True)
-    # —— A4：稳态量比 R_ss 九细胞独立核对（从 counter 读 judgeA r40/r60，与执行侧报告比对）——
+    print(f"[judge182-A3] Delta_s max relative diff={a3:.2e} (criterion <1e-4)", flush=True)
+    # -- A4: independent check of steady-state ratio R_ss over nine cells (read judgeA r40/r60 from counters, compare with the execution side's report) --
     eDD = json.load(open(os.path.join(OUT, "degenerate_directions.json"), encoding='utf-8'))
     a4 = 0.0
     cells9 = ["16713003", "16715049", "16708016", "16708060", "16713110",
@@ -169,8 +169,8 @@ def main():
         er = eDD["九细胞检验_引自judgeA块"][c]
         a4 = max(a4, abs(r40 - er["r40"]) / max(abs(er["r40"]), 1e-30),
                  abs(r60 - er["r60"]) / max(abs(er["r60"]), 1e-30))
-    print(f"[judge182-A4] R_ss 相对差={a4:.2e}（判据<1e-3），九细胞过线={n9}/9（执行侧={eDD['九细胞过线数']}）", flush=True)
-    # —— A5：贴界槽位核对 ——
+    print(f"[judge182-A4] R_ss relative diff={a4:.2e} (criterion <1e-3), nine-cell within limits={n9}/9 (execution side={eDD['九细胞过线数']})", flush=True)
+    # -- A5: boundary-slot check --
     a5_ok = True
     esc_report = eDD.get("跨细胞贴界登记")
     if esc_report:
@@ -179,14 +179,14 @@ def main():
             real = set(blk["judgeA"]["escape"])
             if set(esc_report.get(c, [])) != real:
                 a5_ok = False
-                print(f"[judge182-A5] {c} 贴界登记不一致", flush=True)
-    print(f"[judge182-A5] 贴界登记核对={'一致' if a5_ok else '不一致'}", flush=True)
+                print(f"[judge182-A5] {c} boundary registry inconsistent", flush=True)
+    print(f"[judge182-A5] boundary registry check={'consistent' if a5_ok else 'inconsistent'}", flush=True)
     verdict = {"A0基线": "过", "A1_Fisher": a1, "A2_特征谱": max(a2, a2c), "A3_Δs": a3,
                "A4_Rss": {"相对差": a4, "过线": f"{n9}/9"}, "A5_贴界": a5_ok,
                "用时s": round(time.time() - t0, 1)}
     json.dump(verdict, open(os.path.join(HERE, "judge182_verdict.json"), "w", encoding='utf-8'),
               ensure_ascii=False, indent=1)
-    print("[judge182] 复算完毕，判词件 judge182_verdict.json", flush=True)
+    print("[judge182] recomputation complete, verdict artifact judge182_verdict.json", flush=True)
 
 
 if __name__ == "__main__":

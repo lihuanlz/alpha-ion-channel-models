@@ -1,10 +1,10 @@
 # make_percell_violin_v03_2026-09-21.py
-# ED8 v03：在 v02 基础上把药理臂细胞补全进图（加药/不加药分列）。
-#   e: Nav 药物臂剂量-效应（Nα药，63 条件）
-#   f: IKs V½/k —— WT(8) | Mef(15) | DIDS(26) | HMR-sub(6) 分列
-#   h: CaV f_inact 对照 —— 表征批(6/4) | 筛选批对照段(77/20) 分列
-#   i: CaV 药物效应 Δf 逐组（加药段单独成面板）
-# 同时输出加药臂逐细胞长表 CSV（主表封卷 18,710 行不动，臂表独立登记）。
+# ED8 v03: on top of v02, add the pharmacology-arm cells to the figure (drug / no-drug in separate columns).
+#   e: Nav drug-arm dose-effect (Nα药, 63 conditions)
+#   f: IKs V1/2/k - WT(8) | Mef(15) | DIDS(26) | HMR-sub(6) in separate columns
+#   h: CaV f_inact controls - characterization batch (6/4) | screening-batch control segments (77/20) in separate columns
+#   i: CaV drug effect delta-f per group (drug segments as their own panel)
+# Also writes the drug-arm per-cell long-table CSV (the sealed 18,710-row master table is untouched; the arm table is registered independently).
 import os, sys, json
 import numpy as np
 import pandas as pd
@@ -44,7 +44,7 @@ def L(channel, param, voltage=None, group=None, temp=None, dataset=None):
         d = d[d.dataset == dataset]
     return d["value"].to_numpy(float)
 
-# ============ 1) 组装加药臂长表 ============
+# ============ 1) assemble the drug-arm long table ============
 arm_rows = []
 
 ik = pd.read_csv(os.path.join(AM, "2026-09-15_Kα药_IKs药物表分解判决_逐文件表_结果.csv"))
@@ -91,7 +91,7 @@ def A(channel, param, group):
     d = arm[(arm.channel == channel) & (arm.parameter == param) & (arm.group == group)]
     return d["value"].to_numpy(float)
 
-# ============ 2) 画图 ============
+# ============ 2) plotting ============
 VIOLIN_MIN_N = 20
 
 def draw_groups(ax, data_list, pos, color):
@@ -179,7 +179,7 @@ ax.set_ylabel("per-patch / per-cell τ (ms)")
 ax.set_xlabel("recording modality")
 ax.spines[["top", "right"]].set_visible(False)
 
-# e: Nav 药物臂 —— 剂量-效应散点
+# e: Nav drug arm - dose-effect scatter
 ax = axes[1, 1]
 drugs = ["Naltrexone", "Methadone", "Naloxone", "Buprenorphine", "Norbuprenorphine"]
 cmap = plt.get_cmap("tab10")
@@ -196,7 +196,7 @@ ax.legend(fontsize=4.6, frameon=False, loc="upper left", handletextpad=0.2,
           borderaxespad=0.1, labelspacing=0.25)
 ax.spines[["top", "right"]].set_visible(False)
 
-# f: IKs V½ / k —— WT | Mef | DIDS | HMR 分列
+# f: IKs V1/2 / k - WT | Mef | DIDS | HMR in separate columns
 ax = axes[1, 2]
 wt_v = L("IKs", "V_half_act"); wt_k = L("IKs", "k_act")
 mef_v = A("IKs", "V_half_act_drug", "Mef药臂"); mef_k = A("IKs", "k_act_drug", "Mef药臂")
@@ -239,7 +239,7 @@ ax.set_xticklabels([f"$E_{{chord}}$\n({len(f1)})", f"$Q_{{10}}$($\\tau_{{slow}}$
                    fontsize=6.5)
 ax.set_title("CaV1.2 · Ren 2022 (Ca$^{2+}$), complete record", fontsize=6.5)
 
-# h: CaV f_inact 对照 —— 表征批 vs 筛选批对照段，载子分列
+# h: CaV f_inact controls - characterization batch vs screening-batch control segments, carriers in separate columns
 ax = axes[2, 1]
 h1 = A("CaV1.2", "f_inact", "表征对照_Ca2")
 h2 = np.concatenate([A("CaV1.2", "f_inact", g) for g in
@@ -255,7 +255,7 @@ ax.set_ylabel(r"pre-drug $f_{inact}$(+17 mV, 40 ms)")
 ax.set_ylim(0, 1.05)
 ax.set_title("CaV1.2 · pre-drug $f_{inact}$: batch-anchored", fontsize=6.5)
 
-# i: CaV 药物效应 Δf 逐组（45° 标签）
+# i: CaV drug effect delta-f per group (45-degree labels)
 ax = axes[2, 2]
 groups = ["Buprenorphine_Ca2+_PT", "Methadone_Ca2+_PT", "Norbuprenorphine_Ca2+_PT",
           "Verapamil_Ca2+_PT", "Verapamil_Ca2+_RT",

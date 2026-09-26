@@ -1,8 +1,8 @@
-# lei211_J3_提取.py
-# 判线来源：预注册判决卡 §2-J3-Amended（修订A1/A4）
-# 内容：τ_deact(-40,-60)（staircase 下跳尾，封卷判线 CV<0.3 且 n>=105）
-#       τ_rec 负档族（sinactiv 测试段 DoE，登记）
-#       τ_act/τ_inact（staircase 上跳双相 + -80→+40 大补跳，登记）
+# lei211_J3_extraction.py
+# criteria source: pre-registered verdict card section 2-J3-Amended (amendments A1/A4)
+# contents: tau_deact(-40,-60) (staircase down-step tails; SEAL criterion CV < 0.3 and n >= 105)
+#       tau_rec negative-level family (sinactiv test-segment DoE, registered)
+#       tau_act/tau_inact (staircase up-step biphasic + -80 -> +40 big step, registered)
 import os, json
 import numpy as np
 import matplotlib
@@ -25,9 +25,9 @@ if SMOKE:
 DT_I = 2e-4
 DT_V = 1e-4
 
-# staircase 阶梯段序列（程序化解析在案，0.5s 档）
-# 序列: -80x1.0, -40,-60,-20,-40,0,-20,20,0,40,20,40,0,20,-20,0,-40,-20,-60,-40, -80x1.0
-# 下跳: ->-40 (来自-20, 第4段), ->-60 (来自-40, 第2段), ->-40 (来自0?否), ->-60 (来自-20), ->-40 (来自-20末)
+# staircase step sequence (programmatically parsed, on record; 0.5 s levels)
+# sequence: -80x1.0, -40,-60,-20,-40,0,-20,20,0,40,20,40,0,20,-20,0,-40,-20,-60,-40, -80x1.0
+# down-steps: ->-40 (from -20, seg 4), ->-60 (from -40, seg 2), ->-40 (from 0? no), ->-60 (from -20), ->-40 (from -20 end)
 STAIR_SEQ = [-40, -60, -20, -40, 0, -20, 20, 0, 40, 20, 40, 0, 20, -20, 0, -40, -20, -60, -40]
 
 
@@ -61,7 +61,7 @@ def segments(v10):
 
 
 def fit_biexp_tail(tt, y, sig):
-    """带锚双指数网格：y=y0+a1*e(-t/t1)+a2*e(-t/t2)，t1<t2 对数网格"""
+    """anchored double-exponential grid: y = y0 + a1*e(-t/t1) + a2*e(-t/t2), t1 < t2 log grid"""
     best = None
     for t1 in np.exp(np.linspace(np.log(0.005), np.log(0.3), 18)):
         for t2 in np.exp(np.linspace(np.log(max(0.02, t1 * 1.8)), np.log(6.0), 22)):
@@ -99,15 +99,15 @@ def fit_doe(tt, y, sig):
 
 def extract_J3(well):
     out = {"tdeact": {}, "trec": {}, "tact": {}, "tinact": {}}
-    # ---------- staircase 下跳尾 ----------
+    # ---------- staircase down-step tails ----------
     _, Vs = load_protocol("staircaseramp")
     v10 = Vs[:, 0]
     Is = load_current("staircaseramp", well)[:, 0]
     segs = segments(v10)
-    sig_s = float(np.std(Is[: int(0.2 / DT_I)]))  # 首段 -80x0.25
-    # 找阶梯段（0.5s 档序列），对照 STAIR_SEQ
+    sig_s = float(np.std(Is[: int(0.2 / DT_I)]))  # first segment -80 x0.25
+    # find the step segments (0.5 s level sequence), checked against STAIR_SEQ
     step_segs = [(vv, a, b) for vv, a, b in segs if 0.45 <= (b - a) * DT_V <= 0.55]
-    # 下跳目标：进入 -40 / -60 的档
+    # down-step targets: levels entering -40 / -60
     for k in range(1, len(step_segs)):
         vv, a, b = step_segs[k]
         vp = step_segs[k - 1][0]
@@ -117,7 +117,7 @@ def extract_J3(well):
             r = fit_biexp_tail(tt, seg, sig_s)
             if r is not None:
                 out["tdeact"].setdefault(str(vv), []).append(r)
-    # -80→+40 大补跳（staircase 首个 +40x1.0 段）→ τ_act(+40)/τ_inact(+40) 登记
+    # -80 -> +40 big step (first +40 x1.0 segment of staircase) -> tau_act(+40)/tau_inact(+40) registered
     for vv, a, b in segs:
         if vv == 40 and 0.9 <= (b - a) * DT_V <= 1.1:
             seg = Is[a // 2: b // 2]
@@ -126,7 +126,7 @@ def extract_J3(well):
             if r is not None:
                 out["tact"]["40_bigstep"] = r
             break
-    # 阶梯段上跳（升相 τobs 登记）：-60→-20, -40→0, -20→20, 0→40, 20→40, 0→20, -20→0
+    # step-segment up-steps (rising-phase tau_obs registered): -60->-20, -40->0, -20->20, 0->40, 20->40, 0->20, -20->0
     for k in range(1, len(step_segs)):
         vv, a, b = step_segs[k]
         vp = step_segs[k - 1][0]
@@ -150,7 +150,7 @@ def extract_J3(well):
         if test is None:
             continue
         a, b = test[0] // 2, test[1] // 2
-        seg = ic[a: a + int(0.15 / DT_I)]  # 前 150ms
+        seg = ic[a: a + int(0.15 / DT_I)]  # first 150 ms
         tt = np.arange(len(seg)) * DT_I
         r = fit_doe(tt, seg, sig_s)
         if r is not None:

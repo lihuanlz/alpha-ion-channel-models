@@ -1,55 +1,55 @@
-# 2026-09-13_α模型_组装冒烟_sine前向判决.py
-# 目的（组装冒烟，不是正式组装——DeepSeek 审计三缺口全部桥接声明在案）：
-#   用四块表前向跑 sine 全程：dm/dt=(m_ss-m)/τ_m, dh/dt=(h_ss-h)/τ_h,
-#   I=G·m·h·(V-E_rev)。V(t) 直接读 sine_wave 协议（chirp 波形原样吃进，不近似）。
-#   头号靶：chirp 后反弹/chirp 前反弹 幅度比（实测 0.38-0.66，九细胞全降，
-#   历史改幅度不改 τ_rec，260 在案）——乘积门模型能否自发出这个抑制。
+# 2026-09-13_alpha model_assembly smoke_sine forward adjudication.py
+# Purpose (assembly smoke, not the formal assembly - all three DeepSeek-audit gaps are bridged
+#   by declarations on record): forward-run the full sine protocol with the four tables:
+#   I=G*m*h*(V-E_rev). V(t) read directly from the sine_wave protocol (chirp waveform taken as-is, no approximation).
+#   Primary target: post-chirp rebound / pre-chirp rebound amplitude ratio (measured 0.38-0.66,
+#   all nine cells decrease; history: amplitude changed, tau_rec unchanged, card 260 on record) -
 #
-# 【重要纠偏 2026-09-13】失活块 A(V)/A(+50) 曲线判词修正：
-#   反弹在 -120 停 500ms，h 对任何测试档全额恢复（τ_rec=3ms），反弹峰与测试末 h 无关
-#   -> A(V) 量的是 m(150ms,V)，是激活曲线不是 h_ss(V)；且 -90x60ms 复位不彻底
-#   （τ_d(-90)~72ms -> 进测试档 m~0.43 残留）。A(V) 降级为本组装的验证靶，
-#   h_ss(V<=-40)=1 改物理声明（失活是去极化现象）。
+# [Important correction 2026-09-13] verdict revision for the inactivation-block A(V)/A(+50) curve:
+#   the rebound rests 500ms at -120, h fully recovers for any test step (tau_rec=3ms), so the
+#   rebound peak is independent of end-of-test h -> A(V) measures m(150ms,V), an activation
+#   curve, not h_ss(V); and the -90x60ms reset is incomplete (tau_d(-90)~72ms -> m~0.43 residual
+#   h_ss(V<=-40)=1 changed to a physical declaration (inactivation is a depolarization phenomenon).
 #
-# 数据源（全部封卷/登记 JSON，脚本运行时加载，不手抄）：
-#   幅度表提取_结果.json: 每细胞 y_ss(-70/-60/-50)（m_ss 锚）；τ 阶梯 TF/TM/TAU_L；
-#   反弹hook_结果.json: τ_rec/τ_deact(-120/-110/-100) 中位；A_rows 每细胞 -120 钩锚
-#     （G=A(-120)/31.67，模型形误差±30%声明）；B_rows sine 双反弹实测（评分靶）；
-#   失活门_失活协议封卷判决_结果.json: 每细胞 h_ss50、g_hat、m90 τ_r（-90 格）；
-#   激活时程_结果.json: 登记慢分量 τ2（-20/0/+20/+40 中位，CV 大，缺口 3 在案）。
+# Data sources (all sealed/registered JSONs, loaded at runtime, never hand-copied):
+#   amplitude table extraction results.json: per-cell y_ss(-70/-60/-50) (m_ss anchor); tau ladder TF/TM/TAU_L;
+#   rebound hook results.json: median tau_rec/tau_deact(-120/-110/-100); A_rows per-cell -120 hook
+#     anchor (G=A(-120)/31.67, model-form error +/-30% declared); B_rows measured sine double rebounds (scoring target);
+#   inactivation-gate sealed adjudication results.json: per-cell h_ss50, g_hat, m90 tau_r (-90 grid);
+#   activation time course results.json: registered slow component tau2 (medians at -20/0/+20/+40, large CV, gap 3 on record).
 #
-# 桥接声明（冒烟专用，正式组装前须补，编号对应 DeepSeek 三缺口）：
-#   B1（缺口1）: h_ss(V<=-40)=1.0 物理声明；h_ss(+40) 每细胞实测（失活协议 +40 测试段
-#     末 50ms 均值/(G·1·DF)，m(150ms,+40)~0.85±0.15 折进不确定度）；-40..+40 对数桥。
-#   B2（缺口2）: τ_rec(V) = 已测 4 点(-120:3.04,-110:4.25,-100:5.05,-90:6.5ms) 对数
-#     线性外推至 -40（得 ~8-23ms），-40..0 续外推封顶 100ms；V>=0 τ_h=1.5ms（τ_obs
-#     上界，对组装尺度为瞬时）。
-#   B3（缺口3）: τ_m(V>=-40) 用激活登记慢分量中位（-40:24.05封卷,-20:4.0,0:2.0,
-#     +20:0.71,+40:0.29s）；快分量（20-100ms）不进单门 m，声明；m_ss(-40..-20)
-#     逻辑桥（最弱桥，判词标注）；m_ss(-20..+60)=1.0 声明（A(V) m曲线支持 m(+20)~1）。
-#   B4: -40 档 y_ss 负值伪影在案剔除；缺档细胞用同档中位。
-#   B5: 单门 m（非双分量），chirp 内 m 低通近似，声明。
+# Bridge declarations (smoke-only, must be completed before formal assembly; numbering follows the DeepSeek three gaps):
+#   B1 (gap 1): h_ss(V<=-40)=1.0 physical declaration; h_ss(+40) measured per cell (inactivation
+#     protocol +40 test segment, mean of last 50ms /(G*1*DF); m(150ms,+40)~0.85+/-0.15 folded into the uncertainty); -40..+40 log bridge.
+#   B2 (gap 2): tau_rec(V) = log-linear extrapolation of the 4 measured points (-120:3.04, -110:4.25,
+#     -100:5.05, -90:6.5ms) to -40 (yielding ~8-23ms), continued extrapolation -40..0 capped at 100ms;
+#     V>=0 tau_h=1.5ms (tau_obs upper bound, instantaneous on the assembly time scale).
+#   B3 (gap 3): tau_m(V>=-40) uses the registered activation slow-component medians (-40:24.05 sealed,
+#     -20:4.0, 0:2.0, +20:0.71, +40:0.29s); the fast component (20-100ms) does not enter the single-gate m,
+#     declared; m_ss(-40..-20) logic bridge (weakest bridge, flagged in the verdict); m_ss(-20..+60)=1.0 declared (the A(V) m-curve supports m(+20)~1).
+#   B4: -40-step y_ss negative artifact excluded on record; cells missing a step use the step median.
+#   B5: single-gate m (not two-component); m is a low-pass approximation inside the chirp, declared.
 #
-# 判线（跑前声明）：
-#   S1 反弹1：模拟 DoE 幅度 / 实测 B_rows(which=0) 幅度 ∈ [0.3,3]（G 不确定度）；
-#   S2 抑制比：模拟 A2/A1 与实测 A2/A1 比值 ∈ [0.5,2] 且模拟比 <1（方向必须对）——头号靶；
-#   S3 +40 稳态：模拟 / 实测（+40 段末 200ms 均值）∈ [1/3,3]；
-#   每细胞 S1/S2/S3 全过 -> 该细胞冒烟过；九细胞过 >=7 -> 乘积门冒烟成立。
+# Criteria (declared before run):
+#   S1 rebound 1: simulated DoE amplitude / measured B_rows(which=0) amplitude in [0.3,3] (G uncertainty);
+#   S2 suppression ratio: simulated A2/A1 vs measured A2/A1 ratio in [0.5,2] AND simulated ratio <1 (direction must be right) - primary target;
+#   S3 +40 steady state: simulated / measured (mean of last 200ms of the +40 segment) in [1/3,3];
+#   each cell passing S1/S2/S3 -> cell smoke-passes; >=7 of nine cells -> product-gate smoke holds.
 #
-# 【POST-HOC 修复 2026-09-13 第二轮（首轮 6/9 后跑后声明）】
-#   首轮三例未过全归因数据侧在案问题，修复只动数据锚/靶，不动模型、不动判线：
-#   R1 G 锚回退链：hook -120 有效A>0 -> 任意有效A>0 -> 失活块 g_hat（旗 posthoc_G_inact）
-#      -> hook -120 无效行 |A|（旗 posthoc_G_degraded）。16704047 走第三级（g_hat=0.0718）。
-#   R2 实测靶降级回填：sine 双反弹实测缺档时用无效行 |A| 回填（旗 posthoc_target_degraded）。
-#      16713110 which=0 回填 4.311。16704047 两档全回填（比 1.40，与八细胞相反——
-#      该细胞实测靶不可信，S2 预计仍不过，属数据侧失败，不修饰）。
-#   R3 h40 回退链：失活 +40 测试段直提 -> 失活块 h_ss50 -> sine 自身 +40 段标定
-#      （旗 posthoc_h40_selfcal，该细胞 S3 降级为非独立）-> 默认 0.0034。
-#      16708060/16708016（过减漏在案，失活协议 h 链断裂）走第三级。
-# 对照（跑前声明）：
-#   C1 积分器+评分自洽：已知 τ 表合成 +40->-120 单步，DoE 反演 τ_r 误差 <15%；
-#   C2 合成全程（16713003 表+实测噪声）评分管道必须 S1-S3 全过（管道不死锁）。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 单细胞 16713003 冒烟。
+# [POST-HOC repair 2026-09-13 second round (declared after the first-round 6/9 run)]
+#   all three first-round failures were attributed to on-record data-side issues; the repair touches only data anchors/targets, never the model, never the criteria:
+#   R1 G anchor fallback chain: hook -120 valid A>0 -> any valid A>0 -> inactivation-block g_hat (flag posthoc_G_inact)
+#      -> hook -120 invalid-row |A| (flag posthoc_G_degraded). 16704047 took the third level (g_hat=0.0718).
+#   R2 measured-target degraded backfill: when a sine double-rebound measurement is missing, backfill with the invalid-row |A| (flag posthoc_target_degraded).
+#      16713110 which=0 backfilled 4.311. 16704047 backfilled both steps (ratio 1.40, opposite to the other eight cells -
+#      this cell's measured target is untrustworthy; S2 expected to still fail - a data-side failure, not cosmetically treated).
+#   R3 h40 fallback chain: direct extraction from the inactivation +40 test segment -> inactivation-block h_ss50 -> sine self-calibration
+#      from its own +40 segment (flag posthoc_h40_selfcal; this cell's S3 degraded to non-independent) -> default 0.0034.
+#      16708060/16708016 (over-leak on record, inactivation-protocol h chain broken) take the third level.
+# Controls (declared before run):
+#   C1 integrator + scoring self-consistency: synthetic +40->-120 single step with the known tau table, DoE inversion of tau_r, error <15%;
+#   C2 synthetic full run (16713003 table + measured noise): the scoring pipeline must pass S1-S3 (no pipeline deadlock).
+# Run: python this file (full nine-cell set); SMOKE=1 for the 16713003 single-cell smoke test.
 import os
 import json
 import numpy as np
@@ -129,7 +129,7 @@ def doe_fit(t, y, tr_grid=TR_GRID, td_grid=TD_GRID):
 
 
 class Tab:
-    """对数-线性插值锚表（x 线性、y 对数，越界取端点）。"""
+    """log-linear interpolation anchor table (x linear, y log, clamped at ends)."""
     def __init__(self, anchors, log_y=True):
         self.xs = np.array(sorted(anchors), dtype=float)
         ys = np.array([anchors[x] for x in self.xs], dtype=float)
@@ -142,8 +142,8 @@ class Tab:
 
 
 def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None, sine_mea40=None):
-    """每细胞四表：m_ss, τ_m, h_ss, τ_h + G。返回 dict（含 posthoc 旗帜）。"""
-    # ---- m_ss 锚（每细胞 y_ss，缺档用中位；B3/B4 桥接） ----
+    """per-cell four tables: m_ss, tau_m, h_ss, tau_h + G. Returns dict (with posthoc flags)."""
+    # ---- m_ss anchor (per-cell y_ss, step median if missing; B3/B4 bridges) ----
     yss = {}
     for r in amp["rows"]:
         if r["v"] in (-70, -60, -50):
@@ -154,12 +154,12 @@ def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None, sine_mea40=No
     m_anchors = {-130: 1e-4, -120: 1e-4, -110: 1e-4, -100: 1e-4, -90: 1e-4,
                  -80: cell_y(-70) * 0.5,
                  -70: cell_y(-70), -60: cell_y(-60), -50: cell_y(-50),
-                 -40: min(1.0, cell_y(-50) * 3.0),   # B3 逻辑桥（最弱桥）
+                 -40: min(1.0, cell_y(-50) * 3.0),   # B3 logic bridge (weakest bridge)
                  -30: min(1.0, cell_y(-50) * 8.0),
                  -20: 1.0, 0: 1.0, 20: 1.0, 40: 1.0, 60: 1.0}
     m_ss = Tab(m_anchors, log_y=True)
 
-    # ---- τ_m 锚（封卷中位 + 登记慢分量；B3/B5） ----
+    # ---- tau_m anchor (sealed medians + registered slow component; B3/B5) ----
     hs = hook["summary"]
     tm_anchors = {-130: hs["-120"]["td_med"], -120: hs["-120"]["td_med"],
                   -110: hs["-110"]["td_med"], -100: hs["-100"]["td_med"],
@@ -170,7 +170,7 @@ def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None, sine_mea40=No
                   20: 0.71, 30: 0.45, 40: 0.29, 50: 0.29, 60: 0.30}
     tau_m = Tab(tm_anchors, log_y=True)
 
-    # ---- G：R1 回退链（posthoc 旗帜） ----
+    # ---- G: R1 fallback chain (posthoc flags) ----
     ci = inact["cells"].get(cell, {})
     G = None
     gflag = None
@@ -182,17 +182,17 @@ def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None, sine_mea40=No
                  if r["cell"] == cell and r["valid"] and r["A"] > 0]
         if cands:
             G = float(np.median(cands))
-    if G is None and ci.get("g_hat") and ci["g_hat"] > 0:      # R1 第三级
+    if G is None and ci.get("g_hat") and ci["g_hat"] > 0:      # R1 third level
         G = float(ci["g_hat"])
         gflag = "posthoc_G_inact"
-    if G is None:                                              # R1 第四级
+    if G is None:                                              # R1 fourth level
         cands = [abs(r["A"]) / DF_M120 for r in hook["A_rows"]
                  if r["cell"] == cell and r["v"] == -120 and r["A"] != 0]
         if cands:
             G = float(np.median(cands))
             gflag = "posthoc_G_degraded"
 
-    # ---- h_ss（B1 + R3 回退链） ----
+    # ---- h_ss (B1 + R3 fallback chain) ----
     h50 = None
     if ci.get("h_ss50") and ci["h_ss50"] > 0:
         h50 = float(ci["h_ss50"])
@@ -203,14 +203,14 @@ def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None, sine_mea40=No
         for k, (v, s0, n) in enumerate(info):
             if abs(v - 40.0) < 2.0 and 0.14 < n * DT < 0.16 and k >= 1:
                 pv = info[k - 1][0]
-                if abs(pv + 90.0) < 2.0:                    # 是测试档不是别的
+                if abs(pv + 90.0) < 2.0:                    # it is a test step, not something else
                     iss = float(np.mean(I_inact[s0 + n - 5000: s0 + n]))
                     h40 = iss / (G * 1.0 * (40.0 - E_REV))
                     break
     if not np.isfinite(h40) or h40 <= 0:
         h40 = h50 if h50 else np.nan
     if (not np.isfinite(h40) or h40 <= 0) and G and sine_mea40 and sine_mea40 > 0:
-        h40 = sine_mea40 / (G * 1.0 * (40.0 - E_REV))         # R3 第三级
+        h40 = sine_mea40 / (G * 1.0 * (40.0 - E_REV))         # R3 third level
         hflag = "posthoc_h40_selfcal"
     if not np.isfinite(h40) or h40 <= 0:
         h40 = 0.0034
@@ -231,7 +231,7 @@ def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None, sine_mea40=No
 
 
 def forward(V, tabs):
-    """全向量化查表 + 简单递推：每步 m/h 向 (m_ss,h_ss) 指数弛豫。"""
+    """fully vectorized table lookup + simple recursion: each step m/h relaxes exponentially toward (m_ss,h_ss)."""
     v = V.astype(float)
     ms = np.exp(np.interp(v, tabs["m_ss"].xs, tabs["m_ss"].ly))
     tm = np.exp(np.interp(v, tabs["tau_m"].xs, tabs["tau_m"].ly))
@@ -253,7 +253,7 @@ def forward(V, tabs):
 
 
 def find_sine_structure(V):
-    """程序化核实 sine 结构（实测：+40x1.0s、两个 -120x0.5s 反弹、chirp 每点变）。"""
+    """programmatic verification of the sine structure (measured: +40x1.0s, two -120x0.5s rebounds, chirp varies point by point)."""
     info = segments(V)
     long40 = [(v, s0, n) for v, s0, n in info if abs(v - 40) < 3 and n * DT > 0.8]
     rebs = [(k, v, s0, n) for k, (v, s0, n) in enumerate(info)
@@ -272,7 +272,7 @@ def score_cell(cell, V, I, tabs, meas, pr):
     Isim = G * m * h * (V - E_REV)
     st = find_sine_structure(V)
     out = dict(G=G)
-    # +40 稳态（段长 1.0s，取末 200ms）
+    # +40 steady state (segment length 1.0s, take the last 200ms)
     if st["long40"]:
         v, s0, nseg = st["long40"][0]
         sim40 = float(np.mean(Isim[s0 + nseg - 2000: s0 + nseg]))
@@ -281,7 +281,7 @@ def score_cell(cell, V, I, tabs, meas, pr):
         out["mea40"] = mea40
         out["S3"] = bool(np.isfinite(mea40) and abs(mea40) > 1e-6
                          and 1 / 3 <= sim40 / mea40 <= 3)
-    # 双反弹 DoE（向内翻正，与实测 B_rows 符号约定一致）
+    # double-rebound DoE (inward flipped positive, same sign convention as the measured B_rows)
     amps = []
     for k, v, s0, nseg in st["rebs"][:2]:
         t = np.arange(nseg) * DT
@@ -309,15 +309,15 @@ def score_cell(cell, V, I, tabs, meas, pr):
 def main():
     rng = np.random.default_rng(5)
     print("=" * 84)
-    print(" α模型 组装冒烟·sine 前向判决" + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 判线: S1 反弹1幅度∈[0.3,3] | S2 抑制比方向对且∈[0.5,2]×实测 | S3 +40稳态∈[1/3,3]")
+    print(" alpha model assembly smoke / sine forward adjudication" + (" (smoke 16713003)" if SMOKE else " (full nine-cell set)"))
+    print(" criteria: S1 rebound-1 amplitude in [0.3,3] | S2 suppression ratio direction right and within [0.5,2]x measured | S3 +40 steady state in [1/3,3]")
     print("=" * 84, flush=True)
 
     amp = json.load(open(F_AMP, encoding="utf-8"))
     hook = json.load(open(F_HOOK, encoding="utf-8"))
     inact = json.load(open(F_INACT, encoding="utf-8"))
 
-    # 实测 sine 双反弹靶值（R2：缺档用无效行 |A| 降级回填，旗 posthoc_target_degraded）
+    # measured sine double-rebound targets (R2: backfill missing steps with invalid-row |A|, flag posthoc_target_degraded)
     meas = {}
     for r in hook["B_rows"]:
         if r["valid"] and r["A"] > 0:
@@ -329,50 +329,50 @@ def main():
             d[r["which"]] = abs(r["A"])
             mflag[r["cell"]] = "posthoc_target_degraded"
     meas = {c: (d[0], d[1]) for c, d in meas.items() if 0 in d and 1 in d}
-    print("[实测靶] chirp 抑制比 A2/A1:", flush=True)
+    print("[measured targets] chirp suppression ratio A2/A1:", flush=True)
     for c in CELLS:
         if c in meas:
             tag = f"  [{mflag[c]}]" if c in mflag else ""
             print(f"  {c}: A1={meas[c][0]:.3f} A2={meas[c][1]:.3f} "
-                  f"比={meas[c][1] / meas[c][0]:.3f}{tag}", flush=True)
+                  f"ratio={meas[c][1] / meas[c][0]:.3f}{tag}", flush=True)
         else:
-            print(f"  {c}: 实测反弹缺（评分降级）", flush=True)
+            print(f"  {c}: measured rebound missing (scoring degraded)", flush=True)
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     t_c = np.arange(int(0.4 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) \
         + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τ_r: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> "
-          f"{'过' if c1 else '不过'}", flush=True)
-    # C2: 合成细胞（16713003 表）评分管道不死锁
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f}ms (true 3.5) -> "
+          f"{'pass' if c1 else 'fail'}", flush=True)
+    # C2: synthetic cell (16713003 table), scoring pipeline must not deadlock
     V0 = load_mat("sine_wave_protocol.mat", "16713003", "sine_wave")[0]
     tabs0 = build_tabs("16713003", amp, hook, inact)
     m0, h0 = forward(V0, tabs0)
     Isyn = tabs0["G"] * m0 * h0 * (V0 - E_REV)
     st0 = find_sine_structure(V0)
     ok_c2 = st0["chirp"] is not None and len(st0["long40"]) >= 1 and len(st0["rebs"]) >= 2
-    print(f"  C2 sine 结构解析: +40段 {len(st0['long40'])} 反弹 {len(st0['rebs'])} "
-          f"chirp {'有' if st0['chirp'] else '无'} -> {'过' if ok_c2 else '不过'}", flush=True)
+    print(f"  C2 sine structure parsing: +40 segment {len(st0['long40'])} rebounds {len(st0['rebs'])} "
+          f"chirp {'yes' if st0['chirp'] else 'no'} -> {'pass' if ok_c2 else 'fail'}", flush=True)
     if st0["chirp"]:
         cs, ce = st0["chirp"]
         vc = V0[cs:ce]
-        print(f"     chirp 窗 {(ce - cs) * DT:.2f}s  电压 [{vc.min():.0f},{vc.max():.0f}]mV",
+        print(f"     chirp window {(ce - cs) * DT:.2f}s  voltage [{vc.min():.0f},{vc.max():.0f}]mV",
               flush=True)
     if not (c1 and ok_c2):
-        print("  对照未归位 -> 停。", flush=True)
+        print("  controls not returned to baseline -> halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls returned to baseline.", flush=True)
 
-    # ---------- 真实数据 ----------
-    print("\n[真实数据]", flush=True)
+    # ---------- real data ----------
+    print("\n[real data]", flush=True)
     res = {}
     for c in CELLS:
         V, I = load_mat("sine_wave_protocol.mat", c, "sine_wave")
         Vi, Ii = load_mat("inactivation_protocol.mat", c, "inactivation")
-        smea40 = None                                    # R3 第三级自标定原料
+        smea40 = None                                    # R3 third-level self-calibration material
         if I is not None:
             stc = find_sine_structure(V)
             if stc["long40"]:
@@ -389,34 +389,34 @@ def main():
         fl = " ".join(x for x in [r.get("gflag"), r.get("hflag"), r.get("mflag")] if x)
         print(f"  {c}: G={r['G']:.4f} h40={tabs['h40']:.4f} | "
               f"S1{'✓' if r.get('S1') else '×'} simA1={r['simA'][0] if r['simA'] else np.nan:.2f}"
-              f"(实测{r.get('A1_meas', np.nan):.2f}) | "
-              f"S2{'✓' if r.get('S2') else '×'} 模拟比{r.get('sim_ratio', np.nan):.2f}"
-              f"(实测{r.get('mea_ratio', np.nan):.2f}) | "
+              f"(meas {r.get('A1_meas', np.nan):.2f}) | "
+              f"S2{'v' if r.get('S2') else 'x'} sim ratio {r.get('sim_ratio', np.nan):.2f}"
+              f"(meas {r.get('mea_ratio', np.nan):.2f}) | "
               f"S3{'✓' if r.get('S3') else '×'} sim40={r.get('sim40', np.nan):.3f}"
-              f"(实测{r.get('mea40', np.nan):.3f}) -> "
-              f"{'过' if r['pass'] else '不过'}" + (f"  [{fl}]" if fl else ""), flush=True)
+              f"(meas {r.get('mea40', np.nan):.3f}) -> "
+              f"{'pass' if r['pass'] else 'fail'}" + (f"  [{fl}]" if fl else ""), flush=True)
 
     npass = sum(1 for r in res.values() if r["pass"])
     print("\n" + "-" * 84, flush=True)
-    print(f" 九细胞冒烟: {npass}/{len(res)} 过（判线 >=7 乘积门冒烟成立）", flush=True)
-    print(" 总判词：", "乘积门冒烟成立（登记桥接在案）" if npass >= (1 if SMOKE else 7)
-          else "乘积门冒烟未过——缺口桥接不足或模型缺项，明细见上", flush=True)
+    print(f" nine-cell smoke: {npass}/{len(res)} pass (criterion >=7 for product-gate smoke to hold)", flush=True)
+    print(" overall verdict:", "product-gate smoke holds (registered bridges on record)" if npass >= (1 if SMOKE else 7)
+          else "product-gate smoke failed - insufficient gap bridging or missing model terms, details above", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     nfig = len(res)
     fig, axes = plt.subplots(nfig, 1, figsize=(15, 3.2 * nfig), squeeze=False)
     for ax, (c, r) in zip(axes[:, 0], res.items()):
         V, I = load_mat("sine_wave_protocol.mat", c, "sine_wave")
         tt = np.arange(len(V)) * DT
         if I is not None:
-            ax.plot(tt, I, lw=0.3, color="0.6", label="实测")
-        ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="模拟")
+            ax.plot(tt, I, lw=0.3, color="0.6", label="measured")
+        ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="simulated")
         st = r["_struct"]
         for k, v, s0, nseg in st["rebs"][:2]:
             ax.axvspan(s0 * DT, (s0 + nseg) * DT, color="tab:blue", alpha=0.08)
-        ax.set_title(f"{c}  S1{'过' if r.get('S1') else '未'} "
-                     f"S2{'过' if r.get('S2') else '未'} S3{'过' if r.get('S3') else '未'}"
-                     f"  抑制比 模拟{r.get('sim_ratio', np.nan):.2f}/实测{r.get('mea_ratio', np.nan):.2f}",
+        ax.set_title(f"{c}  S1{'pass' if r.get('S1') else 'fail'} "
+                     f"S2{'pass' if r.get('S2') else 'fail'} S3{'pass' if r.get('S3') else 'fail'}"
+                     f"  suppression ratio sim {r.get('sim_ratio', np.nan):.2f}/meas {r.get('mea_ratio', np.nan):.2f}",
                      fontsize=9)
         ax.set_xlabel("t (s)")
         ax.set_ylabel("I (nA)")
@@ -431,8 +431,8 @@ def main():
     fjson = os.path.join(HERE, "2026-09-13_α模型_组装冒烟_sine前向判决_结果.json")
     with open(fjson, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1, default=float)
-    print(f"\n  图落盘: {fpng}", flush=True)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"\n  figure saved: {fpng}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

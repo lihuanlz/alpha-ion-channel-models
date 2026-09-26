@@ -1,36 +1,36 @@
-# 2026-09-13_α模型_AP前向判决.py
-# 目的（AP clamp 决战，不是调参——与 sine 冒烟同一套四表、同一 G、同一 E_rev=-88.33，
-#   零调参前向打 AP 协议）：dm/dt=(m_ss-m)/τ_m, dh/dt=(h_ss-h)/τ_h, I=G·m·h·(V-E_rev)。
-#   V(t) 直接读 ap_protocol.mat（17 个去极化峰的数字化 AP 钳制波形，原样吃进）。
+# 2026-09-13_alpha model_AP forward adjudication.py
+# Purpose (AP clamp showdown, no tuning - the same four tables, same G, same E_rev=-88.33 as the
+#   sine smoke; zero-tuning forward simulation of the AP protocol): dm/dt=(m_ss-m)/tau_m,
+#   V(t) read directly from ap_protocol.mat (digitized AP clamp waveform with 17 depolarizing peaks, taken as-is).
 #
-# 【协议结构（2026-09-13 程序化解析在案）】
-#   前置 -80x0.25s -> -120x0.05s 预脉冲 -> -80；0.57s 起 17 个去极化峰
-#   （峰 +8.8~+71.8mV，间期回 -80）；7.325s 尾部 -120x0.5s 反弹 hook；尾 -80x1.0s。
-#   全长 8.82s，88245 点 @DT=1e-4。
+# [Protocol structure (parsed programmatically 2026-09-13, on record)]
+#   Pre -80x0.25s -> -120x0.05s pre-pulse -> -80; from 0.57s, 17 depolarizing peaks
+#   (peaks +8.8~+71.8mV, inter-peak returns to -80); 7.325s tail -120x0.5s rebound hook; final -80x1.0s.
+#   total length 8.82s, 88245 points @DT=1e-4.
 #
-# 【实测形态依据（16713003 抽样，判线设计依据）】
-#   复极窗峰 0.09~2.05nA >> 平台窗 -0.001~0.335（hERG 复极回弹 signature）；
-#   间期 -80 窗电流 0.020 -> 0.189nA 跨周期累积（~8倍）；
-#   -120 hook 翻正幅度 ~1.2nA；噪声 std 0.0069nA（前置 -80 段）。
+# [Measured morphology evidence (16713003 sample, basis for criterion design)]
+#   Repolarization-window peaks 0.09~2.05nA >> plateau window -0.001~0.335 (hERG repolarization
+#   rebound signature); inter-peak -80 window current 0.020 -> 0.189nA accumulating across
+#   periods (~8x); -120 hook flipped amplitude ~1.2nA; noise std 0.0069nA (pre -80 segment).
 #
-# 判线（跑前声明）：
-#   A1 复极回弹自发（头号靶）：>=80% 周期（17个中>=14）模拟复极窗
-#      （峰后至 V<-40）出现电流峰（max > 平台窗均值+0.021=3x噪声），
-#      且这些周期 模拟复极峰/实测复极峰 的中位比 ∈ [0.3,3]（G 不确定度）；
-#   A2 -120 hook 反弹幅度：DoE 反演 模拟/实测 ∈ [0.3,3]（同 sine S1 口径）；
-#   A3 间期累积方向：模拟间期 -80 窗电流 末1/3均值 > 首1/3均值（方向判，
-#      实测 0.020->0.189 约8倍）；
-#   每细胞 A1/A2/A3 全过 -> 该细胞过；九细胞过 >=7 -> α模型 AP 前向成立。
+# Criteria (declared before run):
+#   A1 spontaneous repolarization rebound (primary target): >=80% of periods (>=14 of 17) show a
+#      simulated current peak in the repolarization window (after the peak until V<-40)
+#      (max > plateau-window mean + 0.021 = 3x noise), and for those periods the median ratio simulated/measured repolarization peak is in [0.3,3] (G uncertainty);
+#   A2 -120 hook rebound amplitude: DoE inversion simulated/measured in [0.3,3] (same convention as sine S1);
+#   A3 inter-peak accumulation direction: simulated inter-peak -80 window current, last-1/3 mean >
+#      first-1/3 mean (direction criterion; measured 0.020->0.189, ~8x);
+#   each cell passing A1/A2/A3 -> cell passes; >=7 of nine cells pass -> alpha model AP forward holds.
 #
-# 桥接声明（与 sine 冒烟同一套，一字未动）：
-#   B1 h_ss(V<=-40)=1.0 物理声明；h40 回退链（失活协议直提 -> h_ss50 -> 默认0.0034；
-#      AP 无 +40 长段，自标定级无原料，16708060 停在 h50=0.0022 在案）。
-#   B2 τ_rec(V) 4点对数外推；B3 τ_m 锚/逻辑桥；B4 -40档y_ss伪影剔除；
-#   B5 单门 m 声明。R1 G 回退链同 sine（16704047 走 posthoc_G_inact=0.0718）。
-# 对照（跑前声明）：
-#   C1 DoE 反演 τ_r 误差 <15%；
-#   C2 合成全程（16713003 表）结构解析 17峰+hook 且 A1/A2/A3 可计算（管道不死锁）。
-# 运行：python 本文件（九细胞全量）；SMOKE=1 单细胞 16713003 冒烟。
+# Bridge declarations (same set as the sine smoke, verbatim):
+#   B1 h_ss(V<=-40)=1.0 physical declaration; h40 fallback chain (direct extraction from the
+#      inactivation protocol -> h_ss50 -> default 0.0034; AP has no +40 long segment, so the self-calibration grade has no material; 16708060 stuck at h50=0.0022, on record).
+#   B2 tau_rec(V) 4-point log extrapolation; B3 tau_m anchor/logic bridge; B4 -40-step y_ss artifact
+#   B5 single-gate m declaration. R1 G fallback chain same as sine (16704047 uses posthoc_G_inact=0.0718).
+# Controls (declared before run):
+#   C1 DoE inversion of tau_r, error <15%;
+#   C2 synthetic full run (16713003 table): structure parsing finds 17 peaks + hook and A1/A2/A3 computable (pipeline not deadlocked).
+# Run: python this file (full nine-cell set); SMOKE=1 for the 16713003 single-cell smoke test.
 import os
 import json
 import numpy as np
@@ -50,7 +50,7 @@ CELLS = ["16713003"] if SMOKE else ["16704007", "16704047", "16707014", "1670801
 DT = 1e-4
 E_REV = -88.33
 DF_M120 = abs(-120.0 - E_REV)
-NOISE3 = 3 * 0.0069          # A1 峰门槛（16713003 前置段噪声，九细胞同口径）
+NOISE3 = 3 * 0.0069          # A1 peak threshold (16713003 pre-segment noise, same convention for all nine cells)
 
 F_AMP = os.path.join(HERE, "2026-09-13_α模型_幅度表提取_结果.json")
 F_HOOK = os.path.join(HERE, "2026-09-13_α模型_反弹hook_结果.json")
@@ -106,7 +106,7 @@ def doe_fit(t, y, tr_grid=TR_GRID, td_grid=TD_GRID):
 
 
 class Tab:
-    """对数-线性插值锚表（x 线性、y 对数，越界取端点）。与 sine 冒烟同一份。"""
+    """log-linear interpolation anchor table (x linear, y log, clamped at ends). Same copy as the sine smoke."""
     def __init__(self, anchors, log_y=True):
         self.xs = np.array(sorted(anchors), dtype=float)
         ys = np.array([anchors[x] for x in self.xs], dtype=float)
@@ -119,7 +119,7 @@ class Tab:
 
 
 def build_tabs(cell, amp, hook, inact, I_inact=None, V_inact=None):
-    """与 sine 冒烟同一份四表（sine_mea40 级无原料，其余逐字相同）。返回 dict。"""
+    """same four tables as the sine smoke (sine_mea40 grade has no material; rest verbatim). Returns dict."""
     yss = {}
     for r in amp["rows"]:
         if r["v"] in (-70, -60, -50):
@@ -222,7 +222,7 @@ def forward(V, tabs):
 
 
 def find_ap_structure(V):
-    """程序化解析 AP 结构：>0mV 去极化组、复极窗、平台窗、间期窗、-120 hook。"""
+    """programmatic parsing of AP structure: >0mV depolarization groups, repolarization windows, plateau windows, inter-peak windows, -120 hook."""
     n = len(V)
     idx = np.where(V > 0)[0]
     grp = np.split(idx, np.where(np.diff(idx) > 100)[0] + 1) if len(idx) else []
@@ -243,7 +243,7 @@ def find_ap_structure(V):
     gh = np.split(h120, np.where(np.diff(h120) > 100)[0] + 1) if len(h120) else []
     hook = None
     for g in gh:
-        if len(g) * DT > 0.3:                      # 0.5s 尾 hook（不要 0.05s 预脉冲）
+        if len(g) * DT > 0.3:                      # 0.5s tail hook (not the 0.05s pre-pulse)
             hook = (int(g[0]), int(g[-1]) + 1)
     return dict(cycles=cycles, inters=inters, hook=hook)
 
@@ -254,7 +254,7 @@ def score_cell(cell, V, I, tabs):
     Isim = G * m * h * (V - E_REV)
     st = find_ap_structure(V)
     out = dict(G=G, h40=tabs["h40"], gflag=tabs["gflag"])
-    # ---- A1 复极回弹 ----
+    # ---- A1 repolarization rebound ----
     ratios, npeak = [], 0
     for cyc in st["cycles"]:
         a, b = cyc["repol"]
@@ -287,7 +287,7 @@ def score_cell(cell, V, I, tabs):
             out["hook_meaA"] = rm["A"] if rm else np.nan
             out["A2"] = bool(rs and rm and rm["A"] > 0
                              and 0.3 <= rs["A"] / rm["A"] <= 3.0)
-    # ---- A3 间期累积方向 ----
+    # ---- A3 inter-peak accumulation direction ----
     if len(st["inters"]) >= 3:
         k = max(1, len(st["inters"]) // 3)
         first = np.concatenate([Isim[a:b] for a, b in st["inters"][:k]])
@@ -304,36 +304,36 @@ def score_cell(cell, V, I, tabs):
 def main():
     rng = np.random.default_rng(5)
     print("=" * 84)
-    print(" α模型 AP 前向判决" + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"))
-    print(" 判线: A1 复极回弹>=80%周期且峰比中位∈[0.3,3] | A2 hook DoE∈[0.3,3] | A3 累积方向")
-    print(" 纪律: 与 sine 冒烟同一套四表同一 G 同一 E_rev，零调参")
+    print(" alpha model AP forward adjudication" + (" (smoke 16713003)" if SMOKE else " (full nine-cell set)"))
+    print(" criteria: A1 repolarization rebound >=80% periods and peak-ratio median in [0.3,3] | A2 hook DoE in [0.3,3] | A3 accumulation direction")
+    print(" discipline: same four tables, same G, same E_rev as the sine smoke; zero tuning")
     print("=" * 84, flush=True)
 
     amp = json.load(open(F_AMP, encoding="utf-8"))
     hook = json.load(open(F_HOOK, encoding="utf-8"))
     inact = json.load(open(F_INACT, encoding="utf-8"))
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     t_c = np.arange(int(0.4 / DT)) * DT
     y_c = 3.0 * (np.exp(-t_c / 0.030) - np.exp(-t_c / 0.0035)) \
         + rng.normal(0, 0.02, len(t_c))
     rc = doe_fit(t_c, y_c)
     c1 = bool(rc and abs(rc["tau_r"] - 0.0035) / 0.0035 < 0.15)
-    print(f"  C1 DoE 反演 τ_r: {rc['tau_r'] * 1e3:.2f}ms（真值3.5）-> "
-          f"{'过' if c1 else '不过'}", flush=True)
+    print(f"  C1 DoE inversion tau_r: {rc['tau_r'] * 1e3:.2f}ms (true 3.5) -> "
+          f"{'pass' if c1 else 'fail'}", flush=True)
     V0 = load_mat("ap_protocol.mat", "16713003", "ap")[0]
     st0 = find_ap_structure(V0)
     ok_c2 = len(st0["cycles"]) >= 14 and st0["hook"] is not None
-    print(f"  C2 AP 结构解析: 去极化峰 {len(st0['cycles'])} 个, 间期窗 {len(st0['inters'])}, "
-          f"hook {'有' if st0['hook'] else '无'} -> {'过' if ok_c2 else '不过'}", flush=True)
+    print(f"  C2 AP structure parsing: depolarizing peaks {len(st0['cycles'])}, inter-peak windows {len(st0['inters'])}, "
+          f"hook {'yes' if st0['hook'] else 'no'} -> {'pass' if ok_c2 else 'fail'}", flush=True)
     if not (c1 and ok_c2):
-        print("  对照未归位 -> 停。", flush=True)
+        print("  controls not returned to baseline -> halt.", flush=True)
         return
-    print("  对照归位。", flush=True)
+    print("  controls returned to baseline.", flush=True)
 
-    # ---------- 真实数据 ----------
-    print("\n[真实数据]", flush=True)
+    # ---------- real data ----------
+    print("\n[real data]", flush=True)
     res = {}
     for c in CELLS:
         V, I = load_mat("ap_protocol.mat", c, "ap")
@@ -343,34 +343,34 @@ def main():
         res[c] = r
         fl = f"  [{r['gflag']}]" if r.get("gflag") else ""
         print(f"  {c}: G={r['G']:.4f} h40={r['h40']:.4f} | "
-              f"A1{'✓' if r.get('A1') else '×'} 峰{r.get('repol_npeak')}/{r.get('repol_ncy')}"
-              f" 比中位{r.get('repol_ratio_med', np.nan):.2f} | "
-              f"A2{'✓' if r.get('A2') else '×'} hook 模拟{r.get('hook_simA', np.nan):.2f}"
-              f"/实测{r.get('hook_meaA', np.nan):.2f} | "
-              f"A3{'✓' if r.get('A3') else '×'} 间期{r.get('inter_first', np.nan):.4f}"
+              f"A1{'v' if r.get('A1') else 'x'} peaks {r.get('repol_npeak')}/{r.get('repol_ncy')}"
+              f" ratio median {r.get('repol_ratio_med', np.nan):.2f} | "
+              f"A2{'v' if r.get('A2') else 'x'} hook sim {r.get('hook_simA', np.nan):.2f}"
+              f"/meas {r.get('hook_meaA', np.nan):.2f} | "
+              f"A3{'v' if r.get('A3') else 'x'} inter {r.get('inter_first', np.nan):.4f}"
               f"->{r.get('inter_last', np.nan):.4f} -> "
-              f"{'过' if r['pass'] else '不过'}{fl}", flush=True)
+              f"{'pass' if r['pass'] else 'fail'}{fl}", flush=True)
 
     npass = sum(1 for r in res.values() if r["pass"])
     print("\n" + "-" * 84, flush=True)
-    print(f" 九细胞 AP 前向: {npass}/{len(res)} 过（判线 >=7 α模型 AP 成立）", flush=True)
-    print(" 总判词：", "α模型 AP 前向成立（零调参，桥接在案）" if npass >= (1 if SMOKE else 7)
-          else "α模型 AP 前向未过——明细见上", flush=True)
+    print(f" nine-cell AP forward: {npass}/{len(res)} pass (criterion >=7 for alpha model AP to hold)", flush=True)
+    print(" overall verdict:", "alpha model AP forward holds (zero tuning, bridges on record)" if npass >= (1 if SMOKE else 7)
+          else "alpha model AP forward failed - details above", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     nfig = len(res)
     fig, axes = plt.subplots(nfig, 1, figsize=(15, 3.0 * nfig), squeeze=False)
     for ax, (c, r) in zip(axes[:, 0], res.items()):
         V, I = load_mat("ap_protocol.mat", c, "ap")
         tt = np.arange(len(V)) * DT
         if I is not None:
-            ax.plot(tt, I, lw=0.3, color="0.6", label="实测")
-        ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="模拟")
+            ax.plot(tt, I, lw=0.3, color="0.6", label="measured")
+        ax.plot(tt, r["_sim"], lw=0.5, color="tab:red", alpha=0.8, label="simulated")
         if r["_struct"]["hook"]:
             a, b = r["_struct"]["hook"]
             ax.axvspan(a * DT, b * DT, color="tab:blue", alpha=0.08)
-        ax.set_title(f"{c}  A1{'过' if r.get('A1') else '未'} A2{'过' if r.get('A2') else '未'} "
-                     f"A3{'过' if r.get('A3') else '未'}  复极峰比中位 "
+        ax.set_title(f"{c}  A1{'pass' if r.get('A1') else 'fail'} A2{'pass' if r.get('A2') else 'fail'} "
+                     f"A3{'pass' if r.get('A3') else 'fail'}  repol peak-ratio median "
                      f"{r.get('repol_ratio_med', np.nan):.2f}", fontsize=9)
         ax.set_xlabel("t (s)")
         ax.set_ylabel("I (nA)")
@@ -384,8 +384,8 @@ def main():
     fjson = os.path.join(HERE, "2026-09-13_α模型_AP前向判决_结果.json")
     with open(fjson, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1, default=float)
-    print(f"\n  图落盘: {fpng}", flush=True)
-    print(f"  结果落盘: {fjson}", flush=True)
+    print(f"\n  figure saved: {fpng}", flush=True)
+    print(f"  results saved: {fjson}", flush=True)
 
 
 if __name__ == "__main__":

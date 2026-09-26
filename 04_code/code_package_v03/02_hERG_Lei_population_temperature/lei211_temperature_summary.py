@@ -1,7 +1,7 @@
-# lei211_温度汇总.py
-# 五温度(25/27/30/33/37) 汇总 + T1(37°C结构复制) + T2(跨宿主对表) + T3(Q10层)
-# 判线来源: 预注册判决卡_Lei温度Q10_2026-09-21.md (2026-09-21 13:30 冻结)
-# 口径与 25°C 判词卡逐字相同; 37°C = herg37oc3+herg37oc4 合并
+# lei211_temperature_summary.py
+# five-temperature (25/27/30/33/37) summary + T1 (37 degC structure replication) + T2 (cross-host table comparison) + T3 (Q10 layer)
+# criteria source: pre-registered verdict card Lei temperature Q10 2026-09-21 (frozen 2026-09-21 13:30)
+# conventions verbatim identical to the 25 degC verdict card; 37 degC = herg37oc3 + herg37oc4 merged
 import os, json, math
 import numpy as np
 
@@ -14,7 +14,7 @@ BATCHES = {"herg25oc1": 25, "herg27oc1": 27, "herg30oc1": 30,
 B37 = ["herg37oc3", "herg37oc4"]
 SIN_V = [-140, -120, -100, -80, -60, -40, -20, 0, 20, 40]
 ACT_V = [-50, -35, -20, -5, 10, 25, 40]
-BEATTIE_TREC120 = 3.04e-3  # 封卷值 (2026-09-13 战役)
+BEATTIE_TREC120 = 3.04e-3  # sealed value (2026-09-13 campaign)
 
 def J(b, kind):
     fp = os.path.join(ROOT, f"lei211_{kind}_{b}.json")
@@ -38,7 +38,7 @@ def wilson(k, n, z=1.959964):
     h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
     return p, c - h, c + h
 
-SUM = {}   # 每批汇总
+SUM = {}   # per-batch summary
 for b, T in BATCHES.items():
     d12, d3, dtau = J(b, "J1J2_结果"), J(b, "J3_结果"), J(b, "tauh_表")
     cells = d12["cells"]
@@ -62,7 +62,7 @@ for b, T in BATCHES.items():
         m, n, cv = cv_ok(v)
         mss[str(V)] = {"median": m, "n": n, "cv": cv}
     out["m_ss"] = mss
-    # J3 tdeact / bigstep (逐孔: 多episode取中位)
+    # J3 tdeact / bigstep (per well: median over episodes)
     tdeact = {}
     for V in ("-60", "-40"):
         t1 = [np.median([e["tau1"] for e in c["J3"]["tdeact"][V]])
@@ -77,7 +77,7 @@ for b, T in BATCHES.items():
     m1, n1, c1 = cv_ok([x["tau1"] for x in bs]); m2, n2, c2 = cv_ok([x["tau2"] for x in bs])
     out["bigstep"] = {"tau1_失活": {"median": m1, "n": n1, "cv": c1},
                       "tau2_激活": {"median": m2, "n": n2, "cv": c2}}
-    # trec (tauh 表)
+    # trec (tauh table)
     out["trec"] = {k: dtau[k] for k in dtau}
     # J5
     d5 = J(b, "J5_结果")
@@ -106,7 +106,7 @@ for b, T in BATCHES.items():
         out["J5"] = j5
     SUM[b] = out
 
-# ---------- 37°C 合并 ----------
+# ---------- 37 degC merge ----------
 def pooled(key_path, batches=B37):
     vals = []
     for b in batches:
@@ -150,7 +150,7 @@ for b in B37:
 m1, n1, c1 = cv_ok([x["tau1"] for x in bs]); m2, n2, c2 = cv_ok([x["tau2"] for x in bs])
 M37["bigstep"] = {"tau1_失活": {"median": m1, "n": n1, "cv": c1},
                   "tau2_激活": {"median": m2, "n": n2, "cv": c2}}
-# trec 逐孔合并
+# trec per-well merge
 tr37 = {}
 for V in ("-140", "-120", "-100", "-80", "-60", "-40", "-20"):
     vv = []
@@ -161,7 +161,7 @@ for V in ("-140", "-120", "-100", "-80", "-60", "-40", "-20"):
     m, n, cv = cv_ok(vv)
     tr37[V] = {"median": m, "n": n, "cv": cv}
 M37["trec"] = tr37
-# J5 合并
+# J5 merge
 kk = nn = 0; j5f = {}; a3v = []
 for b in B37:
     d5 = J(b, "J5_结果") or {}
@@ -186,7 +186,7 @@ M37["J5"] = {"per_freq": j5f, "A3": {"pass": sum(a3v), "n": len(a3v)},
              "合并": {"k": kk, "n": nn, "p": p, "lo": lo, "hi": hi}}
 SUM["herg37合并"] = M37
 
-# ---------- C1' 管道同一性 (37oc3-A03 sactiv +40段) ----------
+# ---------- C1' pipeline identity (37oc3-A03 sactiv +40 segment) ----------
 def releak(i5, v5):
     v0 = v5[0]
     wa, wb = int(0.175 / DT_I), int(0.2 / DT_I)
@@ -206,7 +206,7 @@ try:
     v10 = Vs[:, sw]
     i5 = dI[:, sw]
     ic = releak(i5, v10[::2][: dI.shape[0]])
-    sig = float(np.std(i5[: int(0.1 / DT_I)]))  # 本扫描首段-80保持噪声
+    sig = float(np.std(i5[: int(0.1 / DT_I)]))  # noise of this sweep's first -80 holding segment
     v_ds = v10[::2][: dI.shape[0]]
     wa, wb = int(0.175 / DT_I), int(0.2 / DT_I)
     mv = float(np.mean(v_ds[wa:wb] - v_ds[0]))
@@ -226,7 +226,7 @@ try:
 except Exception as ex:
     c1p = {"错误": str(ex)}
 
-# ---------- T1 判决 (37°C 合并) ----------
+# ---------- T1 verdict (37 degC merged) ----------
 verd = {}
 e = M37["E_rev"]
 verd["T1-J4 E_rev"] = "封卷" if (e["cv"] is not None and e["cv"] < 0.10 and -100 <= e["median"] <= -80) else "登记"
@@ -291,7 +291,7 @@ Q["E_rev(T)"] = {"medians_mV": dict(zip([str(int(t)) for t in Ts], [float(y) for
                  "slope_mV每C": float(k), "R2": r2e,
                  "判决": "封卷" if (k < 0 and 0.05 <= abs(k) <= 0.35) else "登记"}
 
-# ---------- C2' 完成率 ----------
+# ---------- C2' completion rate ----------
 C2 = {}
 for b in BATCHES:
     sel = [l.strip() for l in open(os.path.join(DATA, "qc", f"selected-{b}.txt"), encoding="utf-8")
@@ -307,9 +307,9 @@ OUT = {"各批": SUM, "C1p": c1p, "C2完成率": C2, "T1判决": verd,
 fp = os.path.join(ROOT, "lei211_温度汇总.json")
 json.dump(OUT, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=float)
 
-# ---------- 摘要打印 ----------
+# ---------- summary printout ----------
 print("== C1' 37oc3-A03 sactiv+40:", c1p)
-print("\n== 各温度核心中位数 ==")
+print("\n== core medians per temperature ==")
 for b in bcols:
     s = SUM[b]
     print(f"[{s['T']}°C {b}] E_rev {s['E_rev']['median']:.2f}mV CV{s['E_rev']['cv']:.4f} n{s['E_rev']['n']} | "
@@ -319,10 +319,10 @@ for b in bcols:
           f"τd2(-60/-40) {s['tdeact']['-60']['tau2']['median']:.3f}/{s['tdeact']['-40']['tau2']['median']:.3f}s | "
           f"τrec120 {s['trec']['-120']['median']*1000:.2f}ms n{s['trec']['-120']['n']} | "
           f"大补跳τ1/τ2 {s['bigstep']['tau1_失活']['median']*1000:.1f}/{s['bigstep']['tau2_激活']['median']*1000:.1f}ms n{s['bigstep']['tau1_失活']['n']}")
-print("\n== T1 (37°C合并) ==")
+print("\n== T1 (37 degC merged) ==")
 for k_, v_ in verd.items():
     print(" ", k_, "->", v_)
-print("  J5合并:", j5m, " A3:", M37["J5"]["A3"], " per_freq:", M37["J5"]["per_freq"])
+print("  J5 merged:", j5m, " A3:", M37["J5"]["A3"], " per_freq:", M37["J5"]["per_freq"])
 print("\n== T2 ==", OUT["T2"])
 print("\n== T3 ==")
 for k_, v_ in Q.items():

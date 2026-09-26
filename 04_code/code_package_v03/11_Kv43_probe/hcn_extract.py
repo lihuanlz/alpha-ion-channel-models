@@ -1,4 +1,4 @@
-# hcn_extract.py — HCN(Ih) 逐细胞提取：3 条件电压 (−80/−100/−120) 的 Ih 幅度与激活 τ
+# hcn_extract.py - HCN(Ih) per-cell extraction: Ih amplitude and activation tau at 3 conditioning voltages (-80/-100/-120)
 import scipy.io as sio, numpy as np, glob, os, csv, sys
 from scipy.optimize import curve_fit
 
@@ -27,7 +27,7 @@ for grp, d in [("veh", "veh_hcn"), ("les", "les_hcn")]:
                 pa, pb, plvl, pdur = segs[si - 1]
                 if lvl <= -70 and dur >= 0.8 and abs(plvl - (-40)) < 2:
                     base = float(np.median(cur[max(a - int(0.05 / dt), 0):a]))
-                    y = (cur[a:b] - base) * 1e9  # nA, inward 为负
+                    y = (cur[a:b] - base) * 1e9  # nA, inward is negative
                     x = np.arange(len(y)) * dt
                     i_inst = float(np.median(y[int(0.005 / dt):int(0.015 / dt)]))
                     i_ss = float(np.median(y[-int(0.1 / dt):]))

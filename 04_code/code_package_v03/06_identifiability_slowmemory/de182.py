@@ -1,6 +1,6 @@
-# de182.py — 代码182 model62 可识别性谱卡·执行侧（预注册 2026-09-11）
-# 硬墙：不重拟合 / 不改架构 / 不改数据 / 不跨协议混噪声 / Fisher 走 expm 验收通道 / 判线不改。
-# 用法：python de182.py sanity | group | fisher | dirs | all
+# de182.py — code-182 model62 identifiability spectrum card, execution side (preregistration 2026-09-11)
+# Hard walls: no refitting / no architecture changes / no data changes / no cross-protocol noise mixing / Fisher via the expm acceptance channel / criteria unchanged.
+# Usage: python de182.py sanity | group | fisher | dirs | all
 import json, math, os, sys, time
 import numpy as np
 from multiprocessing import Pool
@@ -9,16 +9,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import de173
 import de179
-import judge179                       # expm 验收通道（硬墙 5）
+import judge179                       # expm acceptance channel (hard wall 5)
 from de173 import DT, tail_fit_kernel, steady_ratios
 from de174 import load174, windows174, PROTOS
 from de179 import EREV, R2_BARS, _hrs_of
 
 OUT = os.path.join(HERE, "model62_identifiability")
 os.makedirs(OUT, exist_ok=True)
-LOG_SLOTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]   # log10 域
-LIN_SLOTS = [10]                                     # pf2 线性域
-H_DEX = 1e-3                                         # 预注册 §二.1
+LOG_SLOTS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12]   # log10 domain
+LIN_SLOTS = [10]                                     # pf2 linear domain
+H_DEX = 1e-3                                         # preregistration section 2.1
 NWORK = 24
 
 
@@ -42,10 +42,10 @@ def step_h(x16, j):
     return 1e-3 * abs(x16[j]) if j in LIN_SLOTS else H_DEX
 
 
-# ---- 并行 expm 仿真引擎（worker 只收电压数组与参数，不触数据盘） ----
+# ---- parallel expm simulation engine (workers receive only voltage arrays and parameters, never touch the data disk) ----
 
 def _sim_job(job):
-    """job = (key, x16 list, v array, xmax_mult) → (key, 电流数组)"""
+    """job = (key, x16 list, v array, xmax_mult) -> (key, current array)"""
     key, xl, v, xmax_mult = job
     import judge179 as JG
     saved = JG.P6X
@@ -73,7 +73,7 @@ def r2_of(m, c, km):
 
 
 def sigma_maps(data2, keep, base):
-    """预注册 §二.2：keep 连续段分段，段内残差均方；保底=协议汇总×1e-2。"""
+    """Preregistration section 2.2: split keep into contiguous segments, mean-square residual within segments; floor = protocol aggregate x 1e-2."""
     sig = {}
     for pr in PROTOS:
         c_ = np.asarray(data2[pr][1], float)
@@ -103,25 +103,25 @@ def do_sanity():
     x16, v = load_x16()
     data2, keep = load174()
     base = base_eval(x16, data2)
-    # 参照 = 正本 judge181 块（expm 验收通道，硬墙 5 同侧；勘误在案：初稿误用拟合侧 CN 的 r2 落盘值）
+    # reference = the judge181 canonical block (expm acceptance channel, same side of hard wall 5; erratum on record: the first draft mistakenly used the fit-side CN r2 saved value)
     ref = v['judge181']['r2']
     ok = True
     for pr in PROTOS:
         r2 = r2_of(base[pr], data2[pr][1], keep[pr])
         d = abs(r2 - ref[pr])
-        print(f"[sanity] {pr}: R²={r2:.8f} vs 判官正本 {ref[pr]:.8f} |Δ|={d:.2e}", flush=True)
+        print(f"[sanity] {pr}: R2={r2:.8f} vs judge canonical {ref[pr]:.8f} |d|={d:.2e}", flush=True)
         ok &= d < 1e-6
-    print("[sanity] " + ("逐位恒等：过" if ok else "超差——停卡"), flush=True)
+    print("[sanity] " + ("digit-exact identity: pass" if ok else "out of tolerance -- stop"), flush=True)
     return ok
 
 
-# ---------------- 步骤1：乘性标度群排查 ----------------
+# ---------------- step 1: multiplicative scale-group screening ----------------
 
 def do_group():
     x16, _ = load_x16()
     data2, keep = load174()
     base = base_eval(x16, data2)
-    # —— 候选 A：g_s 群（20 仿真并行）——
+    # -- candidate A: g_s group (20 simulations in parallel) --
     jobs = []
     for s in [1.01, 1.05, 1.1, 1.5, 2.0]:
         xs = x16.copy()
@@ -148,14 +148,14 @@ def do_group():
                    "读数": acc[pr]},
                   open(os.path.join(OUT, f"scale_group_A_{pr}.json"), "w", encoding='utf-8'),
                   ensure_ascii=False, indent=1)
-    # —— 候选 B：双指数分量简并（解析，免仿真）——
+    # -- candidate B: double-exponential component degeneracy (analytic, no simulation) --
     do_group_b(x16)
-    # —— 候选 C：X 件幅度简并 ——
+    # -- candidate C: X-component amplitude degeneracy --
     do_group_c(x16, data2, keep, base)
 
 
 def do_group_b(x16=None):
-    """候选 B 单跑入口（勘误复算用）：P2 取 10**x16[1]（x16[1] 是 log10 域，勿当线性值）。"""
+    """Candidate-B single-run entry (for the erratum recomputation): P2 = 10**x16[1] (x16[1] is in log10 domain, do not treat as a linear value)."""
     if x16 is None:
         x16, _ = load_x16()
     P1, P2 = 10.0 ** x16[0], 10.0 ** x16[1]
@@ -169,11 +169,11 @@ def do_group_b(x16=None):
            "判线L2": "倍数<2→简并；>5→可分离；中间登记"}
     json.dump(rec, open(os.path.join(OUT, "double_exp_degeneracy.json"), "w", encoding='utf-8'),
               ensure_ascii=False, indent=1)
-    print(f"[groupB] r(v) 倍数={rv.max()/rv.min():.3f}，|P2−pf2|相对差={rec['P2_pf2_相对差']}", flush=True)
+    print(f"[groupB] r(v) ratio={rv.max()/rv.min():.3f}, |P2-pf2| relative diff={rec['P2_pf2_相对差']}", flush=True)
 
 
 def do_group_c(x16, data2, keep, base):
-    # —— 候选 C：X 件幅度简并（XMAX×2 ∧ α_amp/2；4 仿真并行）——
+    # -- candidate C: X-component amplitude degeneracy (XMAX x2 AND alpha_amp /2; 4 simulations in parallel) --
     xc = x16.copy(); xc[11] -= math.log10(2.0)
     jobs = [(pr, list(xc), data2[pr][0], 2.0) for pr in PROTOS]
     res = run_jobs(jobs)
@@ -183,7 +183,7 @@ def do_group_c(x16, data2, keep, base):
         d = res[pr][km] - base[pr][km]
         out["读数"][pr] = {"Delta": f6(float(np.sqrt(d @ d) / np.sqrt(base[pr][km] @ base[pr][km]))),
                           "res_max": f6(float(np.abs(d).max()))}
-        print(f"[groupC] {pr}: Δ={out['读数'][pr]['Delta']}", flush=True)
+        print(f"[groupC] {pr}: Delta={out['读数'][pr]['Delta']}", flush=True)
     json.dump(out, open(os.path.join(OUT, "X_amp_degeneracy.json"), "w", encoding='utf-8'),
               ensure_ascii=False, indent=1)
 
@@ -194,7 +194,7 @@ def _cache_path(kind, key):
 
 
 def run_jobs_cached(kind, jobs, nwork=NWORK):
-    """逐件落盘缓存，重跑自动续（imap_unordered 每完成一件即存）。"""
+    """Per-item disk cache; reruns resume automatically (imap_unordered saves each item on completion)."""
     out, todo = {}, []
     for job in jobs:
         fp = _cache_path(kind, job[0])
@@ -207,11 +207,11 @@ def run_jobs_cached(kind, jobs, nwork=NWORK):
             for key, m in p.imap_unordered(_sim_job, todo):
                 np.save(_cache_path(kind, key), m)
                 out[key] = m
-                print(f"  [cache] {kind} {key} 落盘（{len(todo)} 件批次）", flush=True)
+                print(f"  [cache] {kind} {key} saved (batch of {len(todo)} items)", flush=True)
     return out
 
 
-# ---------------- 步骤2：Fisher 矩阵（104 仿真并行） ----------------
+# ---------------- step 2: Fisher matrix (104 simulations in parallel) ----------------
 
 def do_fisher():
     x16, _ = load_x16()
@@ -251,7 +251,7 @@ def do_fisher():
                    "matrix": [[f6(v) for v in row] for row in Fpr]},
                   open(os.path.join(OUT, f"fisher_per_protocol_{pr}.json"), "w", encoding='utf-8'),
                   ensure_ascii=False, indent=1)
-        print(f"[fisher] {pr} 协议 Fisher 组装完毕", flush=True)
+        print(f"[fisher] {pr} protocol Fisher assembled", flush=True)
     json.dump({"槽序": slot_names, "步长": "log域 h=1e-3 dex；pf2 线性域 h=1e-3×|pf2|",
                "通道": "expm 验收通道（硬墙5）", "matrix": [[f6(v) for v in row] for row in Ftot]},
               open(os.path.join(OUT, "fisher_matrix_13x13.json"), "w", encoding='utf-8'),
@@ -266,14 +266,14 @@ def do_fisher():
            "判线L3": "χ>1e3→显著简并；χ<1e2→基本可识别；中间=中度病态"}
     json.dump(rec, open(os.path.join(OUT, "fisher_eigen.json"), "w", encoding='utf-8'),
               ensure_ascii=False, indent=1)
-    print(f"[fisher] χ={cond:.4g}，零方向数={rec['零方向数_阈λmax×1e-3']}，"
+    print(f"[fisher] chi={cond:.4g}, null directions={rec['零方向数_阈λmax×1e-3']},"
           f"λmax={lam[-1]:.4g} λmin={lam[0]:.4g}", flush=True)
 
 
-# ---------------- 步骤3：简并方向与不变量 ----------------
+# ---------------- step 3: degenerate directions and invariants ----------------
 
 def _Iss_nullvec(x16, v):
-    """解析稳态：M(v) 零向量 → I_ss(v)=GKr·y3·(v−EREV)（免协议仿真）。"""
+    """Analytic steady state: null vector of M(v) -> I_ss(v)=GKr·y3·(v-EREV) (no protocol simulation needed)."""
     P = 10.0 ** np.asarray(x16[:8], float)
     gkr = 10.0 ** x16[8]
     pf1, pf2 = 10.0 ** x16[9], x16[10]
@@ -298,11 +298,11 @@ def do_dirs():
     slot_names = ["log10P1", "log10P2", "log10P3", "log10P4", "log10P5", "log10P6",
                   "log10P7", "log10P8", "log10GKr", "log10Pf1", "Pf2", "log10α_amp",
                   "log10α_τ"]
-    # —— R_ss 口径电压：从 sa 协议实际窗电位读取（de169.steady_ratios 逐字窗）——
+    # -- R_ss metric voltages: read from the actual window potentials of the sa protocol (de169.steady_ratios verbatim windows) --
     vsa = np.asarray(data2["steady_activation"][0], float)
     v_r40 = (float(vsa[int(45.919 / DT)]), float(vsa[int(29.403 / DT)]))
     v_r60 = (float(vsa[int(54.177 / DT)]), float(vsa[int(29.403 / DT)]))
-    # —— R_ss 对 13 槽梯度（解析稳态中心差分，预注册 §二.3）——
+    # -- R_ss gradient over the 13 slots (analytic-steady-state central differences, preregistration section 2.3) --
     def rss(x, pair):
         return _Iss_nullvec(x, pair[0]) / _Iss_nullvec(x, pair[1])
     grad = {}
@@ -314,7 +314,7 @@ def do_dirs():
             xm = x16.copy(); xm[j] -= h
             g[j] = (rss(xp, pair) - rss(xm, pair)) / (2 * h)
         grad[name] = g
-    # —— 九细胞检验：引用 judgeA 块已落盘 r40/r60（预注册 §二.3，不重算）——
+    # -- nine-cell test: reference the r40/r60 already saved in the judgeA block (preregistration section 2.3, not recomputed) --
     cells9 = ["16713003", "16715049", "16708016", "16708060", "16713110",
               "16708118", "16704007", "16704047", "16707014"]
     nine = {}
@@ -326,7 +326,7 @@ def do_dirs():
         nine[c] = {"r40": f6(r40), "r60": f6(r60),
                    "过线": bool(0.05 <= r40 <= 0.30 and r60 <= 0.8 * r40)}
     n9 = sum(1 for v in nine.values() if v["过线"])
-    # —— 沿零方向的直接扰动验证（每个零方向 ±1% log 域扰动，测功能量响应）——
+    # -- direct perturbation verification along null directions (±1% log-domain perturbation per null direction, measure functional responses) --
     jobs = []
     for k in zero_idx:
         u = vec[:, k]
@@ -369,7 +369,7 @@ def do_dirs():
            "候选不变量": ["稳态量比 R_ss(r40/r60)", "时间常数比 τ_de/τ_act", "激活半升时间比"]}
     json.dump(out, open(os.path.join(OUT, "degenerate_directions.json"), "w", encoding='utf-8'),
               ensure_ascii=False, indent=1)
-    print(f"[dirs] 零方向数={len(zero_idx)}，九细胞 R_ss 过线={n9}/9", flush=True)
+    print(f"[dirs] null directions={len(zero_idx)}, nine-cell R_ss within limits={n9}/9", flush=True)
 
 
 if __name__ == "__main__":
@@ -384,4 +384,4 @@ if __name__ == "__main__":
         do_fisher()
     if mode in ("dirs", "all"):
         do_dirs()
-    print(f"[de182:{mode}] 用时 {time.time()-t0:.0f}s", flush=True)
+    print(f"[de182:{mode}] elapsed {time.time()-t0:.0f}s", flush=True)

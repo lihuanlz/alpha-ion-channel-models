@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_记忆核_可识别性三门验证.py
-# 目的：建模可行性终审（纯合成数据，零真实数据拟合）。三门同炉，判线写死：
-#   门1 锚有效：晚窗双斜率闭式反演核形状参数（β 或 α），200 次噪声实现，查偏差与散布
-#        过：|偏差|<=10% 且 IQR<=20%（1σ 噪声）；3σ 噪声下 IQR<=40%
-#   门2 锚破简并：全长联合拟合（c0,a_rec,τ_rec,a_s,β,τ_s）
-#        自由多初值：若不同初值收敛到不同 β 而残差几乎相同 -> T3 简并复现
-#        锚定（β,τ_s 用门1 的锚冻结）：其余参数恢复误差 <=20% 才算锚能救
-#        三种判词：锚必要且充分 / 联合自识别（锚非必要）/ 锚也不救（不可识别）
-#   门3 族可分辨：拉伸指数<->幂律交叉拟合，两个方向残差都 >2σ 才算族分得开；
-#        分不开则"核形状参数"不良定义，只能退到族无关谱矩
-# 运行：python 本文件（你的机器，约 1-2 分钟）
+# 2026-09-13_memory_kernel_identifiability_three_gate_validation.py
+# Purpose: final ruling on model-building feasibility (pure synthetic data, zero real-data fitting). Three gates in one run, criteria pinned:
+#   Gate 1 anchor validity: closed-form inversion of kernel shape parameters (beta or alpha) from late-window dual slopes, 200 noise realizations, check bias and spread
+#        pass: |bias|<=10% and IQR<=20% (1-sigma noise); IQR<=40% under 3-sigma noise
+#   Gate 2 anchor breaks degeneracy: full-length joint fit (c0,a_rec,tau_rec,a_s,beta,tau_s)
+#        free multi-start: if different starts converge to different beta with nearly identical residuals -> T3 degeneracy reproduced
+#        anchored (beta,tau_s frozen to the gate-1 anchor): remaining parameters must recover within 20% error for the anchor to count as rescuing
+#        three verdicts: anchor necessary and sufficient / joint self-identification (anchor not needed) / anchor cannot rescue (unidentifiable)
+#   Gate 3 family distinguishability: stretched-exponential <-> power-law cross-fits; both directions must exceed 2-sigma residual for the families to be separable;
+#        if not separable, "kernel shape parameter" is ill-defined and one must fall back to family-free spectral moments
+# Run: python this_file (your machine, about 1-2 minutes)
 import os
 import json
 import numpy as np
@@ -22,12 +22,12 @@ matplotlib.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SIG = 0.036          # 实测噪声地板 (nA)
-DT = 1e-3            # 与 v5.3 降采样口径一致
+SIG = 0.036          # measured noise floor (nA)
+DT = 1e-3            # consistent with the v5.3 downsampling metric
 T_END = 5.5
 SEED = 20260913
 
-# ---------------- 核族 ----------------
+# ---------------- kernel families ----------------
 
 def k_stretch(t, tau, beta):
     return np.exp(-(t / tau) ** beta)
@@ -35,7 +35,7 @@ def k_stretch(t, tau, beta):
 def k_power(t, tau, alpha):
     return (1.0 + t / tau) ** (-alpha)
 
-# ---------------- v5.3 同款测量管线：分箱中位 -> log -> WLS ----------------
+# ---------------- v5.3 identical measurement pipeline: binned median -> log -> WLS ----------------
 
 def binlog(t, y, bin_s=0.05):
     nbin = int(np.clip((t[-1] - t[0]) / bin_s, 16, 110))
@@ -55,7 +55,7 @@ def wslope(tq, lq, mq):
     W = np.sum(wq * (tq - tbar) ** 2)
     return float(np.sum(wq * (tq - tbar) * lq) / W)
 
-T1, T2 = 2.0, 4.5                      # 两个锚窗中心
+T1, T2 = 2.0, 4.5                      # centers of the two anchor windows
 W1, W2 = (1.6, 2.4), (4.1, 4.9)
 
 def two_slopes(t, y):
@@ -69,21 +69,21 @@ def two_slopes(t, y):
     return out
 
 def inv_stretch(s1, s2):
-    """s(t) = -(β/τ^β) t^{β-1} 的闭式反演"""
+    """Closed-form inversion of s(t) = -(beta/tau^beta) t^{beta-1}"""
     beta = 1.0 + np.log(s1 / s2) / np.log(T1 / T2)
     tau = (-beta * T1 ** (beta - 1) / s1) ** (1.0 / beta)
     return float(beta), float(tau)
 
 def inv_power(s1, s2):
-    """s(t) = -α/(τ+t) 的闭式反演"""
+    """Closed-form inversion of s(t) = -alpha/(tau+t)"""
     alpha = (T2 - T1) / (1.0 / s1 - 1.0 / s2)
     tau = -alpha / s1 - T1
     return float(alpha), float(tau)
 
-# ---------------- 门 1 ----------------
+# ---------------- gate 1 ----------------
 
 TRUTH_ST = dict(beta=0.5, tau=2.0, amp=0.5)
-TRUTH_PW = dict(alpha=1.0, tau=0.3, amp=0.5)   # α=1.5/τ=0.5 晚窗信号会跌到掩码下，换可测真值
+TRUTH_PW = dict(alpha=1.0, tau=0.3, amp=0.5)   # alpha=1.5/tau=0.5 would drop the late-window signal below the mask; switched to a measurable truth
 
 def gate1(rng, nmc=200):
     t = np.arange(DT, T_END, DT)
@@ -114,7 +114,7 @@ def gate1(rng, nmc=200):
             ests = np.array(ests)
             key = f"{fam}_{tag}"
             if len(ests) < nmc * 0.8:
-                res[key] = dict(error=f"有效反演 {len(ests)}/{nmc}")
+                res[key] = dict(error=f"valid inversions {len(ests)}/{nmc}")
                 continue
             p = ests[:, 0]
             truth_p = TRUTH_ST["beta"] if fam == "stretch" else TRUTH_PW["alpha"]
@@ -125,7 +125,7 @@ def gate1(rng, nmc=200):
                             est_shape=p.tolist())
     return res
 
-# ---------------- 门 2 ----------------
+# ---------------- gate 2 ----------------
 
 TRUTH2 = dict(c0=0.05, a_rec=1.0, t_rec=0.15, a_s=0.5, beta=0.5, tau_s=2.0)
 
@@ -150,7 +150,7 @@ def gate2(rng, nmc=20):
     anch_err, anch_cost = [], []
     for _ in range(nmc):
         y = y_true + rng.normal(0, SIG, len(t))
-        # (a) 自由多初值
+        # (a) free multi-start
         bests = []
         for b0 in beta_starts:
             x0 = [0.1, 0.8, 0.2, 0.4, b0, 2.0]
@@ -165,7 +165,7 @@ def gate2(rng, nmc=20):
             free_cost.append(float(costs.min()))
             near = [b[1] for b in bests if b[0] <= costs.min() * 1.01 + 1e-12]
             free_beta.append([float(x[4]) for x in near])
-        # (b) 锚定：先粗估 c0（β 冻结名义值 0.5，c0 对 β 误设不敏感），扣掉后走门1 锚，再冻结锚联合拟合
+        # (b) anchored: first rough-estimate c0 (beta frozen at nominal 0.5; c0 is insensitive to beta mis-setting), subtract it, take the gate-1 anchor, then joint fit with the anchor frozen
         try:
             r0 = least_squares(lambda th: model_anchored(th, t, 0.5, 2.0) - y,
                                [0.1, 0.8, 0.2, 0.4], bounds=(LB4, UB4), max_nfev=300)
@@ -205,7 +205,7 @@ def gate2(rng, nmc=20):
         out["anchored_ok"] = bool(np.all(np.median(anch_err, axis=0) <= 0.20))
     return out
 
-# ---------------- 门 3 ----------------
+# ---------------- gate 3 ----------------
 
 def model_family(th, t, fam):
     c0, ar, tr, a_s, sh, ts = th
@@ -215,10 +215,10 @@ def model_family(th, t, fam):
 def gate3(rng):
     t = np.arange(DT, T_END, DT)
     cases = [
-        ("真=拉伸β0.5 -> 拟合幂律",
+        ("true=stretched beta0.5 -> fit power-law",
          model_family([0.05, 1.0, 0.15, 0.5, 0.5, 2.0], t, "stretch"), "power",
          [0.1, 0.8, 0.2, 0.4, 1.5, 0.5], ([-0.5, 0, 0.02, 0, 0.1, 0.01], [0.5, 5, 2, 5, 10, 20])),
-        ("真=幂律α1.0 -> 拟合拉伸",
+        ("true=power-law alpha1.0 -> fit stretched",
          model_family([0.05, 1.0, 0.15, 0.5, 1.0, 0.3], t, "power"), "stretch",
          [0.1, 0.8, 0.2, 0.4, 0.5, 2.0], ([-0.5, 0, 0.02, 0, 0.1, 0.2], [0.5, 5, 2, 5, 1, 20])),
     ]
@@ -244,21 +244,21 @@ def gate3(rng):
                          distinguishable=bool(np.median(rms) > 2 * SIG))
     return out
 
-# ---------------- 主流程 ----------------
+# ---------------- main flow ----------------
 
 def main():
     rng = np.random.default_rng(SEED)
     print("=" * 66)
-    print(" 记忆核可识别性 · 三门验证（纯合成，零真实数据）")
-    print(f" 噪声 σ={SIG} nA   窗 {T_END}s   锚窗中心 {T1}/{T2}s   种子 {SEED}")
+    print(" memory-kernel identifiability · three-gate validation (pure synthetic, zero real data)")
+    print(f" noise sigma={SIG} nA   window {T_END}s   anchor-window centers {T1}/{T2}s   seed {SEED}")
     print("=" * 66, flush=True)
 
-    print("\n[门1] 锚有效：晚窗双斜率闭式反演（200 次实现）", flush=True)
+    print("\n[gate 1] anchor validity: late-window dual-slope closed-form inversion (200 realizations)", flush=True)
     g1 = gate1(rng)
     g1_pass = True
     for key, r in g1.items():
         if "error" in r:
-            print(f"  {key}: {r['error']} -> 不过")
+            print(f"  {key}: {r['error']} -> fail")
             g1_pass = False
             continue
         ok_bias = abs(r["bias"]) <= 0.10
@@ -266,20 +266,20 @@ def main():
         ok = ok_bias and ok_iqr
         if key.endswith("1σ"):
             g1_pass &= ok
-        print(f"  {key}: 形状参数 中位 {r['shape_med']:.3f}（真值 {r['truth']}）"
-              f" 偏差 {r['bias']:+.1%} IQR {r['iqr']:.1%}  τ 中位 {r['tau_med']:.2f}s -> {'过' if ok else '不过'}")
-    print(f"  门1 判词: {'过 —— 锚有效' if g1_pass else '不过 —— 锚无效'}")
+        print(f"  {key}: shape parameter median {r['shape_med']:.3f} (truth {r['truth']})"
+              f" bias {r['bias']:+.1%} IQR {r['iqr']:.1%}  tau median {r['tau_med']:.2f}s -> {'pass' if ok else 'fail'}")
+    print(f"  gate-1 verdict: {'pass -- anchor valid' if g1_pass else 'fail -- anchor invalid'}")
 
-    print("\n[门2] 锚破简并：全长联合拟合（20 实现 × 多初值）", flush=True)
+    print("\n[gate 2] anchor breaks degeneracy: full-length joint fit (20 realizations x multi-start)", flush=True)
     g2 = gate2(rng)
     if "free_beta_iqr" in g2:
-        print(f"  自由多初值: β 收敛值 IQR = {g2['free_beta_iqr']:.3f}  "
-              f"({'T3 简并复现' if g2['degeneracy_reproduced'] else '未见简并，联合自识别'})"
-              f"  残差中位 {g2.get('free_cost_med', float('nan')):.4f} nA²")
+        print(f"  free multi-start: beta convergence IQR = {g2['free_beta_iqr']:.3f}  "
+              f"({'T3 degeneracy reproduced' if g2['degeneracy_reproduced'] else 'no degeneracy seen, joint self-identification'})"
+              f"  residual median {g2.get('free_cost_med', float('nan')):.4f} nA^2")
     if "anch_relerr_med" in g2:
         e = g2["anch_relerr_med"]
-        print(f"  锚定拟合: a_rec 误差 {e[0]:.1%}  τ_rec 误差 {e[1]:.1%}  a_s 误差 {e[2]:.1%}"
-              f"  -> {'恢复合格(≤20%)' if g2['anchored_ok'] else '恢复不合格'}")
+        print(f"  anchored fit: a_rec error {e[0]:.1%}  tau_rec error {e[1]:.1%}  a_s error {e[2]:.1%}"
+              f"  -> {'recovery OK (<=20%)' if g2['anchored_ok'] else 'recovery failed'}")
     deg = g2.get("degeneracy_reproduced")
     anc = g2.get("anchored_ok")
     if deg and anc:
@@ -291,20 +291,20 @@ def main():
     else:
         v2 = "数据不足，不下判词"
     g2_pass = bool(anc) and (deg is not None)
-    print(f"  门2 判词: {v2}")
+    print(f"  gate-2 verdict: {v2}")
 
-    print("\n[门3] 族可分辨：交叉拟合（残差 >2σ 才算分得开）", flush=True)
+    print("\n[gate 3] family distinguishability: cross-fits (residual >2-sigma required to separate)", flush=True)
     g3 = gate3(rng)
     g3_pass = True
     for name, r in g3.items():
-        print(f"  {name}: 交叉拟合 RMS = {r['rms_med']:.4f} nA（2σ={2*SIG:.3f}）"
-              f" -> {'分得开' if r['distinguishable'] else '冒充成功，分不开'}")
+        print(f"  {name}: cross-fit RMS = {r['rms_med']:.4f} nA (2-sigma={2*SIG:.3f})"
+              f" -> {'separable' if r['distinguishable'] else 'impersonation succeeded, not separable'}")
         g3_pass &= r["distinguishable"]
-    print(f"  门3 判词: {'过 —— 族可分辨，核形状参数良定义' if g3_pass else '不过 —— 只能提取族无关谱矩'}")
+    print(f"  gate-3 verdict: {'pass -- families separable, kernel shape parameter well-defined' if g3_pass else 'fail -- only family-free spectral moments extractable'}")
 
     print("\n" + "=" * 66)
-    print(" 总判词：")
-    print(f"  门1 {'过' if g1_pass else '不过'} | 门2 {'过' if g2_pass else '不过'} | 门3 {'过' if g3_pass else '不过'}")
+    print(" overall verdicts:")
+    print(f"  gate1 {'pass' if g1_pass else 'fail'} | gate2 {'pass' if g2_pass else 'fail'} | gate3 {'pass' if g3_pass else 'fail'}")
     if g1_pass and g2_pass:
         final = "建模可行：锚有效且破简并。" + ("核形状参数良定义。" if g3_pass else "核形状退到族无关谱矩。")
     else:
@@ -312,27 +312,27 @@ def main():
     print("  " + final)
     print("=" * 66)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     fig, axes = plt.subplots(2, 3, figsize=(17, 8.5))
     ax = axes[0, 0]
     for key, r in g1.items():
         if key.startswith("stretch") and "est_shape" in r:
             ax.hist(r["est_shape"], bins=25, alpha=0.5, label=key)
-    ax.axvline(TRUTH_ST["beta"], color="k", ls="--", label="真值 β=0.5")
-    ax.set_title("门1 拉伸指数 β̂ 分布", fontweight="bold"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    ax.axvline(TRUTH_ST["beta"], color="k", ls="--", label="truth beta=0.5")
+    ax.set_title("gate-1 stretched-exponential beta-hat distribution", fontweight="bold"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
     ax = axes[0, 1]
     for key, r in g1.items():
         if key.startswith("power") and "est_shape" in r:
             ax.hist(r["est_shape"], bins=25, alpha=0.5, label=key)
-    ax.axvline(TRUTH_PW["alpha"], color="k", ls="--", label="真值 α=1.5")
-    ax.set_title("门1 幂律 α̂ 分布", fontweight="bold"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    ax.axvline(TRUTH_PW["alpha"], color="k", ls="--", label="truth alpha=1.5")
+    ax.set_title("gate-1 power-law alpha-hat distribution", fontweight="bold"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
     ax = axes[0, 2]
     if "free_beta_all" in g2:
         ax.hist(g2["free_beta_all"], bins=20, color="tomato", alpha=0.7)
-        ax.axvline(TRUTH2["beta"], color="k", ls="--", label="真值 β=0.5")
-        ax.set_title(f"门2 自由多初值 β̂（IQR={g2['free_beta_iqr']:.3f}）", fontweight="bold")
+        ax.axvline(TRUTH2["beta"], color="k", ls="--", label="truth beta=0.5")
+        ax.set_title(f"gate-2 free multi-start beta-hat (IQR={g2['free_beta_iqr']:.3f})", fontweight="bold")
         ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
 
@@ -340,15 +340,15 @@ def main():
     if "anch_relerr_med" in g2:
         e = g2["anch_relerr_med"]
         ax.bar(["a_rec", "τ_rec", "a_s"], e, color="steelblue")
-        ax.axhline(0.20, color="r", ls="--", label="20% 判线")
-        ax.set_title("门2 锚定后参数恢复误差", fontweight="bold"); ax.legend(fontsize=8)
+        ax.axhline(0.20, color="r", ls="--", label="20% criterion")
+        ax.set_title("gate-2 parameter recovery errors after anchoring", fontweight="bold"); ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
 
     ax = axes[1, 1]
     names = list(g3.keys())
     ax.barh([n[:14] for n in names], [g3[n]["rms_med"] for n in names], color="darkorange")
     ax.axvline(2 * SIG, color="r", ls="--", label=f"2σ={2*SIG:.3f}")
-    ax.set_title("门3 交叉拟合 RMS", fontweight="bold"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+    ax.set_title("gate-3 cross-fit RMS", fontweight="bold"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
     ax = axes[1, 2]
     ax.axis("off")
@@ -360,7 +360,7 @@ def main():
     for L in lines:
         ax.text(0.05, y0, L, fontsize=12, fontweight="bold" if y0 in (0.9, 0.9 - 6 * 0.11) else "normal", wrap=True)
         y0 -= 0.11
-    fig.suptitle("记忆核可识别性三门验证（纯合成）", fontsize=14, fontweight="bold")
+    fig.suptitle("memory-kernel identifiability three-gate validation (pure synthetic)", fontsize=14, fontweight="bold")
     fpng = os.path.join(HERE, "2026-09-13_记忆核_可识别性三门验证.png")
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
 
@@ -372,8 +372,8 @@ def main():
                gate3=g3, gate3_pass=bool(g3_pass), final=final)
     fjson = os.path.join(HERE, "2026-09-13_记忆核_可识别性三门验证_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 if __name__ == "__main__":
     main()

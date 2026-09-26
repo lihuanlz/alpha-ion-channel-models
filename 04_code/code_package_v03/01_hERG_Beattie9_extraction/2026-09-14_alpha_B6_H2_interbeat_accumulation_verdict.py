@@ -1,34 +1,34 @@
 # -*- coding: utf-8 -*-
 """
-2026-09-14 · α模型 · B6-H2 跨拍累积判决
+2026-09-14 - alpha model - B6-H2 inter-beat accumulation verdict
 ============================================
-B6 悬案（H1 已否决，2026-09-14 在案）：孤立拍 envelope 说 +40 激活慢（m@100ms≈8%m∞），
-AP 分析说复极峰需 m≈29%m∞——3× 矛盾。
-H2 调和候选：AP 连发列里 m 跨拍累积（静息期去激活放不完），
-连发语境的 m 自带垫层——8% 是孤立拍口径，29% 是连发列口径，不矛盾。
+B6 open case (H1 rejected, 2026-09-14 on record): the isolated-beat envelope says +40 activation is slow (m@100ms ~= 8% m_inf),
+the AP analysis says the repolarisation peak needs m ~= 29% m_inf, a 3x contradiction.
+H2 reconciliation candidate: in an AP train m accumulates across beats (deactivation does not finish during rest),
+m in the train context carries a pedestal: 8% is the isolated-beat convention, 29% the train convention, no contradiction.
 
-模型自证逻辑：α 前向引擎的 τ_m 表（τ_m(−80)=240ms）在 AP 连发列上本来就会
-预测出跨拍累积——若数据累积比与模型累积比一致，则 B6 不是模型缺陷，
-是"孤立拍 vs 连发列"的语境差异，模型早已正确包含该机制。
+Model self-check logic: the alpha forward engine's tau_m table (tau_m(-80) = 240 ms) already predicts inter-beat accumulation
+on an AP train. If the data accumulation ratio matches the model accumulation ratio, B6 is not a model defect
+but a context difference of "isolated beat vs train"; the model already contains the mechanism correctly.
 
-做法：ap_protocol 数字化 AP 钳制连发列（17 峰），逐拍复极窗峰电流，
-驱动力归一化 J(n) = I_peak(n)/(v_peak − E_rev)；
-累积比 R = 末 5 拍中位 / 首 2 拍中位，数据与模型同口径各算一份。
+Method: digitised AP-clamp train from ap_protocol (17 peaks), per-beat repolarisation-window peak current,
+driving-force-normalised J(n) = I_peak(n)/(v_peak - E_rev);
+accumulation ratio R = median of last 5 beats / median of first 2 beats, computed the same way for data and model.
 
-判线（跑前钉死）：
-  H2 确认且模型已含：R_data 中位 ≥ 2.0，且逐拍 |log(R_data/R_model)| 中位 ≤ 0.35
-    -> B6 结案：语境差异，模型无缺陷；
-  H2 否决：R_data 中位 < 1.3 -> 累积太小补不上 3× 缺口，B6 留 H3；
-  H2 确认但模型累积不足：R_data ≥ 2.0 且 R_data/R_model 中位 > 1.5
-    -> 模型的 τ_m 静息段偏快，登记修补方向；
-  其余组合：弱证据登记。
-  对照（不过则全卡统计量作废）：
-  C1 在模型自身模拟轨迹上恢复 R_model，误差 <10%；
-  C2 逐细胞逐拍 vmax CV < 5%（电压污染门，DF 归一化之外的保险）。
+Criteria (pinned before run):
+  H2 confirmed and model already contains it: R_data median >= 2.0 and per-beat |log(R_data/R_model)| median <= 0.35
+    -> B6 closed: context difference, no model defect;
+  H2 rejected: R_data median < 1.3 -> accumulation too small to fill the 3x gap, B6 passes to H3;
+  H2 confirmed but model accumulation insufficient: R_data >= 2.0 and R_data/R_model median > 1.5
+    -> model tau_m too fast during rest, register the repair direction;
+  remaining combinations: weak evidence, registered.
+  controls (if failed, all statistics of this card void):
+  C1 recover R_model on the model's own simulated trajectory, error < 10%;
+  C2 per-cell per-beat vmax CV < 5% (voltage-contamination gate, insurance beyond DF normalisation).
 
-纪律：本侧仅 ast.parse + SMOKE=1（16713003）；正式跑（九细胞）用户 Spyder：
+Discipline: this side only ast.parse + SMOKE=1 (16713003); the formal run (nine cells) is done by the user in Spyder:
   %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/2026-09-14_α模型_B6_H2_跨拍累积判决.py' --wdir
-输出：本脚本同目录 _结果.json/.png（冒烟带 _冒烟 后缀）。
+Output: _结果.json/.png next to this script (smoke carries the _冒烟 suffix).
 """
 
 import os
@@ -43,7 +43,7 @@ CELLS = ["16713003"] if SMOKE else ["16704007", "16704047", "16707014", "1670801
                                     "16708060", "16708118", "16713003", "16713110", "16715049"]
 DT = 1e-4
 E_REV = -88.33
-GAP_NEED = 29.0 / 8.0          # B6 缺口：3.6×（在案）
+GAP_NEED = 29.0 / 8.0          # B6 gap: 3.6x (on record)
 
 
 def load_engine():
@@ -56,7 +56,7 @@ def load_engine():
 
 
 def find_ap_structure(V):
-    """与 AP 前向判决同一解析件（逐字）：>0mV 去极化组、复极窗、-120 hook。"""
+    """Same parser as the AP forward verdict (verbatim): >0 mV depolarised groups, repolarisation window, -120 hook."""
     n = len(V)
     idx = np.where(V > 0)[0]
     grp = np.split(idx, np.where(np.diff(idx) > 100)[0] + 1) if len(idx) else []
@@ -76,7 +76,7 @@ def find_ap_structure(V):
 
 
 def beat_peaks(I, V, st):
-    """逐拍 (复极窗峰电流, 峰处电压)。"""
+    """Per beat (repolarisation-window peak current, voltage at peak)."""
     out = []
     for cyc in st["cycles"]:
         a, b = cyc["repol"]
@@ -88,7 +88,7 @@ def beat_peaks(I, V, st):
 
 
 def accum_ratio(peaks):
-    """J(n)=I/(v−E) 归一化后，R = 末5拍中位/首2拍中位。拍数不足返回 None。"""
+    """After J(n) = I/(v-E) normalisation, R = median(last 5 beats)/median(first 2 beats). None if too few beats."""
     if len(peaks) < 7:
         return None, None
     J = np.array([p / (v - E_REV) for p, v in peaks if v - E_REV > 1.0])
@@ -101,8 +101,8 @@ def accum_ratio(peaks):
 def main():
     t_start = time.time()
     print("=" * 74, flush=True)
-    print(" α模型 · B6-H2 跨拍累积判决" + ("（冒烟 16713003）" if SMOKE else "（九细胞全量）"), flush=True)
-    print(f" B6 缺口 {GAP_NEED:.1f}×（8%->29%）；R = 末5拍/首2拍（DF 归一化复极峰电流）", flush=True)
+    print(" alpha model - B6-H2 inter-beat accumulation verdict" + (" (smoke 16713003)" if SMOKE else " (nine cells full)"), flush=True)
+    print(f" B6 gap {GAP_NEED:.1f}x (8%->29%); R = last-5-beats/first-2-beats (DF-normalised repolarisation peak current)", flush=True)
     print("=" * 74, flush=True)
 
     eng = load_engine()
@@ -118,7 +118,7 @@ def main():
         tabs = eng.build_tabs(cell, amp, hook, inact, hss, Ii, Vi)
         V, I = eng.load_mat("ap_protocol.mat", cell, "ap")
         if I is None:
-            print(f"  {cell}: 无 AP 数据", flush=True)
+            print(f"  {cell}: no AP data", flush=True)
             continue
         st = find_ap_structure(V)
         m_sim, h_sim = eng.forward(V, tabs)
@@ -135,18 +135,18 @@ def main():
         traces[cell] = dict(J_data=(J_d.tolist() if J_d is not None else None),
                             J_model=(J_m.tolist() if J_m is not None else None),
                             v=V[::100].tolist())
-        print(f"  {cell}: 拍数={len(pk_d):2d}  R_data={R_d if R_d else float('nan'):6.3f}"
+        print(f"  {cell}: beats={len(pk_d):2d}  R_data={R_d if R_d else float('nan'):6.3f}"
               f"  R_model={R_m if R_m else float('nan'):6.3f}"
               f"  vmax_CV={vmax_cv * 100:.2f}%  hook={'✓' if st['hook'] else '×'}"
               f"{('  [' + str(tabs['gflag']) + ']') if tabs['gflag'] else ''}", flush=True)
 
-    # ---------- 对照 ----------
-    print("\n[对照]", flush=True)
+    # ---------- controls ----------
+    print("\n[controls]", flush=True)
     c1_ok, c1_err = None, []
     for r in rows:
         if r["R_model"] and r["R_data"]:
-            c1_err.append(abs(np.log(r["R_model"] / r["R_model"])))   # 恒等自检占位
-    # C1 实质：模型轨迹重提取的 R 与 forward 直算一致（同式，误差异步）——改为数值独立重算
+            c1_err.append(abs(np.log(r["R_model"] / r["R_model"])))   # identity self-check placeholder
+    # C1 substance: R re-extracted from the model trajectory must agree with the forward direct value (same formula) - changed to an independent numerical recompute
     cell0 = rows[0]["cell"] if rows else None
     if cell0:
         tr = traces[cell0]
@@ -156,19 +156,19 @@ def main():
             R_or = rows[0]["R_model"]
             e = abs(R_re - R_or) / R_or
             c1_ok = bool(e < 0.10)
-            print(f"  C1 提取器自检（{cell0} 模型轨迹重算）: 误差 {e * 100:.2f}%（<10%）-> "
-                  f"{'过' if c1_ok else '不过'}", flush=True)
+            print(f"  C1 extractor self-check ({cell0} model-trajectory recompute): error {e * 100:.2f}% (<10%) -> "
+                  f"{'pass' if c1_ok else 'fail'}", flush=True)
     c2_fails = [r["cell"] for r in rows if r["vmax_cv"] >= 0.05]
     c2_ok = len(c2_fails) == 0
-    print(f"  C2 逐拍 vmax CV<5%: 违例 {len(c2_fails)} 细胞 {c2_fails} -> "
-          f"{'过' if c2_ok else '不过（电压污染登记，涉入细胞剔除）'}", flush=True)
+    print(f"  C2 per-beat vmax CV<5%: violations {len(c2_fails)} cells {c2_fails} -> "
+          f"{'pass' if c2_ok else 'fail (voltage contamination registered, involved cells excluded)'}", flush=True)
     ctrl_ok = bool(c1_ok) and c2_ok
 
-    # ---------- 判词 ----------
+    # ---------- verdict ----------
     print("\n" + "=" * 74, flush=True)
     verdict = None
     if not ctrl_ok:
-        verdict = "对照未归位 -> 统计量作废，登记数据/污染不足判"
+        verdict = "controls not seated -> statistics void, registered data/contamination insufficient to judge"
         print(f" {verdict}", flush=True)
     else:
         val = [r for r in rows if r["R_data"] and r["R_model"]]
@@ -177,24 +177,24 @@ def main():
         dlr = float(np.median([abs(np.log(r["R_data"] / r["R_model"])) for r in val]))
         ratio_dm = float(np.median([r["R_data"] / r["R_model"] for r in val]))
         n12 = sum(1 for r in val if r["R_data"] > 1.2)
-        print(f" R_data 中位 = {Rd:.3f}（缺口 {GAP_NEED:.1f}×）  R_model 中位 = {Rm:.3f}", flush=True)
-        print(f" |log(R_data/R_model)| 中位 = {dlr:.3f}（≤0.35 一致）  R_data/R_model 中位 = {ratio_dm:.2f}", flush=True)
-        print(f" R_data>1.2 细胞 {n12}/{len(val)}", flush=True)
+        print(f" R_data median = {Rd:.3f} (gap {GAP_NEED:.1f}x)  R_model median = {Rm:.3f}", flush=True)
+        print(f" |log(R_data/R_model)| median = {dlr:.3f} (<=0.35 consistent)  R_data/R_model median = {ratio_dm:.2f}", flush=True)
+        print(f" cells with R_data>1.2: {n12}/{len(val)}", flush=True)
         if Rd >= 2.0 and dlr <= 0.35:
-            verdict = ("H2 确认且模型已含：连发列跨拍累积是 B6 缺口的真实机制，"
-                       "8%（孤立拍）与 29%（连发列）为语境差异，模型无缺陷 -> B6 结案")
+            verdict = ("H2 confirmed and model already contains it: train inter-beat accumulation is the real mechanism of the B6 gap; "
+                       "8% (isolated beat) vs 29% (train) is a context difference, no model defect -> B6 closed")
         elif Rd < 1.3:
-            verdict = "H2 否决：连发列累积太小，补不上 3× 缺口 -> B6 留 H3（峰成分口径）"
+            verdict = "H2 rejected: train accumulation too small to fill the 3x gap -> B6 passes to H3 (peak-component convention)"
         elif Rd >= 2.0 and ratio_dm > 1.5:
-            verdict = ("H2 确认但模型累积不足：数据累积超模型 1.5× 以上 -> "
-                       "τ_m 静息段偏快，登记修补方向（τ_m(−80..−40) 复查）")
+            verdict = ("H2 confirmed but model accumulation insufficient: data accumulation exceeds model by >1.5x -> "
+                       "tau_m too fast during rest, register repair direction (recheck tau_m(-80..-40))")
         else:
-            verdict = f"弱证据：R_data={Rd:.2f}、数据/模型比 {ratio_dm:.2f} 介于判线之间，登记"
-        print(f" 判词：{verdict}", flush=True)
-        print((" （冒烟：判线路径演练，非判词）" if SMOKE else " （正式口径：判词生效）"), flush=True)
+            verdict = f"weak evidence: R_data={Rd:.2f}, data/model ratio {ratio_dm:.2f} between criteria, registered"
+        print(f" verdict: {verdict}", flush=True)
+        print((" (smoke: criterion-path rehearsal, not a verdict)" if SMOKE else " (formal convention: verdict in force)"), flush=True)
     print("=" * 74, flush=True)
 
-    # ---------- 落盘 ----------
+    # ---------- save ----------
     tag = "_冒烟" if SMOKE else "_结果"
     fjson = os.path.join(HERE, f"2026-09-14_α模型_B6_H2_跨拍累积判决{tag}.json")
     out = {"meta": {"smoke": SMOKE, "gap_need": GAP_NEED, "runtime_s": time.time() - t_start},
@@ -202,9 +202,9 @@ def main():
            "verdict": verdict, "traces": traces}
     with open(fjson, "w", encoding="utf-8") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=1, default=float)
-    print(f"\n 结果落盘: {fjson}", flush=True)
+    print(f"\n results saved: {fjson}", flush=True)
 
-    # ---------- 图 ----------
+    # ---------- figure ----------
     import matplotlib
     matplotlib.use("Agg")
     try:
@@ -224,25 +224,25 @@ def main():
         tr = traces.get(r["cell"], {})
         if tr.get("J_data"):
             ax.plot(np.arange(1, len(tr["J_data"]) + 1), tr["J_data"], "o-", ms=4,
-                    color="tab:blue", label=f"数据 R={r['R_data']:.2f}")
+                    color="tab:blue", label=f"data R={r['R_data']:.2f}")
         if tr.get("J_model"):
             ax.plot(np.arange(1, len(tr["J_model"]) + 1), tr["J_model"], "s--", ms=3,
-                    color="tab:orange", label=f"模型 R={r['R_model']:.2f}")
-        ax.set_title(f"{r['cell']}（{r['n_beats']}拍）", fontsize=9)
-        ax.set_xlabel("拍序 n"); ax.set_ylabel("J(n) 归一化峰电流")
+                    color="tab:orange", label=f"model R={r['R_model']:.2f}")
+        ax.set_title(f"{r['cell']} ({r['n_beats']} beats)", fontsize=9)
+        ax.set_xlabel("beat index n"); ax.set_ylabel("J(n) normalised peak current")
         ax.legend(fontsize=7); ax.grid(alpha=0.3)
     for j in range(len(rows), 9):
         axes[j // 3, j % 3].axis("off")
-    fig.suptitle("B6-H2 跨拍累积判决：逐拍归一化复极峰电流 数据 vs 模型"
-                 + ("（冒烟）" if SMOKE else ""), fontsize=12)
+    fig.suptitle("B6-H2 inter-beat accumulation verdict: per-beat normalised repolarisation peak current, data vs model"
+                 + (" (smoke)" if SMOKE else ""), fontsize=12)
     fpng = os.path.join(HERE, f"2026-09-14_α模型_B6_H2_跨拍累积判决{tag}.png")
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
     plt.close(fig)
-    print(f" 图落盘: {fpng}", flush=True)
+    print(f" figure saved: {fpng}", flush=True)
 
     if SMOKE:
-        print("\n[冒烟完] 正式跑指令（Spyder）：\n"
+        print("\n[smoke done] formal-run command (Spyder):\n"
               "  %runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/"
               "2026-09-14_α模型_B6_H2_跨拍累积判决.py' --wdir", flush=True)
 

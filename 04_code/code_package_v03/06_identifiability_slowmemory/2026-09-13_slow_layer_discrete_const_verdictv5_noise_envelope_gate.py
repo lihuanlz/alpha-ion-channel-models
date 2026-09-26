@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_慢层离散常数判决v5_噪声包络门.py
-# v4 校准段实锤：真实静默段噪声 LB 拒绝率 20ms=100%、50ms=89%、100ms=89%，
-#   噪声在所有分箱尺度上强相关 —— v1-v3 的白噪声门全部歪掉，v3"结构否决"作废。
-# v5 的门：不用白噪声假设。从 9 段静默段实测噪声 ACF 包络（每滞后阶取 9 段第二大，
-#   下限 0.2）；尾巴拟合残差的 ACF 在 20 阶内违约 <=2 次判白。
-#   残差相关不超过噪声自己的相关 = 模型没有剩下可分辨的结构。
-# 其余不变：带锚三指数（fast[0.03,0.6] mid[0.4,3] slow[3,60]s）、晚窗斜率 tau_late、
-#   恒定性 CV<0.30 且极差比<2.0；对照 C1 必须归位，C2 照实登记。
-# 运行：python 本文件（你的机器，约 3-5 分钟）
+# 2026-09-13_slow-layer_discrete-constant_verdict_v5_noise-envelope-gate.py
+# v4 calibration hard fact: in real silent segments the noise LB rejection rates are 20ms=100%, 50ms=89%, 100ms=89%;
+#   the noise is strongly correlated at all binning scales -- every white-noise gate of v1-v3 was skewed, the v3 "structure veto" is void.
+# v5's gate: no white-noise assumption. Use the measured noise ACF envelope from 9 silent segments (per lag take the second-largest of 9,
+#   floor 0.2); a tail-fit residual whose ACF violates the envelope <=2 times in 20 lags is judged white.
+#   Residual correlation not exceeding the noise's own correlation = the model leaves no resolvable structure.
+# Everything else unchanged: anchored triple exponential (fast[0.03,0.6] mid[0.4,3] slow[3,60]s), late-window slope tau_late,
+#   constancy CV<0.30 and range ratio<2.0; control C1 must land back, C2 registered as-is.
+# Run: python this_file (your machine, about 3-5 minutes)
 import os
 import json
 import numpy as np
@@ -41,14 +41,14 @@ ANCHORS = [0.15, 1.0, 15.0]
 SYN_SIGMA = 0.036
 H_ACF = 20
 VIOL_TOL = 2
-ENV = None          # 噪声 ACF 包络，main 里校准后设定
+ENV = None          # noise ACF envelope, set after calibration in main
 
 
 def load(cell):
     V = sio.loadmat(f"{DATA}/data/protocols/deactivation_protocol.mat")['T'].flatten().astype(float)
     fp = f"{DATA}/data/cells/{cell}/deactivation_{cell}_dofetilide_subtracted_leak_subtracted.mat"
     if not os.path.exists(fp):
-        return V, None, "文件缺失"
+        return V, None, "file missing"
     I = sio.loadmat(fp)['T'].flatten().astype(float)
     diag = f"lenI={len(I)} lenV={len(V)} NaN={int(np.isnan(I).sum())}"
     n = min(len(I), len(V))
@@ -110,9 +110,9 @@ def lb_pvalue(resid, h=20):
 
 
 def build_envelope(all_noise, rng):
-    """静默段 ACF 包络：每滞后阶取 9 段 |acf| 第二大，下限 0.2"""
+    """Silent-segment ACF envelope: per lag take the second-largest |acf| of the 9 segments, floor 0.2"""
     global ENV
-    print("\n[校准] 静默段噪声 ACF 包络（20ms 分箱，线性去趋势）", flush=True)
+    print("\n[calibration] silent-segment noise ACF envelope (20 ms binning, linear detrending)", flush=True)
     acs = []
     for seg in all_noise:
         bm = bin_means(seg, BIN_S)
@@ -121,14 +121,14 @@ def build_envelope(all_noise, rng):
         t = np.arange(len(bm))
         tr = np.polyfit(t, bm, 1)
         acs.append(acf(bm - np.polyval(tr, t), H_ACF))
-    print(f"  静默段 {len(acs)} 段，每段约 {len(bm)} 箱", flush=True)
+    print(f"  silent segments {len(acs)}, about {len(bm)} bins each", flush=True)
     A = np.abs(np.array(acs))
     mean_acf = np.mean(np.array(acs), axis=0)
-    print(f"  噪声 ACF 均值 r1={mean_acf[0]:.2f} r2={mean_acf[1]:.2f} r3={mean_acf[2]:.2f} "
+    print(f"  noise ACF mean r1={mean_acf[0]:.2f} r2={mean_acf[1]:.2f} r3={mean_acf[2]:.2f} "
           f"r5={mean_acf[4]:.2f} r10={mean_acf[9]:.2f} r20={mean_acf[19]:.2f}", flush=True)
     env = np.sort(A, axis=0)[-2] if len(acs) >= 2 else A[0]
     ENV = np.maximum(env, 0.2)
-    print(f"  包络（每阶 9 段第二大，下限 0.2）: E1={ENV[0]:.2f} E5={ENV[4]:.2f} "
+    print(f"  envelope (per-lag second-largest of 9, floor 0.2): E1={ENV[0]:.2f} E5={ENV[4]:.2f} "
           f"E10={ENV[9]:.2f} E20={ENV[19]:.2f}", flush=True)
     bm0 = bin_means(all_noise[0], BIN_S) if all_noise else None
     n_bm = len(bm0) if bm0 is not None else 0
@@ -136,7 +136,7 @@ def build_envelope(all_noise, rng):
     for _ in range(10):
         w = rng.normal(0, 1, max(n_bm, 30))
         syn_viol.append(int(np.sum(np.abs(acf(w, H_ACF)) > ENV)))
-    print(f"  合成白噪声违约计数 {syn_viol}（应多数≤{VIOL_TOL}，验证门不滥杀）", flush=True)
+    print(f"  synthetic white-noise violation count {syn_viol} (should be mostly <={VIOL_TOL}, proving the gate does not overkill)", flush=True)
 
 
 def white_by_envelope(resid):
@@ -260,7 +260,7 @@ def fmt(x, nd=2):
 def main():
     rng = np.random.default_rng(23)
     print("=" * 76)
-    print(" 慢层离散常数判决 v5 · 噪声包络门（不用白噪声假设）")
+    print(" slow-layer discrete-constant verdict v5 · noise-envelope gate (no white-noise assumption)")
     print("=" * 76, flush=True)
 
     all_noise = []
@@ -270,15 +270,15 @@ def main():
             all_noise.extend(noise_segments(V, I))
     build_envelope(all_noise, rng)
 
-    print("\n[对照]", flush=True)
+    print("\n[controls]", flush=True)
     cc = synth_check(rng)
     for name, r in cc.items():
         f = r["fit"]
         if f is None:
-            print(f"  {name}: 拟合失败")
+            print(f"  {name}: fit failed")
             continue
         print(f"  {name}: τ=({fmt(f['taus'][0],3)}, {fmt(f['taus'][1],3)}, {fmt(f['taus'][2],2)})s "
-              f"τ_late={fmt(r['tau_late'],1)}s 违约={f['viol']} LBp={f['lb_p']:.3f} 顶边={f['edge']}")
+              f"tau_late={fmt(r['tau_late'],1)}s violations={f['viol']} LBp={f['lb_p']:.3f} edge={f['edge']}")
     c1 = cc.get("C1_离散三指数", {}).get("fit")
     c1_tl = cc.get("C1_离散三指数", {}).get("tau_late")
     c1ok = (c1 is not None and c1["white"]
@@ -286,19 +286,19 @@ def main():
             and 0.5 <= c1["taus"][1] <= 2.0
             and c1_tl is not None and not np.isnan(c1_tl) and 8.0 <= c1_tl <= 30.0)
     if not c1ok:
-        print("\n  对照 C1 未归位 -> 统计量作废，停。")
+        print("\n  control C1 did not land back -> statistics void, stop.")
         return
-    print("  对照 C1 过。C2 登记在案（离散vs连续可分性限制照实写进判词）。")
+    print("  control C1 pass. C2 registered on record (discrete-vs-continuous separability limit written into the verdict as-is).")
 
     per_volt = {}
     ratios = []
     n_white = n_tot = 0
     edge_hits = [0, 0, 0]
-    print("\n[真实数据]", flush=True)
+    print("\n[real data]", flush=True)
     for cell in CELLS:
         V, I, diag = load(cell)
         if I is None:
-            print(f"  细胞 {cell}: {diag}")
+            print(f"  cell {cell}: {diag}")
             continue
         marks = []
         for tl in find_tails(V):
@@ -325,14 +325,14 @@ def main():
             if not np.isnan(tl_late):
                 d["tau_late"].append(tl_late)
             d["cells"].append(cell)
-        print(f"  细胞 {cell}: {' '.join(marks)}  [{diag}]", flush=True)
+        print(f"  cell {cell}: {' '.join(marks)}  [{diag}]", flush=True)
 
     med_ratio = float(np.median(ratios)) if ratios else float("nan")
-    print(f"\n  白化率 {n_white}/{n_tot}（包络门）；残差RMS/σ 中位 {med_ratio:.2f}；顶边 fast/mid/slow = {edge_hits}")
+    print(f"\n  whitening rate {n_white}/{n_tot} (envelope gate); residual RMS/sigma median {med_ratio:.2f}; edge hits fast/mid/slow = {edge_hits}")
 
     print("\n" + "-" * 76)
-    print(f"[恒定性] 每电压档跨细胞（n≥4 才判；CV<{CV_TOL} 且 max/min<{RANGE_TOL} 判恒；τ_slow 只诊断）")
-    print(f"  {'V':>6} {'n':>3} | {'τ_f':>7} {'CV':>5} {'比':>5} | {'τ_m':>7} {'CV':>5} {'比':>5} | {'τ_s':>7} {'CV':>5} {'比':>5} | {'τ_late':>7} {'CV':>5}")
+    print(f"[constancy] cross-cell per voltage band (judged only at n>=4; CV<{CV_TOL} and max/min<{RANGE_TOL} = constant; tau_slow diagnostic only)")
+    print(f"  {'V':>6} {'n':>3} | {'τ_f':>7} {'CV':>5} {'ratio':>5} | {'τ_m':>7} {'CV':>5} {'ratio':>5} | {'τ_s':>7} {'CV':>5} {'ratio':>5} | {'τ_late':>7} {'CV':>5}")
     gear_pass = gear_tot = 0
     tl40_cv = None
     table = []
@@ -371,14 +371,14 @@ def main():
         gear_pass += int(passed)
         row["pass"] = passed
         table.append(row)
-        print(line + ("  恒" if passed else ""))
+        print(line + ("  const" if passed else ""))
 
     frac = gear_pass / max(gear_tot, 1)
     c2 = cc.get("C2_连续拉伸b0.5", {}).get("fit")
     c2white = bool(c2 and c2["white"])
     print("\n" + "=" * 76)
-    print(" 总判词：")
-    print(f"  白化 {n_white}/{n_tot}（包络门）；恒定档 {gear_pass}/{gear_tot}；-40 τ_late CV {fmt(tl40_cv,2)}")
+    print(" overall verdict:")
+    print(f"  whitening {n_white}/{n_tot} (envelope gate); constant bands {gear_pass}/{gear_tot}; -40 tau_late CV {fmt(tl40_cv,2)}")
     if n_white < n_tot * 0.5:
         final = ("结构否决（噪声相关已按真实基线包络排除，这次算数）：带锚三指数装不下长尾，"
                  "'离散常数'图景否掉；建模只剩逐细胞描述 + τ_rec 等已确证常数")
@@ -398,14 +398,14 @@ def main():
     fig, axes = plt.subplots(1, 5, figsize=(24, 5))
     for ax, key, ttl in ((axes[0], "tau1", "τ_fast(V)"),
                          (axes[1], "tau2", "τ_mid(V)"),
-                         (axes[2], "tau3", "τ_slow(V) 带内（诊断）"),
-                         (axes[3], "tau_late", "τ_late(V) 晚窗斜率")):
+                         (axes[2], "tau3", "tau_slow(V) within band (diagnostic)"),
+                         (axes[3], "tau_late", "tau_late(V) late-window slope")):
         means = [np.nanmean(per_volt[v][key]) if per_volt[v][key] else np.nan for v in vs]
         stds = [np.nanstd(per_volt[v][key], ddof=1) if len(per_volt[v][key]) > 1 else np.nan for v in vs]
         ax.errorbar(vs, means, yerr=stds, fmt="o-", ms=5, lw=1.5, capsize=3, color="steelblue")
         ax.set_yscale("log")
         ax.set_title(ttl, fontweight="bold")
-        ax.set_xlabel("尾电压 mV")
+        ax.set_xlabel("tail voltage mV")
         ax.grid(alpha=0.3)
     axes[0].set_ylabel("τ (s)")
     ax = axes[4]
@@ -427,8 +427,8 @@ def main():
                table=table, gear_pass=gear_pass, gear_tot=gear_tot, tl40_cv=tl40_cv, final=final)
     fjson = os.path.join(HERE, "2026-09-13_慢层离散常数判决v5_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 
 if __name__ == "__main__":

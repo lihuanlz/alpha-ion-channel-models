@@ -1,5 +1,5 @@
-# lei211_时间表生成.py
-# 从 lei211_温度汇总.json 生成完整时间表 md（五温度 × 全电压，每格标判决等级）
+# lei211_time_table_build.py
+# build the complete time-table md from lei211_温度汇总.json (five temperatures x all voltages, verdict grade per cell)
 import json, os
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -10,7 +10,7 @@ COLS = [("herg25oc1", 25), ("herg27oc1", 27), ("herg30oc1", 30),
 SIN_V7 = ["-140", "-120", "-100", "-80", "-60", "-40", "-20"]
 SIN_V10 = SIN_V7 + ["0", "20", "40"]
 ACT_V = ["-50", "-35", "-20", "-5", "10", "25", "40"]
-C1_VOID = {"-100", "-60", "-20"}  # C1 作废档（沿用 25°C 规则）
+C1_VOID = {"-100", "-60", "-20"}  # C1 void levels (25 degC rule carried over)
 
 def grade(cv, n, line=0.3, nmin=53):
     if cv is None or n is None or n < nmin:

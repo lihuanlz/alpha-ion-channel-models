@@ -1,9 +1,9 @@
 # verify_tauh_modelfree_2026-09-21.py
-# τ_rec 温度趋势三重核验：
-#  (1) 网格 vs 连续精修的 SSE 改善幅度（判断精修是否只是在平谷里游走）
-#  (2) 网格下边缘堆积比例（判断高温中位数是否被网格边缘顶死）
-#  (3) 无模型时钟：到极值时间 t_ext / 半幅时间 t_half / 10-90% 上升时间
-#      —— 不依赖任何指数拟合，直接检验 Q10 是否还在
+# tau_rec temperature trend, triple check:
+#  (1) SSE improvement of continuous refinement over the grid (is refinement just wandering in a flat valley?)
+#  (2) fraction piled at the grid lower edge (are high-temperature medians pinned by the grid edge?)
+#  (3) model-free clocks: time-to-extremum t_ext / half-amplitude time t_half / 10-90% rise time
+#      - no exponential fit involved; directly tests whether Q10 survives
 import os, json
 import numpy as np
 from scipy.optimize import least_squares
@@ -41,7 +41,7 @@ for tr, td in GRID:
     X = np.column_stack([np.ones(750), x])
     PINV.append(np.linalg.pinv(X))
 PINV = np.array(PINV)
-TR_GRID_MS = np.exp(np.linspace(np.log(1.0), np.log(80.0), 22))  # 网格 tr 值(ms)
+TR_GRID_MS = np.exp(np.linspace(np.log(1.0), np.log(80.0), 22))  # grid tr values (ms)
 
 def grid_best(seg):
     best = None
@@ -68,7 +68,7 @@ def refine(seg, tr0, td0, c0):
         return None, None
 
 def clocks(seg):
-    """无模型时钟：返回 t_half, t_ext, t1090 (ms)。失败返回 (None,None,None)"""
+    """Model-free clocks: returns t_half, t_ext, t1090 (ms). Returns (None,None,None) on failure."""
     base = float(np.median(seg[:5]))
     dev = seg - base
     i = int(np.argmax(np.abs(dev)))
@@ -110,7 +110,7 @@ for batch, T in BATCH_T.items():
                 continue
             rf_tr, rf_sse = refine(seg, gb[1], gb[2], gb[4])
             th, te, t19 = clocks(seg)
-            edge = int(np.argmin(np.abs(TR_GRID_MS - gb[1] * 1000.0)))  # 最近网格点索引
+            edge = int(np.argmin(np.abs(TR_GRID_MS - gb[1] * 1000.0)))  # nearest grid-point index
             out.setdefault(str(T), {}).setdefault(str(V), []).append([
                 w, gb[1] * 1000.0, gb[0],
                 (rf_tr * 1000.0) if rf_tr else None, rf_sse,
@@ -130,23 +130,23 @@ def q10r2(meds):
     r2 = 1 - np.sum((y - pred) ** 2) / np.sum((y - y.mean()) ** 2)
     return float(np.exp(-slope * 10)), float(r2)
 
-print("\n=== (1) 精修相对网格的 SSE 改善 ===")
+print("\n=== (1) SSE improvement of refinement over grid ===")
 for T in ["25", "27", "30", "33", "37"]:
     for V in ["-140", "-120"]:
         rows = out.get(T, {}).get(V, [])
         imp = [(r[2] - r[4]) / r[2] * 100 for r in rows if r[4] is not None and r[2] > 0]
         if imp:
-            print(f"  {T}C {V}mV: n={len(imp)} SSE改善中位 {np.median(imp):.2f}%  p90 {np.percentile(imp, 90):.2f}%")
+            print(f"  {T}C {V}mV: n={len(imp)} SSE improvement median {np.median(imp):.2f}%  p90 {np.percentile(imp, 90):.2f}%")
 
-print("\n=== (2) 网格下边缘(1.0/1.23ms)堆积比例 ===")
+print("\n=== (2) fraction piled at the grid lower edge (1.0/1.23ms) ===")
 for T in ["25", "27", "30", "33", "37"]:
     for V in ["-140", "-120"]:
         rows = out.get(T, {}).get(V, [])
         if rows:
             e = np.array([r[8] for r in rows])
-            print(f"  {T}C {V}mV: n={len(e)} 落在最低2档比例 {np.mean(e <= 1)*100:.1f}%")
+            print(f"  {T}C {V}mV: n={len(e)} fraction in lowest 2 bins {np.mean(e <= 1)*100:.1f}%")
 
-print("\n=== (3) 无模型时钟的五温度中位数与 Q10 ===")
+print("\n=== (3) model-free clock five-temperature medians and Q10 ===")
 for V in ["-140", "-120"]:
     for name, idx in [("t_half", 5), ("t_ext", 6), ("t10-90", 7)]:
         meds = []

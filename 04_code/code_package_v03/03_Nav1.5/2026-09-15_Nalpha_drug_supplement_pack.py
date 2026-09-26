@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Nα药 · deepseek 二审补做包（2026-09-15）
-  Part A：Nav 形态自检（κ* 度量在 Nav 快峰形态 + 20 ms 窗下是否可信）
-  Part B：R_in 门敏感性（不同 R_in 范围下 κ*/ε_x 分布是否变化）
-  Part C：ATX-II 核实（元数据证据，无需计算，结论写在 JSON）
-复用原判词脚本同码函数（import 模块），保证零代码路径偏差。
+Nα-drug · deepseek second-review supplement pack (2026-09-15)
+  Part A: Nav morphology self-check (is the kappa* metric trustworthy on the Nav fast-peak shape within a 20 ms window)
+  Part B: R_in gate sensitivity (does the kappa*/eps_x distribution change across R_in ranges)
+  Part C: ATX-II verification (metadata evidence, no computation; conclusion written to JSON)
+Reuses the same-code functions from the original verdict script (module import), guaranteeing zero code-path deviation.
 """
 import importlib.util, json, os, sys
 import numpy as np
@@ -17,22 +17,22 @@ OUT = os.path.join(ROOT, "α模型", "2026-09-15_Nα药_补做包_结果.json")
 
 spec = importlib.util.spec_from_file_location("nayao", MOD)
 M = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(M)  # main() 有 __name__ 守护，import 无副作用
+spec.loader.exec_module(M)  # main() is __name__-guarded, import has no side effects
 
 rng = np.random.default_rng(20260915)
 
-# ================= Part A：Nav 形态自检 =================
+# ================= Part A: Nav morphology self-check =================
 DT = 0.05            # ms，20 kHz
-T = np.arange(0.0, 20.0, DT)   # 20 ms 窗，400 点，与 WF 一致
+T = np.arange(0.0, 20.0, DT)   # 20 ms window, 400 points, same as WF
 
 def nav_wf(tm=0.5, tf=5.0, ts=300.0, fslow=0.15):
-    """Nav1.5 快峰形态：m^3 激活 × 双指数失活。峰归一前为内向（负）。"""
+    """Nav1.5 fast-peak shape: m^3 activation x double-exponential inactivation. Inward (negative) before peak normalization."""
     m = 1.0 - np.exp(-T / tm)
     h = (1.0 - fslow) * np.exp(-T / tf) + fslow * np.exp(-T / ts)
     return -(m ** 3) * h
 
 def pipe(w, ntr=5, sig=0.02):
-    """镜像管线：n 迹加噪平均 → medfilt3 → |峰| 归一。"""
+    """Mirror pipeline: average n noisy traces -> medfilt3 -> |peak| normalization."""
     tr = [w + rng.normal(0, sig, len(w)) for _ in range(ntr)]
     w2 = medfilt(np.mean(tr, axis=0), 3)
     pk = np.min(w2)
@@ -71,9 +71,9 @@ def partA():
         out[tag]["T2c_回收med_kappa"] = out[tag]["T2c_真warp-0.20"]["med_kappa"]
     return out
 
-# ================= Part B：R_in 门敏感性 =================
+# ================= Part B: R_in gate sensitivity =================
 def lite_cell(row):
-    """v1.0 粗闸同码，但不执行 R_in 门，r_in 照常记录。"""
+    """Same code as the v1.0 coarse gate, but the R_in gate is not applied; r_in is still recorded."""
     import re
     if re.search(r"died|lost clamp|unstable", str(row.get("note", "")), re.I):
         return None
@@ -131,8 +131,8 @@ def partB():
         rec = lite_cell(r)
         if rec:
             recs.append(rec)
-        print(f"  [{j+1}/{len(rows)}] {r['drug'][:12]} r_in=" + (f"{rec['r_in']:.0f}" if rec else "跳过"), flush=True)
-    # 展平到条件级，池 = f_step≥0.15 且 κ* 有效（与判2 同池规约）
+        print(f"  [{j+1}/{len(rows)}] {r['drug'][:12]} r_in=" + (f"{rec['r_in']:.0f}" if rec else "skip"), flush=True)
+    # Flatten to condition level; pool = f_step>=0.15 and valid kappa* (same pool rule as criterion 2)
     pool = []
     for rec in recs:
         for cd in rec["conds"]:
@@ -164,7 +164,7 @@ def partB():
         "bins": bins,
     }
 
-# ================= Part C：ATX-II 核实（元数据） =================
+# ================= Part C: ATX-II verification (metadata) =================
 PARTC = {
     "INa_P_header": "Notes: 1) All recordings were carried out at 37oC; ... （无 ATX-II）",
     "INa_L_header": "Note: 1) Agonist = ATX II; ... （整组共用 150 nM ATX-II）",
@@ -176,8 +176,8 @@ PARTC = {
 
 if __name__ == "__main__":
     res = {"PartA_Nav形态自检": partA()}
-    print("[A] 完成", flush=True)
+    print("[A] done", flush=True)
     res["PartB_R_in敏感性"] = partB()
     res["PartC_ATXII核实"] = PARTC
     json.dump(res, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"[落盘] {OUT}", flush=True)
+    print(f"[saved] {OUT}", flush=True)

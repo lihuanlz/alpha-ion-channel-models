@@ -1,6 +1,6 @@
-# kv43_extract.py — Kv4.3 探针：Dryad 10.5061/dryad.76hdr7t6z 电压钳逐细胞提取
-# 用法: python kv43_extract.py <folder> <protocol:act|inact> <out_csv>
-# 数据源: 6-OHDA 损伤/vehicle 两组 SNc DA 神经元 voltage clamp（.mat, Trace_t_s_r, 20 kHz, col0=t/s, col1=I/A, col2=V/V）
+# kv43_extract.py - Kv4.3 probe: per-cell voltage-clamp extraction from Dryad 10.5061/dryad.76hdr7t6z
+# usage: python kv43_extract.py <folder> <protocol:act|inact> <out_csv>
+# data source: 6-OHDA lesioned / vehicle two groups of SNc DA neurons, voltage clamp (.mat, Trace_t_s_r, 20 kHz, col0=t/s, col1=I/A, col2=V/V)
 import sys, os
 import numpy as np
 import scipy.io as sio
@@ -34,7 +34,7 @@ for fn in sorted(os.listdir(folder)):
             tt, cur, v = t[:, 0], t[:, 1], t[:, 2]
             dt = float(np.median(np.diff(tt)))
             segs = segments(v, dt)
-            # 找测试段: 电平 -25..-15 mV、时长 0.5-2.5 s、非首段
+            # find the test segment: level -25..-15 mV, duration 0.5-2.5 s, not the first segment
             for si, (a, b, lvl, dur) in enumerate(segs):
                 if -25 <= lvl <= -15 and 0.5 <= dur <= 2.5 and si > 0:
                     pa, pb, plvl, pdur = segs[si - 1]
@@ -42,11 +42,11 @@ for fn in sorted(os.listdir(folder)):
                     if not np.isfinite(cond):
                         continue
                     base = float(np.median(cur[max(a - int(0.05 / dt), 0):a]))
-                    i0 = a + int(0.002 / dt)  # 跳变后 2 ms 避容性尖峰
+                    i0 = a + int(0.002 / dt)  # 2 ms after the step to avoid the capacitive spike
                     win = cur[i0:i0 + int(0.15 / dt)] - base
                     ipk = float(win.max())
                     Vc.append(cond); Ip.append(ipk)
-                    # 失活动力学: 在 cond=-120 的迹上, 测试段单指数拟合
+                    # inactivation kinetics: single-exponential fit of the test segment on the cond=-120 trace
                     if abs(cond - (-120)) < 1 and dur >= 0.9:
                         i1 = a + int(0.002 / dt)
                         i2 = min(a + int(0.9 / dt), b)
@@ -61,7 +61,7 @@ for fn in sorted(os.listdir(folder)):
                             pass
                     break
         if len(Vc) >= 5:
-            Vc = np.array(Vc); Ip = np.array(Ip) * 1e9  # nA 单位，避免 Imax~1e-9 与 Vh/k 尺度悬殊使 LM 停滞
+            Vc = np.array(Vc); Ip = np.array(Ip) * 1e9  # nA units, avoiding Imax~1e-9 vs Vh/k scale mismatch stalling LM
             Vu = np.unique(Vc)
             Iu = np.array([Ip[Vc == u].mean() for u in Vu])
             try:
@@ -85,7 +85,7 @@ for fn in sorted(os.listdir(folder)):
             tt, cur, v = t[:, 0], t[:, 1], t[:, 2]
             dt = float(np.median(np.diff(tt)))
             segs = segments(v, dt)
-            # 测试段 = 预脉冲(-80)之后那段
+            # test segment = the segment after the prepulse (-80)
             for si in range(1, len(segs)):
                 a, b, lvl, dur = segs[si]
                 pa, pb, plvl, pdur = segs[si - 1]
@@ -97,7 +97,7 @@ for fn in sorted(os.listdir(folder)):
                     break
         if len(Vt) >= 5:
             Vu = np.array(sorted(Vt.keys()), float)
-            # 稳健合并重复扫次：max/min>5 判尖峰伪迹取小值，否则取均值
+            # robust merge of repeated sweeps: max/min>5 is judged a spike artifact -> take the smaller value, else the mean
             Iu = []
             n_spike = 0
             for u in Vu:
@@ -108,7 +108,7 @@ for fn in sorted(os.listdir(folder)):
                     Iu.append(vals.mean())
             Iu = np.array(Iu)
             imax = Iu.max()
-            # 脚部斜率: ln I vs V, 绝对带 0.25 nA..80%Imax; 若不足 4 点退用 5%..80% 相对带
+            # foot slope: ln I vs V, absolute band 0.25 nA..80% Imax; if fewer than 4 points, fall back to the 5%..80% relative band
             band = (Iu >= 0.25) & (Iu <= 0.8 * imax)
             if band.sum() < 4:
                 band = (Iu >= 0.05 * imax) & (Iu <= 0.8 * imax)

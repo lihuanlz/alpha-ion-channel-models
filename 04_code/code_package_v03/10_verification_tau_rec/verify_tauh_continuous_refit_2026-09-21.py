@@ -1,7 +1,7 @@
 # verify_tauh_continuous_refit_2026-09-21.py
-# 稳健性核验：τ_rec 网格量化影响
-# 对 6 批全部孔（-140/-120 mV）重做网格搜索拿 (tr,td) 种子，再做连续精修，
-# 重算五温度中位 / Q10 / R2 / CV，与网格封卷值对比。
+# Robustness check: effect of tau_rec grid quantization
+# Redo the grid search on all wells of the 6 batches (-140/-120 mV) to get (tr,td) seeds, then continuous refinement;
+# recompute five-temperature medians / Q10 / R2 / CV and compare against the sealed grid values.
 import os, json
 import numpy as np
 from scipy.optimize import least_squares
@@ -88,7 +88,7 @@ for batch, T in BATCH_T.items():
             sig = float(np.std(In[: int(0.09 / DT_I), sw]))
             gb = grid_best(seg)
             if gb is None or abs(gb[3]) < 4 * sig:
-                continue  # 与封卷同一 4σ 门
+                continue  # same 4-sigma gate as the seal
             rf = refine(seg, gb[1], gb[2], gb[4])
             ref_tr = rf[0] if rf else np.nan
             out.setdefault(str(T), {}).setdefault(str(V), []).append(
@@ -99,8 +99,8 @@ fp = os.path.join(AM, "verify_tauh_连续精修_2026-09-21.json")
 json.dump(out, open(fp, "w", encoding="utf-8"), ensure_ascii=False)
 print("saved", fp)
 
-# ===== 汇总对比 =====
-print("\n温度 | V | n | 网格中位(ms) | 精修中位(ms) | 网格CV | 精修CV")
+# ===== summary comparison =====
+print("\nT | V | n | grid median(ms) | refined median(ms) | grid CV | refined CV")
 for T in ["25", "27", "30", "33", "37"]:
     for V in ["-140", "-120"]:
         rows = out.get(T, {}).get(V, [])
@@ -120,9 +120,9 @@ def q10_from_medians(meds):  # meds: list of (T, median_ms)
     r2 = 1 - np.sum((y - pred) ** 2) / np.sum((y - y.mean()) ** 2)
     return float(np.exp(-slope * 10)), float(r2)
 
-print("\nQ10 对比（五温度中位 log-linear）：")
+print("\nQ10 comparison (five-temperature medians, log-linear):")
 for V in ["-140", "-120"]:
-    for kind, idx in [("网格", 1), ("精修", 2)]:
+    for kind, idx in [("grid", 1), ("refined", 2)]:
         meds = []
         for T in ["25", "27", "30", "33", "37"]:
             rows = out.get(T, {}).get(V, [])

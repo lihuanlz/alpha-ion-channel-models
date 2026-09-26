@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Cα-1：CaV1.2 失活温度律与电荷载子判决（预注册 v1.0，2026-09-15）
-数据: 公开数据/Cav12_Ren2022_g3msb/Temperature_{Ca2,Ba2}/*.abf （11 细胞，非配对）
-判线: 预注册 §五（Q10 恒定 / τ37 恒定 / CDI R>1.2 且 CI>1.0 / 载子效应恒定）
-用法: 正式跑  %runfile 本文件 --wdir      （全量 11 文件）
-      冒烟    python 本文件 --smoke       （合成回收 S1/S2/S3）
+Cα-1: CaV1.2 inactivation temperature law and charge-carrier verdict (preregistration v1.0, 2026-09-15)
+Data: 公开数据/Cav12_Ren2022_g3msb/Temperature_{Ca2,Ba2}/*.abf (11 cells, unpaired)
+Criteria: preregistration section 5 (Q10 constancy / tau37 constancy / CDI R>1.2 and CI>1.0 / carrier-effect constancy)
+Usage: full run  %runfile this_file --wdir   (all 11 files)
+      smoke    python this_file --smoke     (synthetic recovery S1/S2/S3)
 """
 import os, sys, json, glob
 import numpy as np
@@ -18,23 +18,23 @@ OUTP = os.path.join(ROOT, "α模型", "2026-09-15_Cα1_CaV12失活温度律与�
 SMOKE = "--smoke" in sys.argv
 
 DT = 1e-4            # 10 kHz
-T47 = (0.42, 0.60)   # 主测段 +47 mV
-T17 = (0.38, 0.42)   # 副测段 +17 mV（只登记）
-TRAMP = (0.61, 0.71) # 斜坡段求 E_rev
+T47 = (0.42, 0.60)   # main measurement segment +47 mV
+T17 = (0.38, 0.42)   # secondary segment +17 mV (registry only)
+TRAMP = (0.61, 0.71) # ramp segment for E_rev
 
-# QC 门（预注册 §四）
-G1_DV = 5.0      # 回读电压 |V-47| ≤ 5 mV
-G2_PK = 100.0    # 内向峰 |峰| ≥ 100 pA
-G3_RATIO = 0.9   # 末值/峰 < 0.9
-G4_R2 = 0.95     # 拟合 R²
-MIN_SW_CELL = 20     # 细胞入池最少有效 sweep
-MIN_TSPAN = 3.0      # 细胞入池最少温度跨度
-MIN_BINS = 4         # Q10 回归最少非空箱
-MIN_PER_BIN = 3      # 每箱最少 sweep
-AICC_MARGIN = 10.0   # 双指数胜出所需 AICc 优势
+# QC gates (preregistration section 4)
+G1_DV = 5.0      # read-back voltage |V-47| <= 5 mV
+G2_PK = 100.0    # inward peak |peak| >= 100 pA
+G3_RATIO = 0.9   # end/peak < 0.9
+G4_R2 = 0.95     # fit R^2
+MIN_SW_CELL = 20     # minimum valid sweeps for a cell to enter the pool
+MIN_TSPAN = 3.0      # minimum temperature span for a cell to enter the pool
+MIN_BINS = 4         # minimum non-empty bins for Q10 regression
+MIN_PER_BIN = 3      # minimum sweeps per bin
+AICC_MARGIN = 10.0   # AICc advantage required for the double exponential to win
 
 
-# ---------- 指数模型 ----------
+# ---------- exponential models ----------
 def exp1(t, A, tau, C):
     return A * np.exp(-t / tau) + C
 
@@ -47,15 +47,15 @@ def aicc(n, k, rss):
     return n * np.log(rss / n) + 2 * k + 2 * k * (k + 1) / (n - k - 1)
 
 def fit_segment(t, y):
-    """从峰后起拟单/双指数，AICc 选型。返回 dict 或 None（拟合失败）。"""
+    """Fit single/double exponentials from just after the peak; AICc model selection. Returns dict or None (fit failed)."""
     i_pk = int(np.argmin(y))
     if i_pk >= len(y) - 30:
         return None
     tt = t[i_pk:] - t[i_pk]
     yy = y[i_pk:]
     pk = y[i_pk]
-    tail = np.mean(yy[-200:])  # 末 20 ms
-    # ---- G3 预检：存在衰减
+    tail = np.mean(yy[-200:])  # last 20 ms
+    # ---- G3 pre-check: decay must exist
     if not (pk <= -G2_PK and abs(tail) < G3_RATIO * abs(pk)):
         return {"qc_fail": "G2G3", "peak": float(pk)}
     C0 = tail
@@ -68,7 +68,7 @@ def fit_segment(t, y):
     r2_1 = 1 - rss1 / float(np.sum((yy - yy.mean()) ** 2))
     best = {"model": "1", "tau": float(p1[1]), "A": float(p1[0]), "C": float(p1[2]),
             "r2": float(r2_1), "peak": float(pk), "aicc1": aicc(len(yy), 3, rss1)}
-    # 双指数
+    # double exponential
     try:
         p2, _ = curve_fit(exp2, tt, yy,
                           p0=[(pk - C0) * 0.6, 0.01, (pk - C0) * 0.4, 0.08, C0],
@@ -89,7 +89,7 @@ def fit_segment(t, y):
     return best
 
 
-# ---------- 真实数据 ----------
+# ---------- real data ----------
 def scan_file(path):
     import pyabf
     a = pyabf.ABF(path)
@@ -110,7 +110,7 @@ def scan_file(path):
             rec["qc_fail"] = "peaklate"
         else:
             rec.update(fr)
-        # E_rev（登记）
+        # E_rev (registry)
         mr = (t >= TRAMP[0]) & (t < TRAMP[1])
         vr, ir = v[mr], i[mr]
         k = np.argsort(vr); vr, ir = vr[k], ir[k]
@@ -121,7 +121,7 @@ def scan_file(path):
 
 
 def cell_q10(recs):
-    """入池 + 1°C 分箱 + log10τ~T 回归。返回 dict。"""
+    """Pooling + 1°C binning + log10(tau)~T regression. Returns dict."""
     ok = [r for r in recs if r.get("qc_fail") is None and "tau" in r]
     out = {"n_valid": len(ok)}
     if len(ok) < MIN_SW_CELL:
@@ -160,14 +160,14 @@ def bootstrap_R(ca, ba, n=10000, seed=1):
     return float(np.median(ba) / np.median(ca)), float(np.percentile(Rs, 5)), float(np.percentile(Rs, 95))
 
 
-# ---------- 冒烟 ----------
+# ---------- smoke ----------
 def bessel_lowpass(y, fc=2000.0, fs=10000.0, order=4):
     sos = signal.bessel(order, fc / (fs / 2), btype="low", output="sos", norm="mag")
     return signal.sosfilt(sos, y)
 
 def smoke():
     print("=" * 72, flush=True)
-    print(" [冒烟] S1 τ 回收（含 2kHz Bessel 偏差） | S2 Q10 回收 | S3 选型", flush=True)
+    print(" [smoke] S1 tau recovery (incl. 2kHz Bessel bias) | S2 Q10 recovery | S3 model selection", flush=True)
     print("=" * 72, flush=True)
     rng = np.random.default_rng(7)
     # S1
@@ -181,8 +181,8 @@ def smoke():
             if fr and fr.get("qc_fail") is None:
                 errs.append(fr["tau"] / tau_true - 1)
         med = float(np.median(errs)) * 100 if errs else float("nan")
-        print(f"  S1 τ={tau_true*1e3:.0f}ms: 回收中位误差 {med:+.1f}%（n={len(errs)}，判线 |err|≤15% 且偏差<5%）",
-              "过" if errs and abs(med) <= 5 and np.percentile(np.abs(errs), 50) <= 0.15 else "挂", flush=True)
+        print(f"  S1 tau={tau_true*1e3:.0f}ms: recovered median error {med:+.1f}% (n={len(errs)}, criterion |err|<=15% and bias<5%)",
+              "pass" if errs and abs(med) <= 5 and np.percentile(np.abs(errs), 50) <= 0.15 else "fail", flush=True)
     # S2
     q10_true, tau37_true = 2.5, 0.030
     errs = []
@@ -200,8 +200,8 @@ def smoke():
         if q.get("pooled"):
             errs.append(q["Q10"] / q10_true - 1)
     med = float(np.median(errs)) * 100 if errs else float("nan")
-    print(f"  S2 Q10={q10_true}: 回收中位误差 {med:+.1f}%（n={len(errs)}，判线 ≤10%）",
-          "过" if errs and abs(med) <= 10 else "挂", flush=True)
+    print(f"  S2 Q10={q10_true}: recovered median error {med:+.1f}% (n={len(errs)}, criterion <=10%)",
+          "pass" if errs and abs(med) <= 10 else "fail", flush=True)
     # S3
     pick1 = 0
     for _ in range(20):
@@ -210,22 +210,22 @@ def smoke():
         fr = fit_segment(t, y)
         if fr and fr.get("model") == "1":
             pick1 += 1
-    print(f"  S3 单指数不被双指数抢走: {pick1}/20（判线 ≥16）", "过" if pick1 >= 16 else "挂", flush=True)
+    print(f"  S3 single exponential not stolen by double: {pick1}/20 (criterion >=16)", "pass" if pick1 >= 16 else "fail", flush=True)
 
 
-# ---------- 主流程 ----------
+# ---------- main flow ----------
 def main():
     if SMOKE:
         smoke(); return
     print("=" * 72, flush=True)
-    print(" Cα-1：CaV1.2 失活温度律与电荷载子判决（预注册 v1.0 正式跑）", flush=True)
+    print(" Ca-1: CaV1.2 inactivation temperature law and charge-carrier verdict (preregistration v1.0 full run)", flush=True)
     print("=" * 72, flush=True)
     result = {"groups": {}, "verdict": {}}
     tau37 = {"Ca2": [], "Ba2": []}; q10s = {"Ca2": [], "Ba2": []}
     for grp in ["Ca2", "Ba2"]:
         files = sorted(glob.glob(os.path.join(DATA, "Temperature_" + grp, "*.abf")))
         result["groups"][grp] = {}
-        print(f"\n[{grp} 组] {len(files)} 文件", flush=True)
+        print(f"\n[{grp} group] {len(files)} files", flush=True)
         for f in files:
             name = os.path.basename(f)
             recs = scan_file(f)
@@ -240,10 +240,10 @@ def main():
             }, "q10": q}
             if q.get("pooled"):
                 tau37[grp].append(q["tau37_ms"]); q10s[grp].append(q["Q10"])
-                print(f"  {name}: 有效 {q['n_valid']} sweep | Q10={q['Q10']:.2f} τ37={q['tau37_ms']:.1f}ms R²={q['r2']:.3f} (跨度{q['Tspan']:.0f}°C)", flush=True)
+                print(f"  {name}: valid {q['n_valid']} sweeps | Q10={q['Q10']:.2f} tau37={q['tau37_ms']:.1f}ms R2={q['r2']:.3f} (span {q['Tspan']:.0f}°C)", flush=True)
             else:
-                print(f"  {name}: 有效 {q.get('n_valid',0)} sweep | 未入池（{q.get('why')}）", flush=True)
-    # ---- 判决
+                print(f"  {name}: valid {q.get('n_valid',0)} sweeps | not pooled ({q.get('why')})", flush=True)
+    # ---- verdicts
     v = {}
     for grp in ["Ca2", "Ba2"]:
         a = np.array(q10s[grp]); b = np.array(tau37[grp])
@@ -264,12 +264,12 @@ def main():
                         "CDI": bool(R > 1.2 and lo > 1.0)}
     result["verdict"] = v
     print("\n" + "=" * 72, flush=True)
-    print(" 判词组件", flush=True)
+    print(" verdict components", flush=True)
     print(json.dumps(v, ensure_ascii=False, indent=2), flush=True)
     with open(OUTJ, "w", encoding="utf-8") as fp:
         json.dump(result, fp, ensure_ascii=False, indent=1)
-    print("\n 结果落盘:", OUTJ, flush=True)
-    # ---- 图
+    print("\n results saved:", OUTJ, flush=True)
+    # ---- figure
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -286,8 +286,8 @@ def main():
                 q = d["q10"]
                 if q.get("pooled"):
                     axes[0].scatter(q["bin_T"], q["bin_tau_ms"], c=c, s=18, alpha=0.7)
-        axes[0].set_xlabel("浴温 °C"); axes[0].set_ylabel("τ_inact (ms)")
-        axes[0].set_title("τ(T) 分箱（红 Ca²⁺ / 蓝 Ba²⁺）"); axes[0].set_yscale("log")
+        axes[0].set_xlabel("bath temperature °C"); axes[0].set_ylabel("τ_inact (ms)")
+        axes[0].set_title("tau(T) binned (red Ca2+ / blue Ba2+)"); axes[0].set_yscale("log")
         labels, vals = [], []
         for grp in ["Ca2", "Ba2"]:
             for name, d in result["groups"][grp].items():
@@ -297,7 +297,7 @@ def main():
                     vals.append(q["Q10"])
         axes[1].bar(range(len(vals)), vals, color=["tab:blue" if L.endswith("*") else "tab:red" for L in labels])
         axes[1].set_xticks(range(len(vals))); axes[1].set_xticklabels(labels, rotation=45, ha="right", fontsize=7)
-        axes[1].set_ylabel("Q10"); axes[1].set_title("Q10 逐细胞（* = Ba²⁺）")
+        axes[1].set_ylabel("Q10"); axes[1].set_title("Q10 per cell (* = Ba2+)")
         labels2, vals2 = [], []
         for grp in ["Ca2", "Ba2"]:
             for name, d in result["groups"][grp].items():
@@ -307,11 +307,11 @@ def main():
                     vals2.append(q["tau37_ms"])
         axes[2].bar(range(len(vals2)), vals2, color=["tab:blue" if L.endswith("*") else "tab:red" for L in labels2])
         axes[2].set_xticks(range(len(vals2))); axes[2].set_xticklabels(labels2, rotation=45, ha="right", fontsize=7)
-        axes[2].set_ylabel("τ37 (ms)"); axes[2].set_title("37 °C 参考 τ 逐细胞")
+        axes[2].set_ylabel("τ37 (ms)"); axes[2].set_title("37 °C reference tau per cell")
         fig.tight_layout(); fig.savefig(OUTP, dpi=140, bbox_inches="tight")
-        print(" 图落盘:", OUTP, flush=True)
+        print(" figure saved:", OUTP, flush=True)
     except Exception as e:
-        print(" 绘图失败（不影响判词）:", e, flush=True)
+        print(" plotting failed (verdicts unaffected):", e, flush=True)
 
 
 if __name__ == "__main__":

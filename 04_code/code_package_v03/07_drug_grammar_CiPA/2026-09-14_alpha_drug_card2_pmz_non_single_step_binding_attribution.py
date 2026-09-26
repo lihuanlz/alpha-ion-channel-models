@@ -1,15 +1,15 @@
-# 2026-09-14_α模型_药物卡2_pmz非单步结合归因.py
+# 2026-09-14_alpha-model_drug-card2_pmz-non-single-step-binding_attribution.py
 # ============================================================================
-# 药物卡2：pimozide 非单步结合归因（判线跑前钉死，见
-#   预注册_α模型_药物卡2_pmz非单步结合归因_2026-09-14.md，v2 修订在案）
+# Drug card 2: pimozide non-single-step binding attribution (criteria pinned before the run, see
+#   预注册_α模型_药物卡2_pmz非单步结合归因_2026-09-14.md, v2 amendment on record)
 #
-# 机制候选：M1 多步结合 / M2 灌注限速 / M3 真双指数洗入
-# 数据：ted.xlsx ResultsWide 逐扫 Ramp（不读大 csv）
-# 门A 轨迹形状：零模型=锚定b_ss单指数+线性漂移，参数自助包络白化；备择=双指数
-# 门B 浓度依赖：端点组 Welch t（p<0.01 可证）；门D 同细胞 E-4031 速率比 R_E
-# 对照 C1 单步 / C2 两步预平衡(Km=0.01) / C3 灌注 / C4 双指数，各 20 MC
+# Mechanism candidates: M1 multi-step binding / M2 perfusion-limited / M3 true double-exponential wash-in
+# Data: ted.xlsx ResultsWide per-sweep Ramp (the large csv is not read)
+# Gate A trajectory shape: null model = anchored-bss single exponential + linear drift, parametric-bootstrap envelope whitening; alternative = double exponential
+# Gate B concentration dependence: endpoint-group Welch t (p<0.01 provable); Gate D same-cell E-4031 rate ratio R_E
+# Controls C1 single-step / C2 two-step pre-equilibration (Km=0.01) / C3 perfusion / C4 double exponential, 20 MC each
 #
-# 运行：Spyder %runfile '...py' --wdir 。SMOKE=1 冒烟 4 细胞/药 + 5 MC。
+# Run: Spyder %runfile '...py' --wdir. SMOKE=1 smoke: 4 cells/drug + 5 MC.
 # ============================================================================
 import os, json
 import numpy as np
@@ -31,19 +31,19 @@ POOLS = {
                        exclude_prefix=("57_A", "61_E"), ref_min_conc=3.0),
 }
 
-# ---- 判线（钉死）----
+# ---- criteria (pinned) ----
 A_WHITE_HI, A_WHITE_LO = 2 / 3, 1 / 3
 A_IMPROVE = 0.5
 B_P = 0.01
 D_HI, D_LO = 3.0, 2.0
 MIN_SWEEPS, MIN_BSS_E = 10, 0.5
-N_ENV = 50 if SMOKE else 200       # 门A 参数自助条数
-N_MC = 5 if SMOKE else 20          # 对照 MC
-CTRL_REC = 0.8                     # 对照找回率阈
+N_ENV = 50 if SMOKE else 200       # gate-A parametric-bootstrap count
+N_MC = 5 if SMOKE else 20          # control MC
+CTRL_REC = 0.8                     # control recovery-rate threshold
 rng = np.random.default_rng(20260914)
 
 
-# ------------------------------------------------------------ 数据加载
+# ------------------------------------------------------------ data loading
 def load_rw(tedx):
     wb = openpyxl.load_workbook(tedx, read_only=True)
     rw = [list(r) for r in wb["ResultsWide"].iter_rows(values_only=True)]
@@ -95,12 +95,12 @@ def cell_traj(rows, cfg):
     return out
 
 
-# ------------------------------------------------------------ 模型与快速拟合
-KGRID = np.logspace(-4, 0, 30)  # k 网格（/s）
+# ------------------------------------------------------------ models and fast fitting
+KGRID = np.logspace(-4, 0, 30)  # k grid (/s)
 
 
 def null_fit(t, b, refine=True):
-    """零模型：b_ss 锚定=末5扫中位；k 网格+d 线性 LS（refine=True 再 curve_fit 精修）。"""
+    """Null model: b_ss anchored to the median of the last 5 sweeps; k grid + d linear LS (refine=True adds a curve_fit polish)."""
     bss = float(np.median(b[-5:]))
     tt2 = float(np.sum(t * t))
     E = 1.0 - np.exp(-np.outer(KGRID, t))          # (30, n)
@@ -149,7 +149,7 @@ _env_cache = {}
 
 
 def noise_env(n, rho=0.0):
-    """AR(1) 噪声包络（线性去趋势残差 ACF 95%），供双指数判白。"""
+    """AR(1) noise envelope (95% ACF of linearly detrended residuals), for the double-exponential whiteness test."""
     key = (n, round(rho, 2))
     if key not in _env_cache:
         sims = np.zeros((2000, 5))
@@ -163,7 +163,7 @@ def noise_env(n, rho=0.0):
 
 
 def ar1_noise(n, sig, rho, rng_):
-    """AR(1) 噪声，边际 std=sig。"""
+    """AR(1) noise with marginal std=sig."""
     e = np.zeros(n)
     si = sig * np.sqrt(max(1e-8, 1 - rho * rho))
     x = 0.0
@@ -174,7 +174,7 @@ def ar1_noise(n, sig, rho, rng_):
 
 
 def white_boot(t, b, sig, rho):
-    """门A 零模型参数自助白化（AR(1) 噪声）。返回 (k, bss, white, viol, r1)。"""
+    """Gate-A null-model parametric-bootstrap whitening (AR(1) noise). Returns (k, bss, white, viol, r1)."""
     k, d, bss, res, m = null_fit(t, b, refine=True)
     n = len(t)
     sims = np.zeros((N_ENV, 5))
@@ -188,10 +188,10 @@ def white_boot(t, b, sig, rho):
     return k, bss, viol <= 2, viol, float(a[0])
 
 
-# ------------------------------------------------------------ 门
+# ------------------------------------------------------------ gates
 def gate_A(cells):
     per = []
-    r1_pairs = []  # (r1_drug, r1_e4031) 门A2 用
+    r1_pairs = []  # (r1_drug, r1_e4031) for gate A2
     for c in cells:
         k, bss, white, viol, r1 = white_boot(c["t"], c["b"], c["sig_b"], c.get("rho_b", 0.0))
         rec = dict(k=k, bss=bss, white=bool(white), viol=viol, r1=r1, conc_nM=c["conc_nM"])
@@ -221,7 +221,7 @@ def gate_A(cells):
         verdict = "非指数结构(待门A2归因)"
     else:
         verdict = "中间登记"
-    # 门A2：药段 vs 同细胞 E-4031 段 r1 对照
+    # Gate A2: drug segment vs same-cell E-4031 segment r1 control
     a2 = None
     if r1_pairs:
         md = float(np.median([p[0] for p in r1_pairs]))
@@ -250,7 +250,7 @@ def gate_B(pts):
     tstat, p2 = sst.ttest_ind(k[hi], k[lo], equal_var=False)
     p1 = float(p2 / 2) if tstat > 0 else 1.0
     verdict = "浓度依赖可证" if (p1 < B_P and k[hi].mean() > k[lo].mean()) else "不可证(饱和方向)"
-    # 参考观察：线性/饱和 R² 与 ΔBIC（不入判）
+    # reference observation: linear/saturated R2 and dBIC (not part of the verdict)
     n = len(C)
     A = np.vstack([C, np.ones_like(C)]).T
     coef, *_ = np.linalg.lstsq(A, k, rcond=None)
@@ -261,7 +261,7 @@ def gate_B(pts):
                 n_lo=int(lo.sum()), n_hi=int(hi.sum()), R2_lin=r2_l)
 
 
-# ------------------------------------------------------------ 合成对照
+# ------------------------------------------------------------ synthetic controls
 def sim_cells(fam, concs, n_per, nsweeps, dt, sig, bss_fn, rho):
     out = []
     for C in concs:
@@ -303,14 +303,14 @@ def run_controls(concs, n_per, nsweeps, dt, sig, bss_fn, rho):
         rec = float(np.mean(oks))
         out[fam] = dict(找回率=rec, 末轮白化=lastA["white_frac"], 末轮门B=lastB["判"],
                         归位=bool(rec >= CTRL_REC))
-        print(f"  [对照 {fam}] 找回率 {rec * 100:.0f}%  末轮门A白化 {lastA['white_frac']:.2f} "
-              f"门B {lastB['判']} -> {'归位' if out[fam]['归位'] else '未归位'}", flush=True)
+        print(f"  [control {fam}] recovery rate {rec * 100:.0f}%  final-round gate-A whitening {lastA['white_frac']:.2f} "
+              f"gate-B {lastB['判']} -> {'landed' if out[fam]['归位'] else 'not landed'}", flush=True)
     return out
 
 
-# ------------------------------------------------------------ 主跑
+# ------------------------------------------------------------ main run
 print("=" * 76, flush=True)
-print(" 药物卡2 · pmz 非单步结合归因 v3（AR(1)包络 / 门A2结构归因 / 端点t / E-4031参照）", flush=True)
+print(" drug card 2 · pmz non-single-step binding attribution v3 (AR(1) envelope / gate-A2 structural attribution / endpoint t / E-4031 reference)", flush=True)
 print("=" * 76, flush=True)
 
 result = {"预注册": "预注册_α模型_药物卡2_pmz非单步结合归因_2026-09-14.md",
@@ -331,7 +331,7 @@ for name, cfg in POOLS.items():
         if ct and len(ct["t"]) >= MIN_SWEEPS:
             ct["cell"] = cid
             cells.append(ct)
-    print(f"\n=== 池 {name}：细胞 {len(cells)}", flush=True)
+    print(f"\n=== pool {name}: cells {len(cells)}", flush=True)
     pools_full[name] = cells
     if SMOKE:
         by_c = {}
@@ -341,7 +341,7 @@ for name, cfg in POOLS.items():
     else:
         pools_data[name] = cells
 
-# 对照锚 pmz 全池真实网格（SMOKE 也不截断，保证对照判线不被冒烟口径污染）
+# control anchors use the full pmz real grid (not truncated even under SMOKE, so control criteria are not contaminated by the smoke metric)
 pmz = pools_full["pimozide"]
 concs = sorted(set(round(c["conc_nM"], 3) for c in pmz))
 nsw = int(np.median([len(c["t"]) for c in pmz]))
@@ -350,17 +350,17 @@ sig_med = float(np.median([c["sig_b"] for c in pmz]))
 rho_med = float(np.median([c["rho_b"] for c in pmz]))
 bss_fn = lambda C: C / (C + 1.3)
 n_per = max(2 if SMOKE else 1, int(round(len(pmz) / max(1, len(concs)))))
-print(f"\n[对照] 锚: 浓度{concs} 每档{n_per} 扫数{nsw} dt={dts:.1f}s σ_b={sig_med:.4f} ρ={rho_med:.2f}", flush=True)
+print(f"\n[controls] anchors: concentrations {concs} per band {n_per} sweeps {nsw} dt={dts:.1f}s sigma_b={sig_med:.4f} rho={rho_med:.2f}", flush=True)
 result["controls"] = run_controls(concs, n_per, nsw, dts, sig_med, bss_fn, rho_med)
 ctrl_ok = all(v["归位"] for v in result["controls"].values())
-print(f"[对照] 四族全归位 = {ctrl_ok}", flush=True)
+print(f"[controls] all four families landed = {ctrl_ok}", flush=True)
 
-# 真实池
+# real pools
 for name, cells in pools_data.items():
     gA = gate_A(cells)
     pts = [(c["conc_nM"], p["k"]) for c, p in zip(cells, gA["per"])]
     gB = gate_B(pts)
-    # 门D
+    # gate D
     kE = []
     for c in cells:
         if "e4031" in c:
@@ -380,15 +380,15 @@ for name, cells in pools_data.items():
     else:
         gD["判"] = "缺席登记"
     result["pools"][name] = dict(A=gA, B=gB, D=gD)
-    print(f"\n[{name}] 门A 白化 {gA['white_frac']:.2f} 改善 "
+    print(f"\n[{name}] gate A whitening {gA['white_frac']:.2f} improvement "
           f"{gA['improve_frac'] if gA['improve_frac'] is not None else float('nan'):.2f} -> {gA['判']}"
-          f"\n      门B {gB.get('判')}（p={gB.get('p_one_side', float('nan')):.4f} "
+          f"\n      gate B {gB.get('判')} (p={gB.get('p_one_side', float('nan')):.4f} "
           f"lo={gB.get('k_lo', float('nan')):.4f} hi={gB.get('k_hi', float('nan')):.4f}）"
-          f"\n      门D {gD.get('判')}（kE={gD.get('kE_med', float('nan')):.4f}/s "
+          f"\n      gate D {gD.get('判')} (kE={gD.get('kE_med', float('nan')):.4f}/s "
           f"kref={gD.get('kref_med', float('nan')):.4f}/s R_E={gD.get('R_E', float('nan')):.2f}）",
           flush=True)
 
-# 总判词（逻辑树钉死）
+# overall verdict (logic tree pinned)
 for name in POOLS:
     p = result["pools"][name]
     if not ctrl_ok:
@@ -439,9 +439,9 @@ def _clean(o):
 
 
 json.dump(_clean(result), open(fj, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-print("  结果落盘:", fj, flush=True)
+print("  results saved:", fj, flush=True)
 
-# ------------------------------------------------------------ 图
+# ------------------------------------------------------------ figure
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -453,7 +453,7 @@ for pi, (name, cells) in enumerate(pools_data.items()):
     a = ax[0][pi]
     for c in cells:
         a.plot(c["t"], c["b"], lw=0.5, alpha=0.35)
-    a.set_title(f"{name} wash-in 轨迹族"); a.set_xlabel("t (s)"); a.set_ylabel("阻断 b")
+    a.set_title(f"{name} wash-in trajectory family"); a.set_xlabel("t (s)"); a.set_ylabel("block b")
     a.grid(alpha=0.3)
     b2 = ax[1][pi]
     p = result["pools"][name]
@@ -461,9 +461,9 @@ for pi, (name, cells) in enumerate(pools_data.items()):
     kk = [q["k"] for q in per]; cc = [q["conc_nM"] for q in per]
     b2.plot(cc, kk, "o", ms=5)
     b2.set_xscale("log")
-    b2.set_title(f"{name} 门B:{p['B'].get('判')} | 门A白化 {p['A']['white_frac']:.2f} | 门D:{p['D'].get('判')}")
+    b2.set_title(f"{name} gateB:{p['B'].get('判')} | gateA whitening {p['A']['white_frac']:.2f} | gateD:{p['D'].get('判')}")
     b2.set_xlabel("C (nM)"); b2.set_ylabel("k_obs (/s)"); b2.grid(alpha=0.3)
 fig.tight_layout()
 fp = os.path.join(HERE, f"2026-09-14_α模型_药物卡2_pmz非单步结合归因{sfx}.png")
 fig.savefig(fp, dpi=130, bbox_inches="tight")
-print("  图落盘:", fp, flush=True)
+print("  figure saved:", fp, flush=True)

@@ -684,7 +684,7 @@ def fig5():
                   fontsize=6.5)
     plabel(axb, 'b')
 
-    # c: Stage B per-drug scatter B1 vs B2 (dynamic arm only, sealed 口径)
+    # c: Stage B per-drug scatter B1 vs B2 (dynamic arm only, sealed convention)
     axc = fig.add_subplot(gs[1, :2])
     m1 = {r['drug']: fnum(r['qNet_ratio']) for r in b1}
     cl1 = {r['drug']: fnum(r['CiPA']) for r in b1}
@@ -737,7 +737,7 @@ def fig5():
                   '(shared 1×Cmax static ceiling ≈ −0.55)', fontsize=6.5)
     plabel(axd, 'd')
 
-    # e: sensitivity strip — rho per tauA arm (dyn arm only, sealed 口径)
+    # e: sensitivity strip - rho per tauA arm (dyn arm only, sealed convention)
     axe = fig.add_subplot(gs[1, 4:])
     rhos = []
     for k, f in arms_files.items():

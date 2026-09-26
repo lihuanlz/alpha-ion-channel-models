@@ -1,6 +1,6 @@
 # verify_tauh_refit_v2_2026-09-21.py
-# 正确播种的连续精修：A0 用网格解的幅度（修掉 v1 的符号错播种）
-# 输出：五温度中位 / CV / Q10，以及 SSE 改善统计
+# Correctly seeded continuous refinement: A0 uses the grid-solution amplitude (fixes the sign-seeding bug of v1)
+# Output: five-temperature medians / CV / Q10, plus SSE improvement statistics
 import os, json
 import numpy as np
 from scipy.optimize import least_squares
@@ -105,7 +105,7 @@ def q10r2(meds):
     r2 = 1 - np.sum((y - pred) ** 2) / np.sum((y - y.mean()) ** 2)
     return float(np.exp(-slope * 10)), float(r2)
 
-print("\n温度 | V | n | 网格中位 | 精修v2中位 | 网格CV | 精修v2CV | SSE改善中位%")
+print("\nT | V | n | grid median | refined-v2 median | grid CV | refined-v2 CV | SSE improvement median %")
 for T in ["25", "27", "30", "33", "37"]:
     for V in ["-140", "-120"]:
         rows = out.get(T, {}).get(V, [])
@@ -116,9 +116,9 @@ for T in ["25", "27", "30", "33", "37"]:
             print(f"{T} | {V} | {len(g)} | {np.median(g):.3f} | {np.median(r):.3f} | "
                   f"{np.std(g)/np.mean(g):.3f} | {np.std(r)/np.mean(r):.3f} | {np.median(imp):.2f}")
 
-print("\nQ10 对比：")
+print("\nQ10 comparison:")
 for V in ["-140", "-120"]:
-    for kind, idx in [("网格", 1), ("精修v2", 3)]:
+    for kind, idx in [("grid", 1), ("refined-v2", 3)]:
         meds = []
         for T in ["25", "27", "30", "33", "37"]:
             rows = out.get(T, {}).get(V, [])

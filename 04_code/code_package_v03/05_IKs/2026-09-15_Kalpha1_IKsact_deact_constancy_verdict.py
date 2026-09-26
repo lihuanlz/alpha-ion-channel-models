@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Kα-1：IKs（EQ 串联体）激活/去激活 τ(V) 恒定性判决 —— 正式跑（v1.3 修订版）
-预注册：04_细胞线4/结果/预注册_Kα1_IKs激活去激活恒定性判决_2026-09-15.md（v1.3）
+Kα-1: IKs (EQ tandem) activation/deactivation tau(V) constancy verdict -- full run (v1.3 amended)
+Preregistration: 04_细胞线4/结果/预注册_Kα1_IKs激活去激活恒定性判决_2026-09-15.md (v1.3)
 运行：%runfile 'D:/Kimi_Agent_细胞仿真工具包扩展以及具身智能20260911/04_细胞线4/α模型/2026-09-15_Kα1_IKs激活去激活恒定性判决.py' --wdir
-输出：同目录 _结果.json / _图.png / _逐文件表.csv
+Output: _结果.json / _图.png / _逐文件表.csv next to this script
 """
 import pyabf, os, re, json, glob, collections
 import numpy as np
@@ -24,11 +24,11 @@ ANCHOR_VH_SEM, ANCHOR_K_SEM = 2.4, 1.2
 TAU_ACT_BAND_60 = (0.3, 2.0)
 TAU_FIT_MAX = 2.5
 CV_GATE = 0.3
-V_ACT_RANGE = (20, 60)   # v1.4：4 秒协议下 IKs 在 <+20 基本无激活信号
-DECAY_GATE = 0.15      # 尾巴衰减下限（判 0）
-AMP_GATE = 20.0        # pA，表达量下限（判 0）
+V_ACT_RANGE = (20, 60)   # v1.4: under the 4 s protocol IKs shows essentially no activation signal below +20
+DECAY_GATE = 0.15      # tail-decay lower bound (crit-0)
+AMP_GATE = 20.0        # pA, expression-level lower bound (crit-0)
 
-# ---------------- 去重 ----------------
+# ---------------- deduplication ----------------
 def rec_id(fn):
     s = fn[:-4] if fn.lower().endswith(".abf") else fn
     for pat in [" after LS and HMR subtraction", r"_reduced_\d+",
@@ -45,7 +45,7 @@ def pick_version(group):
         return (2 if "updated" in fn else 0) - (1 if "reduced" in fn else 0), x.get("sweeps", 0)
     return sorted(group, key=score)[-1]
 
-# ---------------- 模型 ----------------
+# ---------------- model ----------------
 def boltz(V, Vh, k):
     return 1.0 / (1.0 + np.exp(-(V - Vh) / k))
 
@@ -60,7 +60,7 @@ def r2_of(y, yhat):
     st = np.sum((y - y.mean()) ** 2)
     return 1 - ss / st if st > 0 else np.nan
 
-# ---------------- 单文件提取 ----------------
+# ---------------- single-file extraction ----------------
 def analyze(path):
     a = pyabf.ABF(path)
     dt = 1.0 / a.sampleRate
@@ -78,14 +78,14 @@ def analyze(path):
         p3a, p3b = int(e.p1s[3]), int(e.p2s[3])
         base = float(np.mean(y[max(0, p2a - int(0.02 / dt)):p2a]))
         yc = y - base
-        # ---- 激活段（带延迟单指数） ----
+        # ---- activation segment (delayed single exponential) ----
         seg = yc[p2a:p2b]
         t = np.arange(len(seg)) * dt
         iss0 = float(np.mean(seg[-int(0.1 / dt):])) if len(seg) > int(0.2 / dt) else float(seg.max())
         act = None
         if iss0 > 0:
             try:
-                i15 = int(np.argmax(seg > 0.15 * iss0))  # v1.4：拟合窗从 15% I_ss 起（Fedida 约定）
+                i15 = int(np.argmax(seg > 0.15 * iss0))  # v1.4: fit window starts at 15% I_ss (Fedida convention)
                 tw = t[i15:]
                 popt, _ = curve_fit(act_model, tw, seg[i15:],
                                     p0=[iss0, max(tw[0] - 0.05, 0.0), 0.5],
@@ -97,7 +97,7 @@ def analyze(path):
                            trunc=bool(popt[2] >= TAU_FIT_MAX - 1e-6))
             except Exception:
                 pass
-        # ---- 尾巴段（截断感知提取） ----
+        # ---- tail segment (truncation-aware extraction) ----
         tseg = yc[p3a:p3b]
         tt = np.arange(len(tseg)) * dt
         win = tseg[:int(min(0.2, tt[-1]) / dt)]
@@ -108,7 +108,7 @@ def analyze(path):
             i1 = slice(len(tseg) - int(0.05 / dt), len(tseg))
             start = float(np.mean(tseg[i0])); end = float(np.mean(tseg[i1]))
             decay_frac = (start - end) / start if start > 0 else np.nan
-            # 锚定 C 的表观 τ（窗口远短于 τ 时仍稳健，偏低偏置同模）
+            # apparent tau with C anchored (still robust when the window is far shorter than tau; same-mode downward bias)
             tau_app, r2d = np.nan, np.nan
             if start > 0:
                 Cfix = end
@@ -122,7 +122,7 @@ def analyze(path):
                     pass
             deact = dict(V=v_step, start=start, end=end, decay_frac=decay_frac,
                          tau_app=tau_app, r2=r2d, tail_s=float(tt[-1]))
-        # ---- 瞬时度（v1.4：只看 V≥+40，低电压无信号） ----
+        # ---- instantaneity (v1.4: only V>=+40, no signal at low voltages) ----
         n50 = max(1, int(0.05 / dt))
         head = float(np.mean(seg[int(0.002 / dt):int(0.002 / dt) + n50]))
         inst = head / iss0 if (iss0 > 0 and v_step >= 40) else np.nan
@@ -151,10 +151,10 @@ def analyze(path):
                 inst_med=float(np.nanmedian(insts)) if insts else np.nan,
                 n_sweeps=len(Vs))
 
-# ---------------- 主流程 ----------------
+# ---------------- main flow ----------------
 def main():
     print("=" * 72)
-    print(" Kα-1：IKs（EQ）激活/去激活 τ(V) 恒定性判决（预注册 v1.3 正式跑）")
+    print(" Ka-1: IKs (EQ) activation/deactivation tau(V) constancy verdict (preregistration v1.3 full run)")
     print("=" * 72)
     inv = json.load(open(os.path.join(D, "inventory.json")))
     cand = [x for x in inv if x.get("protocol") in PROTO_POOL and "error" not in x]
@@ -164,8 +164,8 @@ def main():
     keep = [pick_version(g) for g in groups.values()]
     if os.environ.get("KA1_SMOKE"):
         keep = keep[:int(os.environ["KA1_SMOKE"])]
-        print(f"[SMOKE 模式] 只跑前 {len(keep)} 条记录")
-    print(f"[去重] 候选 {len(cand)} 文件 → {len(groups)} 记录 ID → 保留 {len(keep)}")
+        print(f"[SMOKE mode] running only the first {len(keep)} records")
+    print(f"[dedup] {len(cand)} candidate files -> {len(groups)} record IDs -> {len(keep)} kept")
 
     recs = []
     for i, x in enumerate(sorted(keep, key=lambda z: z["file"])):
@@ -177,8 +177,8 @@ def main():
         except Exception:
             pass
         if (i + 1) % 20 == 0:
-            print(f"  进度 {i+1}/{len(keep)}", flush=True)
-    print(f"[提取] 成功 {len(recs)} 记录")
+            print(f"  progress {i+1}/{len(keep)}", flush=True)
+    print(f"[extraction] {len(recs)} records succeeded")
 
     def pool(recs, gate):
         out = []
@@ -188,14 +188,14 @@ def main():
                 continue
             if not (gate["vh"][0] <= g["Vh"] <= gate["vh"][1] and gate["k"][0] <= g["k"] <= gate["k"][1]):
                 continue
-            if r["inst_med"] > 0.5:      # v1.4：药物样瞬时 onset 物理排除
+            if r["inst_med"] > 0.5:      # v1.4: drug-like instant onset physically excluded
                 continue
             hi = [d for d in r["deacts"] if d["V"] >= 40]
             if not hi:
                 continue
             amp = float(np.median([d["start"] for d in hi]))
             dec = float(np.median([d["decay_frac"] for d in hi]))
-            if np.isnan(dec) or dec < 0.05:   # v1.4：Mef 样平尾物理排除
+            if np.isnan(dec) or dec < 0.05:   # v1.4: Mef-like flat tail physically excluded
                 continue
             if amp <= AMP_GATE:
                 continue
@@ -216,12 +216,12 @@ def main():
     k_med = float(np.median([r["gv"]["k"] for r in p])) if p else np.nan
     J0 = (4 <= len(p) <= 12 and abs(vh_med - ANCHOR_VH) <= 5 and abs(k_med - ANCHOR_K) <= 4)
     verdict["J0"] = dict(branch=branch, n=len(p), vh_med=vh_med, k_med=k_med, PASS=bool(J0))
-    print(f"[判0] 池分支={branch} n={len(p)} V½中位={vh_med:.1f} k中位={k_med:.1f} -> {'过' if J0 else '未过'}")
+    print(f"[crit-0] pool branch={branch} n={len(p)} V1/2 median={vh_med:.1f} k median={k_med:.1f} -> {'pass' if J0 else 'fail'}")
     for r in p:
-        print(f"    池: {r['file'][:44]:46s} V½={r['gv']['Vh']:+5.1f} k={r['gv']['k']:4.1f} "
+        print(f"    pool: {r['file'][:44]:46s} V1/2={r['gv']['Vh']:+5.1f} k={r['gv']['k']:4.1f} "
               f"inst={r['inst_med']:.2f} amp={r['_amp']:.0f}pA dec={r['_dec']:.0%}")
 
-    # ---- 判1 ----
+    # ---- crit-1 ----
     per_v = collections.defaultdict(list)
     trunc_v = collections.defaultdict(lambda: [0, 0])
     for r in p:
@@ -238,7 +238,7 @@ def main():
         if not (V_ACT_RANGE[0] <= v <= V_ACT_RANGE[1]):
             continue
         taus = per_v[v]; nt, nn = trunc_v[v]
-        if nn < 3:   # v1.4：池上限 ~6，n≥3 可投
+        if nn < 3:   # v1.4: pool ceiling ~6, n>=3 qualifies for the vote
             continue
         if nt / nn >= 1 / 3:
             j1_detail[v] = dict(n=nn, note="protocol-truncated")
@@ -249,10 +249,10 @@ def main():
     j1_passfrac = float(np.mean([j1_detail[v]["PASS"] for v in voted])) if voted else 0.0
     J1 = j1_passfrac >= 0.8
     verdict["J1"] = dict(pass_frac=j1_passfrac, detail=j1_detail, PASS=bool(J1))
-    print(f"[判1] τ_act(V) CV<0.3 电压占比 {j1_passfrac*100:.0f}%"
-          f"（{sum(1 for v in voted if j1_detail[v]['PASS'])}/{len(voted)}） -> {'过' if J1 else '未过'}")
+    print(f"[crit-1] tau_act(V) CV<0.3 voltage fraction {j1_passfrac*100:.0f}%"
+          f"({sum(1 for v in voted if j1_detail[v]['PASS'])}/{len(voted)}) -> {'pass' if J1 else 'fail'}")
 
-    # ---- 判2：τ_app（锚定 C 表观 τ）总 CV + 协议分层 ----
+    # ---- crit-2: tau_app (apparent tau with C anchored) overall CV + protocol stratification ----
     td_cells = {}
     for r in p:
         tds = [d["tau_app"] for d in r["deacts"]
@@ -270,11 +270,11 @@ def main():
     sub_ok = all(c < CV_GATE for n, c in proto_cv.values() if not np.isnan(c))
     verdict["J2"] = dict(n=len(vals), tau_app_med_s=float(np.median(vals)) if len(vals) else None,
                          cv=cv2, proto_cv=proto_cv, subgroups_pass=bool(sub_ok), PASS=J2)
-    print(f"[判2] τ_app(−40) n={len(vals)} 中位={np.median(vals) if len(vals) else np.nan:.2f}s "
-          f"CV={cv2:.2f} -> {'过' if J2 else '未过'}"
-          f"（协议分层: { {pr: (n, round(c,2) if not np.isnan(c) else None) for pr,(n,c) in proto_cv.items()} }）")
+    print(f"[crit-2] tau_app(-40) n={len(vals)} median={np.median(vals) if len(vals) else np.nan:.2f}s "
+          f"CV={cv2:.2f} -> {'pass' if J2 else 'fail'}"
+          f"(protocol stratified: { {pr: (n, round(c,2) if not np.isnan(c) else None) for pr,(n,c) in proto_cv.items()} })")
 
-    # ---- 判3 ----
+    # ---- crit-3 ----
     j3a = bool(abs(vh_med - ANCHOR_VH) <= 2 * ANCHOR_VH_SEM and abs(k_med - ANCHOR_K) <= 2 * ANCHOR_K_SEM)
     tau60 = [a["tau"] for r in p for a in r["acts"] if int(round(a["V"])) == 60 and a["r2"] >= 0.9 and not a["trunc"]]
     tau60_med = float(np.median(tau60)) if tau60 else np.nan
@@ -282,10 +282,10 @@ def main():
     J3 = j3a and j3b
     verdict["J3"] = dict(gv_anchor=bool(j3a), tau60_med_s=tau60_med, tau60_n=len(tau60),
                          tau_anchor=bool(j3b), PASS=bool(J3))
-    print(f"[判3] G-V锚 {'过' if j3a else '未过'} | τ_act(+60) 中位={tau60_med:.2f}s（n={len(tau60)}） {'过' if j3b else '未过'}")
+    print(f"[crit-3] G-V anchor {'pass' if j3a else 'fail'} | tau_act(+60) median={tau60_med:.2f}s (n={len(tau60)}) {'pass' if j3b else 'fail'}")
 
     verdict["ALL"] = bool(J0 and J1 and J2 and J3)
-    print(f"[总判] {'全过 —— IKs α 表提取成立' if verdict['ALL'] else '未全过 —— 如实登记'}")
+    print(f"[overall] {'ALL PASS -- IKs alpha-table extraction holds' if verdict['ALL'] else 'not all pass -- registered as-is'}")
 
     json.dump(verdict, open(OUT_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=1, default=str)
     with open(OUT_CSV, "w", encoding="utf-8") as f:
@@ -299,8 +299,8 @@ def main():
             f.write(f"{r['file']},{r['protocol']},{r['gv']['Vh']:.2f},{r['gv']['k']:.2f},"
                     f"{r['gv']['r2']:.3f},{r['inst_med']:.3f},{amp},{dec if dec=='' else round(dec,3)},"
                     f"{np.median(tds) if tds else ''},{np.median(t60) if t60 else ''},{1 if r in p else 0}\n")
-    print(" 结果落盘:", OUT_JSON)
-    print(" 表落盘:", OUT_CSV)
+    print(" results saved:", OUT_JSON)
+    print(" table saved:", OUT_CSV)
 
     import matplotlib
     matplotlib.use("Agg")
@@ -320,28 +320,28 @@ def main():
         ax.scatter(r["gv"]["Vh"], r["gv"]["k"], c=c, s=18, alpha=0.8)
     ax.axvspan(ANCHOR_VH - 2 * ANCHOR_VH_SEM, ANCHOR_VH + 2 * ANCHOR_VH_SEM, color="g", alpha=0.15)
     ax.axhspan(ANCHOR_K - 2 * ANCHOR_K_SEM, ANCHOR_K + 2 * ANCHOR_K_SEM, color="g", alpha=0.15)
-    ax.set_xlabel("V½ (mV)"); ax.set_ylabel("k (mV)"); ax.set_title("判0/判3：池与 WT 锚（绿带±2SEM）")
+    ax.set_xlabel("V½ (mV)"); ax.set_ylabel("k (mV)"); ax.set_title("crit-0/crit-3: pool vs WT anchor (green band ±2SEM)")
     ax = axs[0, 1]
     for r in p:
         vs = [a["V"] for a in r["acts"] if a["r2"] >= 0.9]
         ts = [a["tau"] for a in r["acts"] if a["r2"] >= 0.9]
         ax.plot(vs, ts, ".-", color="0.6", lw=0.5, ms=4)
     med_v = sorted(v for v in j1_detail if "tau_med" in j1_detail[v])
-    ax.plot(med_v, [j1_detail[v]["tau_med"] for v in med_v], "ko-", lw=2, label="池内中位")
-    ax.set_xlabel("V (mV)"); ax.set_ylabel("τ_act (s)"); ax.set_title("判1：τ_act–V（灰=各细胞）"); ax.legend()
+    ax.plot(med_v, [j1_detail[v]["tau_med"] for v in med_v], "ko-", lw=2, label="pool median")
+    ax.set_xlabel("V (mV)"); ax.set_ylabel("τ_act (s)"); ax.set_title("crit-1: tau_act-V (grey = individual cells)"); ax.legend()
     ax = axs[1, 0]
     vv = [v for v in voted]
     ax.bar([str(v) for v in vv], [j1_detail[v]["cv"] for v in vv])
     ax.axhline(CV_GATE, color="r", ls="--")
-    ax.set_xlabel("V (mV)"); ax.set_ylabel("CV"); ax.set_title(f"判1：CV 谱（过线占比 {j1_passfrac*100:.0f}%）")
+    ax.set_xlabel("V (mV)"); ax.set_ylabel("CV"); ax.set_title(f"crit-1: CV spectrum (pass fraction {j1_passfrac*100:.0f}%)")
     ax = axs[1, 1]
     if len(vals):
         ax.hist(vals, bins=12)
-    ax.set_xlabel("τ_app(−40) (s)"); ax.set_ylabel("细胞数")
-    ax.set_title(f"判2：表观去激活 τ 分布（CV={cv2:.2f}，截断偏低同模）")
+    ax.set_xlabel("τ_app(-40) (s)"); ax.set_ylabel("cell count")
+    ax.set_title(f"crit-2: apparent deactivation-tau distribution (CV={cv2:.2f}, truncation bias same-mode)")
     fig.tight_layout()
     fig.savefig(OUT_PNG, dpi=150, bbox_inches="tight")
-    print(" 图落盘:", OUT_PNG)
+    print(" figure saved:", OUT_PNG)
 
 if __name__ == "__main__":
     main()

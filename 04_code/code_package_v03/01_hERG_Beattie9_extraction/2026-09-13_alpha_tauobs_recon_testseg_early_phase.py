@@ -1,12 +1,14 @@
-# 2026-09-13_α模型_τobs侦察_测试段早期相位.py
-# 目的（侦察，不是判决）：缺口2（τ_h(V) 全表）+ 缺口1b（τ_obs 判别）设计前看数据。
-#   失活协议测试段（测试V×0.150s，前接 -90x0.06s 复位 -> h(0)≈1, m(0)≈0.43 残留在案）：
-#   h(t) 从 ~1 向 h_ss(V) 弛豫，早期相位形状携带 τ_obs。端点被两个实测钉死
-#   （h(0)=1、h(150ms)=剥离 h_150），只有中段形状携带 τ_obs —— 本脚本回答：
-#   在实测噪声下，τ_obs=25/50/100/175ms 四种形状能不能分开（SNR 够不够）？
-# 输出：4 细胞 × 7 档 PNG（数据 2ms 分箱中位，归一到末 20ms；预测曲线同口径归一）
-#   + 30ms/60ms 比值表（数据 vs 四档 τ 预测）。
-# 侦察性质：我自己跑，不写判词，不作判线；正式判决脚本据此设计后再由用户跑。
+# 2026-09-13_alpha_tauobs_recon_testseg_early_phase.py
+# Purpose (reconnaissance, not a verdict): inspect data before designing gap 2
+#   (full tau_h(V) table) and gap 1b (tau_obs discrimination).
+#   Inactivation-protocol test segment (test V x 0.150 s, preceded by -90 x 0.06 s
+#   reset -> h(0) ~= 1, m(0) ~= 0.43 residual on record): h(t) relaxes from ~1
+#   toward h_ss(V). Endpoints pinned by measurement (h(0)=1, h(150 ms) = stripped
+#   h_150); only the mid-segment shape carries tau_obs. This script asks: under
+#   measured noise, can tau_obs = 25/50/100/175 ms shapes be separated (SNR enough)?
+# Output: 4 cells x 7 levels PNG (data 2 ms-binned medians, normalised to the
+#   last 20 ms; predicted curves normalised the same way) + 30 ms/60 ms ratio table.
+# Recon nature: I run it myself, no verdict, no criteria; the formal verdict script is designed from this and then run by the user.
 import os
 import json
 import numpy as np
@@ -23,7 +25,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DT = 1e-4
 CELLS = ["16713003", "16704007", "16708118", "16708060"]
 GEARS = [-70, -60, -50, -40, -30, 0, 40]
-TAUS = [0.025, 0.050, 0.100, 0.175]          # 四种 τ_obs 候选形状
+TAUS = [0.025, 0.050, 0.100, 0.175]          # four candidate tau_obs shapes
 TAU_EFF = {-70: 0.81, -60: 1.21, -50: 1.8, -40: 2.0, -30: 2.0, 0: 2.0, 40: 0.29}
 MSS = {-70: 0.057, -60: 0.19, -50: 0.46, -40: 1.0, -30: 1.0, 0: 1.0, 40: 1.0}
 
@@ -44,7 +46,7 @@ def segments(V):
 
 
 def test_segments(V):
-    """测试档：时长~0.15s 且前一段为 -90x0.06s。"""
+    """Test level: duration ~0.15 s and previous segment is -90 x 0.06 s."""
     info = segments(V)
     out = {}
     for k, (v, s0, n) in enumerate(info):
@@ -67,7 +69,7 @@ def binmed(t, y, w=0.002):
 
 
 def pred_shape(t, tau_obs, h150, v, m0=0.435):
-    """h_ss 由 (h150, τ_obs) 族定；m 单 τ_eff 近似（侦察口径）。归一到 t=150ms。"""
+    """h_ss set by the (h150, tau_obs) family; m single-tau_eff approximation (recon convention). Normalised to t = 150 ms."""
     r = np.exp(-0.150 / tau_obs)
     hss = (h150 - r) / (1.0 - r) if r < 0.999 else h150
     hss = max(hss, 0.0)
@@ -86,12 +88,12 @@ def main():
     fig, axes = plt.subplots(len(CELLS), len(GEARS), figsize=(3.0 * len(GEARS), 2.6 * len(CELLS)),
                              squeeze=False)
     print("=" * 96)
-    print(" τ_obs 侦察：测试段早期相位（归一 i_end=末20ms均值；30/60ms 比值 数据 vs 预测）")
+    print(" tau_obs recon: test-segment early phase (normalised i_end = mean of last 20 ms; 30/60 ms ratios, data vs prediction)")
     print("=" * 96)
     for ri, cell in enumerate(CELLS):
         V, I = load_mat("inactivation_protocol.mat", cell, "inactivation")
         ts = test_segments(V)
-        # 噪声：末尾 -80x1.34s 段末 500ms 去趋势 std
+        # noise: detrended std of the last 500 ms of the closing -80 x 1.34 s segment
         info = segments(V)
         sig = np.nan
         for v, s0, n in info:
@@ -100,11 +102,11 @@ def main():
                 seg = seg - np.polyval(np.polyfit(np.arange(len(seg)), seg, 1), np.arange(len(seg)))
                 sig = float(np.std(seg))
         hc = hssj["cells"].get(cell, {}).get("curve", {})
-        print(f"\n细胞 {cell}（σ={sig:.4f} nA）")
+        print(f"\ncell {cell} (sigma={sig:.4f} nA)")
         for ci, g in enumerate(GEARS):
             ax = axes[ri][ci]
             if g not in ts or I is None:
-                ax.set_title(f"{g}mV 无档", fontsize=8)
+                ax.set_title(f"{g}mV no level", fontsize=8)
                 continue
             s0, n = ts[g]
             t = np.arange(n) * DT
@@ -117,11 +119,11 @@ def main():
             for tau, col in zip(TAUS, ["tab:blue", "tab:green", "tab:orange", "tab:red"]):
                 ax.plot(t, pred_shape(t, tau, h150, g), lw=0.9, color=col,
                         label=f"τ={tau * 1e3:.0f}ms")
-            ax.plot(tb, yb, "k.", ms=2.5, label="数据")
+            ax.plot(tb, yb, "k.", ms=2.5, label="data")
             ax.set_title(f"{cell[-3:]} {g}mV  h150={h150:.3f}", fontsize=8)
             if ri == 0 and ci == 0:
                 ax.legend(fontsize=6, loc="upper right")
-            # 30/60ms 比值（数据 ±2ms 窗）
+            # 30/60 ms ratios (data, +/-2 ms window)
             for tq in (0.030, 0.060):
                 m = np.abs(t - tq) < 0.002
                 if m.any():
@@ -130,14 +132,14 @@ def main():
             r60 = float(np.mean(i[np.abs(t - 0.060) < 0.002])) / i_end
             p = {tau: (pred_shape(np.array([0.030, 0.060]), tau, h150, g)
                        / 1.0) for tau in TAUS}
-            print(f"  {g:>4}mV: 30ms 数据{r30:.2f} | τ25 {p[0.025][0]:.2f} τ50 {p[0.050][0]:.2f} "
+            print(f"  {g:>4}mV: 30ms data{r30:.2f} | tau25 {p[0.025][0]:.2f} tau50 {p[0.050][0]:.2f} "
                   f"τ100 {p[0.100][0]:.2f} τ175 {p[0.175][0]:.2f} || "
-                  f"60ms 数据{r60:.2f} | τ25 {p[0.025][1]:.2f} τ50 {p[0.050][1]:.2f} "
+                  f"60ms data{r60:.2f} | tau25 {p[0.025][1]:.2f} tau50 {p[0.050][1]:.2f} "
                   f"τ100 {p[0.100][1]:.2f} τ175 {p[0.175][1]:.2f}")
     fig.tight_layout()
     fpng = os.path.join(HERE, "2026-09-13_α模型_τobs侦察_测试段早期相位.png")
     fig.savefig(fpng, dpi=120, bbox_inches="tight")
-    print(f"\n  图落盘: {fpng}")
+    print(f"\n  figure saved: {fpng}")
 
 
 if __name__ == "__main__":

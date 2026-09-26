@@ -1,5 +1,5 @@
-"""Kα-1 冒烟：对 IKs activation 类协议逐文件提 (V1/2, k, 尾巴衰减)，看构型簇结构。
-尾巴峰 = 阶跃结束后 -40mV 段头 200ms 内最大外向幅值。
+"""Kα-1 smoke: extract (V1/2, k, tail decay) per file from IKs activation-type protocols and inspect the conformational cluster structure.
+Tail peak = maximum outward amplitude within the first 200 ms of the -40 mV segment after the step ends.
 """
 import pyabf, os, json, glob
 import numpy as np
@@ -23,18 +23,18 @@ def analyze(path):
         e = a.sweepEpochs
         if len(e.types) < 5:
             continue
-        # epoch 2 = 4s 阶跃, epoch 3 = -40 尾巴
+        # epoch 2 = 4s step, epoch 3 = -40 tail
         v_step = float(e.levels[2]); p3, p4 = int(e.p1s[3]), int(e.p2s[3])
         v_tail = float(e.levels[3])
         if abs(v_tail + 40) > 5:
             continue
         y = a.sweepY.astype(float)
-        seg = y[p3:p3 + min(p4 - p3, int(0.2 / dt))]  # 尾巴头 200ms
+        seg = y[p3:p3 + min(p4 - p3, int(0.2 / dt))]  # first 200 ms of the tail
         if len(seg) < 10:
             continue
         pk = float(np.max(seg))
         Vs.append(v_step); amps.append(pk)
-        # 尾巴单指数 τ（头 200ms 窗，峰后衰减）
+        # tail single-exponential tau (first 200 ms window, post-peak decay)
         i_pk = int(np.argmax(seg))
         dec = seg[i_pk:]
         if len(dec) > 30 and pk > 0:
@@ -67,7 +67,7 @@ def analyze(path):
     except Exception:
         Vh, k, r2 = np.nan, np.nan, np.nan
     tau_med = float(np.nanmedian(taus)) if taus else np.nan
-    # 波形瞬时度：+60 阶跃段头 50ms 幅值 / 段末幅值（瞬时 onset 判据）
+    # waveform instantaneity: amplitude in the first 50 ms of the +60 step / end-of-segment amplitude (instant-onset criterion)
     return dict(Vh=Vh, k=k, r2=r2, tau_deact40=tau_med, n_steps=len(Vs))
 
 out = []
@@ -86,12 +86,12 @@ for x in inv:
 json.dump(out, open(os.path.join(D, "smoke_gv.json"), "w"), indent=1)
 print(f"analyzed {len(out)} files")
 vhs = np.array([r["Vh"] for r in out if not np.isnan(r["Vh"])])
-print(f"V1/2 分布: n={len(vhs)}")
+print(f"V1/2 distribution: n={len(vhs)}")
 hist, edges = np.histogram(vhs, bins=np.arange(-100, 130, 10))
 for h, e in zip(hist, edges):
     if h: print(f"  {e:+5.0f}..{e+10:+4.0f}: {'#'*h} {h}")
-# WT 锚
+# WT anchor
 sel = [r for r in out if not np.isnan(r["Vh"]) and 18 <= r["Vh"] <= 33 and 12 <= r["k"] <= 28 and r["r2"] > 0.9]
-print(f"\nWT 表型候选 (V1/2 18-33, k 12-28, R2>0.9): {len(sel)}")
+print(f"\nWT phenotype candidates (V1/2 18-33, k 12-28, R2>0.9): {len(sel)}")
 for r in sorted(sel, key=lambda z: z["Vh"]):
     print(f"  {r['file'][:42]:44s} V1/2={r['Vh']:+6.1f} k={r['k']:5.1f} R2={r['r2']:.3f} tau40={r['tau_deact40']:7.1f}ms")

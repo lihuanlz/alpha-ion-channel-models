@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_长尾平直度判决v5_九细胞.py   (v5.3：WLS斜率+SE自适应判线)
-# v5.2 对照N 病灶：s3=-1.04 精确命中真值，s4=-0.86 仅偏 1.3σ（末段信号弱，斜率估计噪声大），
-#   但死判线15%不认估计误差 -> 窄谱被冤。修法不是放松判线，是让判线认账估计器噪声：
-#   斜率 = 加权最小二乘（权重∝信号²）；门 = max(15%, 2*σ估计器)。
-#   窄谱末段信号弱->门自动放宽；宽谱末段信号强->门依然紧。公平性是结构给的。
-# 判词：直 = 三尺度窄谱在窗内收敛；弯 = 窗内不收敛（最慢模态 >10s 或宽谱，本脚本不区分）
-# 对照（先跑，挂则停）：N 三指数18/149/962ms 必须直；B 拉伸指数beta0.5 必须弯
-# 运行：python 本文件
+# 2026-09-13_longtail_flatness_verdict_v5_nine_cells.py   (v5.3: WLS slope + SE-adaptive criterion)
+# v5.2 control-N lesion: s3 = -1.04 hit the truth exactly, s4 = -0.86 off by only 1.3 sigma
+#   (weak late-window signal, noisy slope estimate), but the rigid 15% criterion ignores
+#   estimation error -> narrow spectrum wronged. The fix is not loosening the criterion
+#   but making it account for estimator noise: slope = weighted least squares (weights
+#   proportional to signal^2); gate = max(15%, 2 * sigma_estimator). Weak late signal
+# Verdict: straight = three-scale narrow spectrum converges inside the window; bent =
+#   auto-loosens for narrow spectra, stays tight for wide; fairness is structural.
+# Verdict: straight = converges in window; bent = does not (slowest mode > 10 s or wide spectrum; not distinguished here).
+# Controls (run first, halt on failure): N three-exponential 18/149/962 ms must be straight; B stretched-exponential beta 0.5 must be bent.
+# Run: python this file
 import os
 import json
 import numpy as np
@@ -26,18 +29,18 @@ DT = 1e-4
 DS = 10
 SKIP_MS = 5.0
 NOISE_NA = 0.036
-MASK_NA = 2 * NOISE_NA       # 仅用于窗口截断
+MASK_NA = 2 * NOISE_NA       # used only for window truncation
 DEBOUNCE = 20
 WIN_MIN_S = 1.0
 BASE_MS = 200.0
 POST_PEAK_MS = 20.0
 STRAIGHT_TOL = 0.15
-BIN_S = 0.05                 # 分箱宽度
-MIN_BINS_Q = 4               # 每四分窗最少箱数
+BIN_S = 0.05                 # bin width
+MIN_BINS_Q = 4               # minimum bins per quarter window
 
 
 def slopes_of(t, y):
-    """统一管线：峰后让位 -> 2σ防抖截断 -> 分箱中位 -> log -> 4等分Theil-Sen"""
+    """Unified pipeline: post-peak let-pass -> 2-sigma debounce truncation -> binned median -> log -> 4-part Theil-Sen"""
     ipk = int(np.argmax(y))
     i0 = ipk + int(POST_PEAK_MS / 1000.0 / (t[1] - t[0]))
     k = max(3, int(15.0 / 1000.0 / (t[1] - t[0])) | 1)
@@ -54,7 +57,7 @@ def slopes_of(t, y):
         return None
     tt, xx = t[i0:i1], y[i0:i1]
     nbin = int(np.clip(win_s / BIN_S, 16, 80))
-    sig_bin = 3 * NOISE_NA / np.sqrt(max(1, len(tt) // nbin))   # 箱中位 3σ
+    sig_bin = 3 * NOISE_NA / np.sqrt(max(1, len(tt) // nbin))   # bin-median 3 sigma
     bt, bl = [], []
     for b in np.array_split(np.arange(len(tt)), nbin):
         med = float(np.median(xx[b]))
@@ -64,12 +67,12 @@ def slopes_of(t, y):
     if len(bt) < 4 * MIN_BINS_Q:
         return None
     bt, bl = np.array(bt), np.array(bl)
-    bm = np.exp(bl)                       # 箱中位信号
+    bm = np.exp(bl)                       # bin-median signal
     qs = np.array_split(np.arange(len(bt)), 4)
     if any(len(q) < MIN_BINS_Q for q in qs):
         return None
     ss, ses = [], []
-    for q in qs:                          # 加权最小二乘（权重∝信号²）+ 斜率标准误
+    for q in qs:                          # weighted least squares (weights prop. signal^2) + slope SE
         tq, lq, wq = bt[q], bl[q], bm[q] ** 2
         tbar = np.sum(wq * tq) / wq.sum()
         W = float(np.sum(wq * (tq - tbar) ** 2))
@@ -81,7 +84,7 @@ def slopes_of(t, y):
         ses.append(float(np.sqrt(s2 / W)))
     s1, s2v, s3, s4 = ss
     e1, e2, e3, e4 = ses
-    # 门 = max(15%相对, 2σ估计器)：信号弱处自动放宽，信号强处依然紧
+    # gate = max(15% relative, 2 sigma_estimator): auto-loosens where signal is weak, stays tight where strong
     d2 = abs(s3 - s2v); tol2 = max(STRAIGHT_TOL * abs(s3), 2 * float(np.hypot(e2, e3)))
     d1 = abs(s4 - s3); tol1 = max(STRAIGHT_TOL * abs(s4), 2 * float(np.hypot(e3, e4)))
     straight = (d1 <= tol1) and (d2 <= tol2)
@@ -140,15 +143,15 @@ def controls():
     t = np.arange(0, 5.5, DT)[::DS]
     res = {}
     synth = {
-        "对照N_窄谱三指数": (0.4 * np.exp(-t / 0.018) + 0.8 * np.exp(-t / 0.149)
+        "control_N_narrow_three_exp": (0.4 * np.exp(-t / 0.018) + 0.8 * np.exp(-t / 0.149)
                           + 0.5 * np.exp(-t / 0.962), True),
-        "对照B_宽谱拉伸": (1.2 * np.exp(-(t / 1.0) ** 0.5), False),
+        "control_B_wide_stretched": (1.2 * np.exp(-(t / 1.0) ** 0.5), False),
     }
     for name, (yc, want) in synth.items():
         y = yc + rng.normal(0, NOISE_NA, len(t))
         r = slopes_of(t, y)
         if r is None:
-            res[name] = dict(error="窗不足")
+            res[name] = dict(error="window insufficient")
             continue
         r["want_straight"] = want
         r["ok"] = bool(r["straight"] == want)
@@ -158,70 +161,70 @@ def controls():
 
 def main():
     print("=" * 64)
-    print(" 长尾平直度判决 v5.3 · deactivation 长尾 · 九细胞（免拟合）")
-    print(f" 判线: |Δs| < max({STRAIGHT_TOL:.0%}·|s|, 2σ估计器)  对 (s3,s4) 与 (s2,s3) 两门 -> 直")
-    print(f" 分箱 {BIN_S*1000:.0f}ms 中位取log；截断 平滑<{MASK_NA:.3f} nA 连续{DEBOUNCE}点")
+    print(" long-tail flatness verdict v5.3 - deactivation long tails - nine cells (fit-free)")
+    print(f" criteria: |Ds| < max({STRAIGHT_TOL:.0%}*|s|, 2 sigma_estimator) on both (s3,s4) and (s2,s3) gates -> straight")
+    print(f" bin {BIN_S*1000:.0f} ms, median then log; truncate at smooth <{MASK_NA:.3f} nA for {DEBOUNCE} consecutive points")
     print("=" * 64, flush=True)
 
     ctrl = controls()
     ctrl_ok = True
     for name, r in ctrl.items():
         if "error" in r:
-            print(f"  {name}: {r['error']}，统计量作废")
+            print(f"  {name}: {r['error']}, statistics void")
             ctrl_ok = False
             continue
         good = r["ok"]
         ctrl_ok &= good
-        print(f"  {name}: 窗 {r['win_s']:.2f}s 斜率 "
+        print(f"  {name}: window {r['win_s']:.2f} s slope "
               f"[{r['s1']:.2f} {r['s2']:.2f} {r['s3']:.2f} {r['s4']:.2f}] "
-              f"g2={r['g2']:.0%}(限{r['tol2']/max(abs(r['s3']),1e-9):.0%}) "
-              f"g1={r['g1']:.0%}(限{r['tol1']/max(abs(r['s4']),1e-9):.0%}) -> {'直' if r['straight'] else '弯'} "
-              f"({'符合预期' if good else '不符合预期，统计量作废！'})")
+              f"g2={r['g2']:.0%}(lim{r['tol2']/max(abs(r['s3']),1e-9):.0%}) "
+              f"g1={r['g1']:.0%}(lim{r['tol1']/max(abs(r['s4']),1e-9):.0%}) -> {'straight' if r['straight'] else 'bent'} "
+              f"({'as expected' if good else 'NOT as expected, statistics void!'})")
     if not ctrl_ok:
-        print("\n  对照未过 -> 统计量不可信，真实数据判决不执行。停。")
+        print("\n  controls failed -> statistics untrustworthy, real-data verdict not executed. Halt.")
         return
 
     allres = []
     for cell in CELLS:
         V, I = load(cell)
         if I is None:
-            print(f"\n  细胞 {cell}: 数据缺失，跳过")
-            allres.append(dict(cell=cell, tails=[], verdict="数据缺失"))
+            print(f"\n  cell {cell}: data missing, skipped")
+            allres.append(dict(cell=cell, tails=[], verdict="data missing"))
             continue
         tails, info = find_tails(V)
         if cell == CELLS[0]:
-            print(f"\n  [诊断] 协议共 {len(info)} 段，识别出长尾 {len(tails)} 条；前 24 段：")
+            print(f"\n  [diagnostic] protocol has {len(info)} segments, {len(tails)} long tails identified; first 24 segments:")
             for j, (v, s0, n) in enumerate(info[:24]):
-                print(f"    段{j:02d}: {v:+7.1f} mV × {n * DT:7.3f}s")
+                print(f"    seg{j:02d}: {v:+7.1f} mV x {n * DT:7.3f}s")
         rows = []
         for tl in tails:
             r = one_tail(I, tl)
             if r:
                 rows.append(r)
         if len(rows) < 2:
-            allres.append(dict(cell=cell, tails=rows, verdict=f"可用长尾不足（{len(rows)} 条）"))
-            print(f"\n  细胞 {cell}: 可用长尾 {len(rows)} 条 -> 不足")
+            allres.append(dict(cell=cell, tails=rows, verdict=f"insufficient usable tails ({len(rows)})"))
+            print(f"\n  cell {cell}: usable tails {len(rows)} -> insufficient")
             continue
         n_bent = sum(1 for r in rows if not r["straight"])
         frac = n_bent / len(rows)
-        verdict = f"弯 {n_bent}/{len(rows)} ({frac:.0%})"
+        verdict = f"bent {n_bent}/{len(rows)} ({frac:.0%})"
         allres.append(dict(cell=cell, tails=rows, verdict=verdict,
                            n_bent=n_bent, n_tails=len(rows)))
-        print(f"\n  细胞 {cell}: 长尾 {len(rows)} 条，判弯 {n_bent} 条 ({frac:.0%})")
+        print(f"\n  cell {cell}: tails {len(rows)}, judged bent {n_bent} ({frac:.0%})")
         for r in rows:
-            print(f"    尾 {r['v']:+6.0f} mV (前脉冲 {r['pre_v']:+.0f}): 窗 {r['win_s']:.2f}s  "
+            print(f"    tail {r['v']:+6.0f} mV (prepulse {r['pre_v']:+.0f}): window {r['win_s']:.2f}s  "
                   f"s1..s4 = {r['s1']:7.2f} {r['s2']:7.2f} {r['s3']:7.2f} {r['s4']:7.2f}  "
-                  f"g2={r['g2']:5.0%}(限{r['tol2']/max(abs(r['s3']),1e-9):4.0%}) "
-                  f"g1={r['g1']:5.0%}(限{r['tol1']/max(abs(r['s4']),1e-9):4.0%}) -> {'直' if r['straight'] else '弯'}")
+                  f"g2={r['g2']:5.0%}(lim{r['tol2']/max(abs(r['s3']),1e-9):4.0%}) "
+                  f"g1={r['g1']:5.0%}(lim{r['tol1']/max(abs(r['s4']),1e-9):4.0%}) -> {'straight' if r['straight'] else 'bent'}")
 
     valid = [r for r in allres if "n_bent" in r]
     tot_b = sum(r["n_bent"] for r in valid)
     tot_t = sum(r["n_tails"] for r in valid)
     print("\n" + "=" * 64)
-    print(" 汇总：")
-    print(f"  有效细胞 {len(valid)}，长尾 {tot_t} 条，判弯 {tot_b} 条 ({tot_b/max(tot_t,1):.0%})")
-    print("  判读：三尺度窄谱预言'基本全直'；")
-    print("       大多数弯 -> 三尺度图景不完整（最慢模态 >10s 或宽谱）")
+    print(" summary:")
+    print(f"  valid cells {len(valid)}, tails {tot_t}, judged bent {tot_b} ({tot_b/max(tot_t,1):.0%})")
+    print("  reading: the three-scale narrow-spectrum prediction is 'essentially all straight';")
+    print("       mostly bent -> the three-scale picture is incomplete (slowest mode > 10 s or wide spectrum)")
     print("=" * 64)
 
     fig, axes = plt.subplots(3, 3, figsize=(17, 12))
@@ -230,7 +233,7 @@ def main():
         cmap = plt.cm.viridis(np.linspace(0, 1, max(len(rows), 2)))
         for k, row in enumerate(rows):
             ax.plot(row["bt"], row["bl"], ".", color=cmap[k], ms=3,
-                    label=f"{row['v']:+.0f}{'直' if row['straight'] else '弯'}")
+                    label=f"{row['v']:+.0f}{'straight' if row['straight'] else 'bent'}")
         color = "red" if ("n_bent" in r and r["n_bent"] > r["n_tails"] / 2) else "green"
         ax.set_title(f"{r['cell']} · {r['verdict']}", fontsize=10, fontweight="bold", color=color)
         ax.set_ylim(-9, 1)
@@ -239,7 +242,7 @@ def main():
             ax.legend(fontsize=6, loc="lower left")
     for ax in axes.flat[len(allres):]:
         ax.axis("off")
-    fig.suptitle(f"长尾平直度 v5.3 · 判弯 {tot_b}/{tot_t} 条尾（对照已过）",
+    fig.suptitle(f"long-tail flatness v5.3 - judged bent {tot_b}/{tot_t} tails (controls passed)",
                  fontsize=14, fontweight="bold")
     fpng = os.path.join(HERE, "2026-09-13_长尾平直度判决v5_九细胞.png")
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
@@ -265,8 +268,8 @@ def main():
     }
     fjson = os.path.join(HERE, "2026-09-13_长尾平直度判决v5_九细胞_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 
 if __name__ == "__main__":

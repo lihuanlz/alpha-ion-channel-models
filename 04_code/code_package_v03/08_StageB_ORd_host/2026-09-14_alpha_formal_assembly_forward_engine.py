@@ -1,47 +1,48 @@
 # 2026-09-14_α模型_正式组装_前向引擎.py
 # ============================================================================
-# α 模型 · 正式组装 · 唯一正式前向引擎（2026-09-14 定稿）
+# alpha model · formal assembly · the single formal forward engine (finalized 2026-09-14)
 #
-# 模型方程（单门 m，乘积门）：
+# model equations (single gate m, product gate):
 #   dm/dt = (m_ss(V) - m) / tau_m(V)
 #   dh/dt = (h_ss(V) - h) / tau_h(V)
 #   I(t)  = G * m * h * (V - E_rev)          E_rev = -88.33 mV
 #
-# 本文件 = 2026-09-13_α模型_hss实测表重跑_AP前向判决.py 的模型部分继承
-#   （Tab / forward 逐字；build_tabs 仅 th_anchors 一处换锚——2026-09-14 τ_obs 换锚，
-#    与 τobs换锚版判决脚本一致；评分件 doe_fit/find_ap_structure/score_cell 属判决管道
-#    不入引擎）。四张测量表运行时从封卷 JSON 加载，不手抄：
-#     幅度表提取_结果.json        y_ss(-70/-60/-50) 每细胞、τ 阶梯 TF/TM/TAU_L
-#     反弹hook_结果.json          τ_rec/τ_deact(-120/-110/-100) 中位、G 锚 A(-120)
-#     失活门_失活协议封卷判决_结果.json  h_ss50、g_hat、m90 τ_r(-90)
-#     纯hssV剥离判决_结果.json    h_ss(-80..+30) 12 档每细胞值+群体中位
+# This file inherits the model part of 2026-09-13_α模型_hss实测表重跑_AP前向判决.py
+#   (Tab / forward verbatim; build_tabs changes only th_anchors to the new anchor - the 2026-09-14 tau_obs re-anchoring,
+#    consistent with the tau_obs re-anchored judge script; the scoring pieces doe_fit/find_ap_structure/score_cell
+#    belong to the judge pipeline and are not part of the engine). The four measured tables are loaded at runtime
+#    from the sealed JSONs, never hand-copied:
+#     幅度表提取_结果.json        y_ss(-70/-60/-50) per cell, tau ladder TF/TM/TAU_L
+#     反弹hook_结果.json          tau_rec/tau_deact(-120/-110/-100) medians, G anchor A(-120)
+#     失活门_失活协议封卷判决_结果.json  h_ss50, g_hat, m90 tau_r(-90)
+#     纯hssV剥离判决_结果.json    h_ss(-80..+30) 12 levels, per-cell values + population median
 #
-# 封卷战绩（本引擎原样产生，判线跑前钉死）：
-#   AP 前向 8/9（稳健峰口径；唯一败例 16707014，模型侧登记：h 表全群体中位+D4）
-#   sine 前向 7/9（败例 047 数据侧 posthoc_target_degraded、060 数据侧 D1）
-#   去激活阶梯白化 28/33；h_ss 12 档实测剥离（4 档封卷/8 档登记）；
-#   τ_obs 复极窗快弛豫封卷 5/6 档（h_ss=h_150 身份封卷）；
-#   τ_obs 换锚重跑（B2 退役 2026-09-14）：sine 7/9、AP 8/9 同集合同归因，判线未动。
+# sealed track record (produced by this engine as-is; criteria pinned before the runs):
+#   AP forward 8/9 (robust-peak convention; sole failure 16707014, model-side registry: h table population median + D4)
+#   sine forward 7/9 (failures 047 data-side posthoc_target_degraded, 060 data-side D1)
+#   deactivation-ladder whitening 28/33; h_ss 12-level measured stripping (4 levels sealed / 8 registered);
+#   tau_obs repolarization-window fast relaxation sealed 5/6 levels (h_ss = h_150 identity sealed);
+#   tau_obs re-anchored rerun (B2 retired 2026-09-14): sine 7/9, AP 8/9, same sets and same attributions; criteria unmoved.
 #
-# 登记限制（随附，逐条见模型卡 §7-§9）：
-#   B2 已退役（2026-09-14 换锚重跑过线：sine 7/9、AP 8/9 同集合同归因，判线未动）：
-#     τ_h(-70/-60/-50/-40/-30)=τ_obs 实测上界中位 7.0/7.0/8.9/14.4/14.4ms；
-#     -20: 50ms 无实测覆盖，桥锚保留登记（τ_h 链唯一残留桥锚）；
-#   B3 τ_m(V>=-40) 登记带（激活慢分量中位，CV 0.36 未封卷）；
-#   B5 单门 m 声明——B6 判决（2026-09-14）：激活足（延迟 50-150ms）在 +40 阶跃
-#     封卷成立，但整流级联全局施加被双协议拒绝（sine 1/9、AP 2/9）-> 单门保留为
-#     组装形；代价登记：去极化头 100-200ms m 高估 ~3x（AP A1 定量散布机制之一）；
-#     3x 矛盾（包络 m≈0.08·m∞ @100ms vs AP 要求 m≈0.29·m∞）调和候选 H1/H2/H3
-#     全部登记未决。
+# registered limitations (attached; item-by-item in model card sections 7-9):
+#   B2 retired (2026-09-14 re-anchored rerun passed: sine 7/9, AP 8/9, same sets and same attributions; criteria unmoved):
+#     tau_h(-70/-60/-50/-40/-30) = measured upper-bound medians of tau_obs: 7.0/7.0/8.9/14.4/14.4 ms;
+#     -20: no measured coverage at 50 ms; bridge anchor kept as registry (the sole remaining bridge anchor in the tau_h chain);
+#   B3 tau_m(V>=-40) registry band (activation slow-component median, CV 0.36, not sealed);
+#   B5 single-gate-m declaration - B6 verdict (2026-09-14): the activation foot (delay 50-150 ms) at the +40 step
+#     is sealed, but globally applying the rectification cascade was rejected by both protocols (sine 1/9, AP 2/9) -> the single gate is kept as
+#     the assembly form; registered cost: m overestimated ~3x in the first 100-200 ms of depolarization (one mechanism behind the AP A1 quantitative spread);
+#     the 3x contradiction (envelope m~0.08*m_inf @100 ms vs AP requiring m~0.29*m_inf) reconciliation candidates H1/H2/H3
+#     all registered unresolved.
 #
-# 【已拒·登记】k3 整流级联（B6b 换形，被拒，不入模型，留存备查）：
-#   激活方向（m_ss>=m3）三级等τ串联（tau_c(+40) 逐细胞 48-108ms 中位 86ms），
-#   去激活方向单门弛豫（梯子不动）；对照 C3 6.7e-4 / C4 4.6e-14 归位。
-#   拒绝原因：chirp 期 m 过抑制 2x（sine S2 塌）、AP 短峰期 m 压低 ~3x（A1 塌）。
-#   对称级联更早被否（胖尾伪影：003 AP 间期累积 0.10->0.54 出窗）。
+# [REJECTED · registry] k3 rectification cascade (B6b re-shape, rejected, not in the model, kept for reference):
+#   activation direction (m_ss>=m3) three-stage equal-tau cascade (tau_c(+40) per cell 48-108 ms, median 86 ms),
+#   deactivation direction single-gate relaxation (ladder untouched); controls C3 6.7e-4 / C4 4.6e-14 restored.
+#   rejection reason: m over-suppressed 2x during chirp (sine S2 collapse), m depressed ~3x during the short AP peak (A1 collapse).
+#   the symmetric cascade was rejected earlier (fat-tail artifact: 003 AP inter-interval accumulation 0.10->0.54 out of window).
 #
-# 运行：本文件为模块；python 本文件 = 16713003 锚表打印自检（非判决，不产生判词）。
-#   正式判决管道见同目录 *hss实测表重跑_*前向判决.py（判线跑前钉死版）。
+# Run: this file is a module; running it directly prints the 16713003 anchor tables as a self-check (not a judgement, no verdict).
+#   The formal judge pipeline is *hss实测表重跑_*前向判决.py in the same directory (criteria pinned before the run).
 # ============================================================================
 import os
 import json
@@ -71,7 +72,7 @@ def load_mat(proto, cell, tag):
 
 
 class Tab:
-    """对数-线性插值锚表（x 线性、y 对数，越界取端点）。与 sine 冒烟同一份。"""
+    """Log-linear interpolated anchor table (linear in x, log in y, endpoints beyond the range). Same copy as the sine smoke."""
     def __init__(self, anchors, log_y=True):
         self.xs = np.array(sorted(anchors), dtype=float)
         ys = np.array([anchors[x] for x in self.xs], dtype=float)
@@ -84,9 +85,9 @@ class Tab:
 
 
 def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
-    """与 sine 换表版同一份四表（sine_mea40 级无原料，其余逐字相同）。返回 dict。
-    换表版：h_ss B1 段（-80..+30）用实测剥离表；m_ss=y_ss/h_ss 同步重分裂。"""
-    # ---- h_ss 实测剥离表（P3：每细胞 qc 过 -> 每细胞值；否 -> 群体中位） ----
+    """The same four tables as the sine table-swapped version (no raw material at sine_mea40 level; the rest verbatim). Returns dict.
+    Table-swapped version: the h_ss B1 segment (-80..+30) uses the measured stripped table; m_ss=y_ss/h_ss re-split accordingly."""
+    # ---- h_ss measured stripped table (P3: per-cell qc pass -> per-cell value; else population median) ----
     hc = hss["cells"].get(cell, {}).get("curve", {})
     hB1, h_pop = {}, []
     for v in (-80, -70, -60, -50, -40, -30, -20, -10, 0, 10, 20, 30):
@@ -96,7 +97,7 @@ def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
         else:
             hB1[v] = float(hss["gears"][str(v)]["med"])
             h_pop.append(v)
-    # ---- m_ss 锚（每细胞 y_ss，缺档用中位；换表重分裂 m_ss=y_ss/h_ss） ----
+    # ---- m_ss anchors (per-cell y_ss, missing levels use the median; table-swap re-splits m_ss=y_ss/h_ss) ----
     yss = {}
     for r in amp["rows"]:
         if r["v"] in (-70, -60, -50):
@@ -145,7 +146,7 @@ def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
             G = float(np.median(cands))
             gflag = "posthoc_G_degraded"
 
-    # ---- h_ss（B1 退役：实测剥离表；+40 端 R3 回退链保留，P4） ----
+    # ---- h_ss (B1 retired: measured stripped table; +40 end R3 fallback chain kept, P4) ----
     h50 = None
     if ci.get("h_ss50") and ci["h_ss50"] > 0:
         h50 = float(ci["h_ss50"])
@@ -167,13 +168,13 @@ def build_tabs(cell, amp, hook, inact, hss, I_inact=None, V_inact=None):
         h40 = 0.0034
     h40 = float(np.clip(h40, 1e-4, 0.2))
     h_anchors = {-130: 1.0, -100: 1.0}                       # P1
-    h_anchors.update(hB1)                                    # B1 段实测（-80..+30）
-    h_anchors[40] = h40                                      # P4：+40 端 R3 链保留
+    h_anchors.update(hB1)                                    # B1 segment measured (-80..+30)
+    h_anchors[40] = h40                                      # P4: +40 end R3 chain kept
     h_anchors[50] = h50 if h50 else h40
     h_anchors[60] = h50 if h50 else h40
     h_ss = Tab(h_anchors, log_y=True)
 
-    # ---- τ_h（B2 已退役 2026-09-14：τ_obs 封卷实测上界中位表；-20 桥锚保留登记） ----
+    # ---- tau_h (B2 retired 2026-09-14: tau_obs sealed measured upper-bound median table; -20 bridge anchor kept as registry) ----
     tr90 = ci.get("m90", {}).get("tau_r") if ci.get("m90", {}).get("valid") else None
     th_anchors = {-130: hs["-120"]["tr_med"], -120: hs["-120"]["tr_med"],
                   -110: hs["-110"]["tr_med"], -100: hs["-100"]["tr_med"],
@@ -207,30 +208,30 @@ def forward(V, tabs):
 
 
 # ----------------------------------------------------------------------------
-# 【已拒·登记】k3 整流级联换形（B6b，2026-09-14 判决：sine 1/9、AP 2/9 被拒）
-# 留存备查，不入模型。参考实现（来自 B6 判决脚本，注释态）：
+# [REJECTED · registry] k3 rectification cascade re-shape (B6b, verdict 2026-09-14: sine 1/9, AP 2/9, rejected)
+# Kept for reference, not in the model. Reference implementation (from the B6 judge script, commented out):
 #
 #   def forward_k3_rectified(V, tabs, tauc_tab):
-#       # 激活方向（m_ss >= m3）：三级等τ串联（足）
+#       # activation direction (m_ss >= m3): three-stage equal-tau cascade (foot)
 #       #   dm1/dt=(m_ss-m1)/τc, dm2/dt=(m1-m2)/τc, dm3/dt=(m2-m3)/τc
-#       # 去激活方向（m_ss < m3）：m3 以封卷 tau_m 单门弛豫（梯子逐字不动）
-#       ...（见 2026-09-14_α模型_B6激活足_k3级联判决_双协议换形重跑.py）
-#   τc(+40) 逐细胞锚 48-108ms（中位 86ms，D11 两细胞 007/047 取中位）。
-#   拒绝机制：chirp 期 m 过抑制 ~2x（S2 塌）；AP 短峰期 m 压低 ~3x（A1 塌）。
+#       # deactivation direction (m_ss < m3): m3 relaxes with the sealed tau_m single gate (ladder verbatim untouched)
+#       ... (see 2026-09-14_α模型_B6激活足_k3级联判决_双协议换形重跑.py)
+#   tau_c(+40) per-cell anchors 48-108 ms (median 86 ms; D11 two cells 007/047 take the median).
+#   rejection mechanism: m over-suppressed ~2x during chirp (S2 collapse); m depressed ~3x during the short AP peak (A1 collapse).
 # ----------------------------------------------------------------------------
 
 
 def _selfcheck():
-    """锚表打印自检（非判决，不产生判词）：16713003 四表锚值 + G。"""
+    """Anchor-table print self-check (not a judgement, no verdict): 16713003 four-table anchor values + G."""
     amp = json.load(open(F_AMP, encoding="utf-8"))
     hook = json.load(open(F_HOOK, encoding="utf-8"))
     inact = json.load(open(F_INACT, encoding="utf-8"))
     hss = json.load(open(F_HSS, encoding="utf-8"))
     Vi, Ii = load_mat("inactivation_protocol.mat", "16713003", "inactivation")
     tabs = build_tabs("16713003", amp, hook, inact, hss, Ii, Vi)
-    print("α模型正式引擎自检（16713003，非判决）")
+    print("alpha-model formal engine self-check (16713003, not a judgement)")
     print(f"  G = {tabs['G']:.4f} nA/mV  h40 = {tabs['h40']:.4f}  gflag = {tabs['gflag']}")
-    print(f"  h_pop（群体中位回退档）= {tabs['h_pop']}")
+    print(f"  h_pop (population-median fallback level) = {tabs['h_pop']}")
     for v in (-120, -90, -70, -50, -40, -30, 0, 20, 40):
         print(f"  V={v:+5.0f}mV: m_ss={tabs['m_ss'](v):.4f}  tau_m={tabs['tau_m'](v)*1e3:9.2f}ms"
               f"  h_ss={tabs['h_ss'](v):.4f}  tau_h={tabs['tau_h'](v)*1e3:7.2f}ms")

@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# 2026-09-13_同压异史_耦合判决v4_九细胞.py
-# v3 的教训：7/9 细胞尾巴振幅小，基线高估 + 噪声使 xs 反复过零，log 深刺把 A/B 拉爆，数字不可引用。
-# v4 测量纪律（判线与 v2/v3 完全相同：A<30% 且 B<15%）：
-#   1. 信号掩码：基线扣除后 xs < 2*噪声地板(0.072 nA) 的点不取对数
-#   2. 窗口斜率 = Theil-Sen 稳健直线拟合 log(xs)~t（抗离群）；每窗有效点 <15 的尾巴弃用
-# 只读数据，窗内除稳健直线外无模型拟合。
-# 运行：python 本文件
+# 2026-09-13_same-V_different-history_coupling_verdict_v4_nine_cells.py
+# Lesson from v3: in 7/9 cells the tail amplitude is small; baseline overestimation + noise makes xs cross zero repeatedly, deep log dips blow up A/B, numbers not citable.
+# v4 measurement discipline (criteria identical to v2/v3: A<30% and B<15%):
+#   1. signal mask: after baseline subtraction, points with xs < 2*noise floor (0.072 nA) are not log-transformed
+#   2. window slope = Theil-Sen robust straight-line fit of log(xs)~t (outlier resistant); tails with <15 valid points per window are discarded
+# Read-only data; no model fitting inside the windows other than the robust line.
+# Run: python this_file
 import os
 import json
 import numpy as np
@@ -26,11 +26,11 @@ DT = 1e-4
 SKIP_MS = 5.0
 WIN_S = 0.9
 DS = 10
-NOISE_NA = 0.036          # v1 实测噪声地板
-MASK_NA = 2 * NOISE_NA    # 掩码阈值 2σ
+NOISE_NA = 0.036          # v1 measured noise floor
+MASK_NA = 2 * NOISE_NA    # mask threshold 2*sigma
 LATE = (0.6, 0.9)
 MID = (0.4, 0.6)
-MIN_PTS = 15              # 每窗最少有效点数
+MIN_PTS = 15              # minimum valid points per window
 AMP_MIN_NA = 0.15
 CONV_TOL = 0.30
 DRIFT_TOL = 0.15
@@ -63,7 +63,7 @@ def find_tails(V):
 
 
 def win_slope(t, lx, win):
-    """窗口内有效点的 Theil-Sen 斜率；点不够返回 None"""
+    """Theil-Sen slope over valid points in the window; None if too few points"""
     m = (t >= win[0]) & (t <= win[1]) & np.isfinite(lx)
     if m.sum() < MIN_PTS:
         return None, int(m.sum())
@@ -82,7 +82,7 @@ def judge_cell(cell, tails, I):
         amp = float(np.max(np.abs(y)))
         if amp < AMP_MIN_NA or not np.all(np.isfinite(y)):
             continue
-        base = float(np.median(y[int(0.94 * len(y)):]))   # 基线：最后 50ms 中位
+        base = float(np.median(y[int(0.94 * len(y)):]))   # baseline: median of the last 50 ms
         xs = y - base
         with np.errstate(divide="ignore", invalid="ignore"):
             lx = np.where(xs >= MASK_NA, np.log(xs), np.nan)
@@ -109,15 +109,15 @@ def judge_cell(cell, tails, I):
 
 def main():
     print("=" * 64)
-    print(" 同压异史耦合判决 v4 · 九细胞（掩码+稳健斜率，判线不变）")
-    print(f" 判线: A 跨历史收敛 <{CONV_TOL:.0%} 且 B 时间漂移 <{DRIFT_TOL:.0%}   掩码 xs<{MASK_NA:.3f} nA")
+    print(" same-V different-history coupling verdict v4 · nine cells (mask + robust slopes, criteria unchanged)")
+    print(f" criteria: A cross-history convergence <{CONV_TOL:.0%} and B temporal drift <{DRIFT_TOL:.0%}   mask xs<{MASK_NA:.3f} nA")
     print("=" * 64, flush=True)
 
     allres = []
     for cell in CELLS:
         V, I = load(cell)
         if I is None:
-            print(f"\n  细胞 {cell}: 数据文件缺失，跳过")
+            print(f"\n  cell {cell}: data file missing, skipped")
             allres.append(dict(cell=cell, rows=[], conv=float("nan"), drift_med=float("nan"),
                                A=None, B=None, verdict="数据缺失"))
             continue
@@ -125,28 +125,28 @@ def main():
         allres.append(res)
         good = [r for r in res["rows"] if r["usable"]]
         if res["A"] is None:
-            print(f"\n  细胞 {cell}: {res['verdict']}")
+            print(f"\n  cell {cell}: {res['verdict']}")
         else:
-            print(f"\n  细胞 {cell}: 可用尾巴 {len(good)} 条")
+            print(f"\n  cell {cell}: usable tails {len(good)}")
             for r in good:
-                print(f"    历史 {r['hist_v']:+6.0f} mV: 中段 {r['lam_mid']:7.2f}/s  晚窗 {r['lam_late']:7.2f}/s  漂移 {r['drift']:5.1%}  (点 {r['n_mid']}/{r['n_late']})")
-            print(f"    A 跨历史收敛 {res['conv']:7.1%} -> {'过' if res['A'] else '不过'}   "
-                  f"B 时间平稳 {res['drift_med']:6.1%} -> {'过' if res['B'] else '不过'}   => {res['verdict']}")
+                print(f"    history {r['hist_v']:+6.0f} mV: mid {r['lam_mid']:7.2f}/s  late {r['lam_late']:7.2f}/s  drift {r['drift']:5.1%}  (points {r['n_mid']}/{r['n_late']})")
+            print(f"    A cross-history convergence {res['conv']:7.1%} -> {'pass' if res['A'] else 'fail'}   "
+                  f"B temporal stationarity {res['drift_med']:6.1%} -> {'pass' if res['B'] else 'fail'}   => {res['verdict']}")
 
     valid = [r for r in allres if r["A"] is not None]
     n_mem = sum(1 for r in valid if r["verdict"] == "率耦合/记忆")
     n_flat = sum(1 for r in valid if r["verdict"].startswith("平庸"))
     print("\n" + "=" * 64)
-    print(" 九细胞汇总（v4 掩码+稳健斜率）")
+    print(" nine-cell summary (v4 mask + robust slopes)")
     print("-" * 64)
-    print(f"  {'细胞':<10} {'可用尾':>4} {'A收敛':>8} {'B漂移':>8}   判词")
+    print(f"  {'cell':<10} {'tails':>4} {'A_conv':>8} {'B_drift':>8}   verdict")
     for r in allres:
         if r["A"] is None:
             print(f"  {r['cell']:<10} {sum(1 for x in r['rows'] if x['usable']):>4} {'--':>8} {'--':>8}   {r['verdict']}")
         else:
             print(f"  {r['cell']:<10} {sum(1 for x in r['rows'] if x['usable']):>4} {r['conv']:>7.0%} {r['drift_med']:>7.0%}   {r['verdict']}")
     print("-" * 64)
-    print(f"  有效判决 {len(valid)} 细胞：率耦合/记忆 {n_mem} 个，平庸 {n_flat} 个")
+    print(f"  valid verdicts {len(valid)} cells: rate-coupling/memory {n_mem}, flat {n_flat}")
     print("=" * 64)
 
     fig, axes = plt.subplots(3, 3, figsize=(17, 12))
@@ -159,7 +159,7 @@ def main():
                 m = (row["t"] >= win[0]) & (row["t"] <= win[1])
                 tt = row["t"][m]
                 if len(tt) and lam is not None:
-                    # 用窗内中位高度画拟合直线，便于肉眼核对
+                    # draw the fitted line at the in-window median height for visual checking
                     mm = np.isfinite(row["lx"][m])
                     if mm.sum():
                         c0 = np.median(row["lx"][m][mm]) - lam * np.median(tt)
@@ -173,7 +173,7 @@ def main():
             ax.legend(fontsize=7, loc="lower left")
     for ax in axes.flat[len(allres):]:
         ax.axis("off")
-    fig.suptitle(f"同压异史 v4 · 九细胞（掩码 xs<{MASK_NA:.2f} nA + Theil-Sen）率耦合/记忆 {n_mem}/{len(valid)}",
+    fig.suptitle(f"same-V different-history v4 · nine cells (mask xs<{MASK_NA:.2f} nA + Theil-Sen) rate-coupling/memory {n_mem}/{len(valid)}",
                  fontsize=14, fontweight="bold")
     fpng = os.path.join(HERE, "2026-09-13_同压异史_耦合判决v4_九细胞.png")
     fig.savefig(fpng, dpi=130, bbox_inches="tight")
@@ -193,8 +193,8 @@ def main():
     }
     fjson = os.path.join(HERE, "2026-09-13_同压异史_耦合判决v4_九细胞_结果.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    print(f"\n  图落盘: {fpng}")
-    print(f"  结果落盘: {fjson}")
+    print(f"\n  figure saved: {fpng}")
+    print(f"  results saved: {fjson}")
 
 
 if __name__ == "__main__":
