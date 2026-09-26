@@ -7,3 +7,12 @@ _tmp*/
 04_code/**/*_结果.json
 04_code/**/*.png
 04_code/**/CiPA全药库/
+
+# rerun junctions (archived inputs, do not commit)
+04_code/code_package_v03/数据/
+04_code/code_package_v03/公开数据/
+04_code/code_package_v03/结果/
+04_code/code_package_v03/α模型/
+04_code/code_package_v03/w182/
+04_code/code_package_v03/Kv43探针/
+04_code/code_package_v03/08_StageB_ORd_host/CiPA官方锚/
