@@ -16,3 +16,10 @@ _tmp*/
 04_code/code_package_v03/w182/
 04_code/code_package_v03/Kv43探针/
 04_code/code_package_v03/08_StageB_ORd_host/CiPA官方锚/
+
+# rerun intermediates (copied archived inputs, do not commit)
+04_code/**/*.json
+04_code/**/*.csv
+04_code/**/2026-09-14_α模型_正式组装_前向引擎.py
+04_code/**/2026-09-14_α模型_StageB_B0_ORd移植地基复核.py
+04_code/code_package_v03/w192_第四尺度指纹卡/
