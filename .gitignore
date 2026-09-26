@@ -6,3 +6,4 @@ _tmp*/
 # rerun artifacts (regenerated outputs next to scripts)
 04_code/**/*_结果.json
 04_code/**/*.png
+04_code/**/CiPA全药库/
