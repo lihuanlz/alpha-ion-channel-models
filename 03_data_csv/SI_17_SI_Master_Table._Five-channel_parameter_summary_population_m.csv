@@ -1,0 +1,13 @@
+﻿# source section: SI Master Table. Five-channel parameter summary (population median ± spread; verdicts)
+quantity,hERG,Nav1.5,CaV1.2,IKs,Kv4.3 (registration grade)
+current form,G·m·h·(V−E_rev),G·m³·h·(V−E_rev),G·m·h·P(V) (inactivation block),G·a·(V−E_K),not assembled (probe only)
+E_rev,−88.33 mV (sealed),"+72…+75 mV (registered, weak)","+45.2 ± 2.5 mV (Ba²⁺, sealed)",−85 mV (registered),not extracted
+kinetic τ portability,deact τ CV 0.13–0.19 (sealed),τ_h mid-band CV ≤ 0.26; −30 mV CV 0.029 (sealed),τf 6–12 ms; τ_slow 50.0/41.6 ms (group),τ_act(V) cross-paper anchored; τ_deact magnitude 2–3 s anchored,"activation t10–90 invariant across conditions (1.00/1.02 ms, p = 0.80)"
+kinetic τ failure,none,"τ_h(−40): median 1.03 ms, CV 0.772, n = 69 (distributed)",per-cell τf (needs long pulses),τ_deact apparent 0.40 s rejected; single-value unification failed (CV 0.313),"τ_inact rewritten by condition (40.6 → 100.4 ms, +148%, p = 0.001; candidate discovery)"
+steady-state slope,h_ss 12-level measured table,k_h = 4.79 mV (sealed),n/a,k = 22.6 mV (methodology footnote),activation foot slope rewritten −28% by condition
+steady-state midpoint,per-cell (h_pop fallback),"V½h = −66.1 + Δcell, ±4 mV (per-cell)",n/a,"V½ = 25.05 mV (pool, zero deviation vs source anchor)","availability V½ invariant (−61.8 → −61.0 mV, p = 0.35)"
+activation midpoint,m_ss re-split anchors,V½m not portable (Rs artefact),not assembled,(in a_ss),not sealed (foot-only protocol)
+per-cell free parameters,G only,G + ΔV½h,G only (inactivation block),G only,n/a (not assembled)
+forward record,sine 7/9; AP 8/9; CiPA 65/68; whitening 28/33,full trace 3/3 (≤3.4% RMS),component-level (no full model),activation 7/8; inst 0.062 vs 0.10,source-study anchors 6/6 reproduced
+drug action,amplitude-type on h_ss (,κ*−1,= 0.020); pure block rejected (ε_x 0.088 > 0.030),dual component (,κ*,= 0.20; Δf = +0.12); external 7/7 in ±50%,amplitude-type (κ* −0.01); pools +0.168 / −0.088; pure block rejected (ε_x 0.223 > 0.139; p = 7.2e−16),"multi-table (a_ss shift, inst +0.30, deact suppression); DIDS confounded","condition arm is a lesion, not a drug; amplitude/slope rewritten, other tables unmoved"
+host-model status,α-ised (ORd),Markov retained (N-arm closed),not assembled (data gap),α-ised (ORd; τ_deact 2.0 s + sensitivity),not assembled

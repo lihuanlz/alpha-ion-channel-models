@@ -1,0 +1,8 @@
+﻿# source section: S10. Kv4.3 (Ito) registration-grade probe
+quantity,this probe,source study,verdict
+"Kv4.3 peak current −30 mV, vehicle",3.95 ± 0.37 nA (n = 17),3.8 ± 0.4 nA,match
+"Kv4.3 peak current −30 mV, 6-OHDA",1.95 ± 0.26 nA (n = 11),1.7 ± 0.3 nA,match
+amplitude down-regulation,−51% (p = 2 × 10⁻⁴),≈ −50% (p < 10⁻⁴),match
+"activation foot slope, group shift","0.109 → 0.078 mV⁻¹ (−28%, p = 2 × 10⁻⁵)",slope change reported,direction match
+"availability V½, group shift","−61.8 → −61.0 mV (Δ 1.3%, p = 0.35)",no gating change beyond activation slope,match
+HCN amplitude −120 mV,0.44 vs 0.40 nA (p = 0.78),no group difference (p = 0.98),match

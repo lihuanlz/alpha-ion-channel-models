@@ -1,0 +1,5 @@
+﻿# source section: S5. Host-model integration and CiPA drug scoring (Stage B; ORd assembly)
+arm,model,V1 ρ,V2 AUC
+B1,official Markov 9-state + static Hill,−0.523,0.833
+B2s,α-model + static binding,−0.506,0.833
+B2,α-model + dynamic binding,−0.547 (p = 0.0057),0.857

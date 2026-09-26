@@ -1,0 +1,4 @@
+﻿# source section: S1.1 hERG (IKr). Sealed 2026-09-14
+V (mV),−120,−110,−100,−90
+τ_r (recovery; engine τ_h anchor),0.00304,0.00425,0.00505,0.0065 (flagged)
+τ_d (deactivation; engine τ_m anchor),0.0303,0.0492,0.0858,0.072 (flagged)

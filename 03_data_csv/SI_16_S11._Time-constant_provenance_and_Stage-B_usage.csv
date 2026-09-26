@@ -1,0 +1,15 @@
+﻿# source section: S11. Time-constant provenance and Stage-B usage
+time constant,value(s) used,source,extraction,grade,in α model,in ORd assembly,in Stage B CiPA
+hERG deactivation staircase τ_f / τ_m / τ_late,"S1.1a (0.191–24.05 s, −70…−40 mV)",Beattie nine cells,bi-exponential staircase fits,sealed (CV 0.13–0.19),yes (m-gate chain),yes,yes (same table)
+hERG repolarisation τ_r / τ_d,"S1.1b (3.04–6.5 ms / 30.3–85.8 ms, −120…−90 mV)",Beattie nine cells,recovery and tail fits,sealed,yes (τ_h / τ_m anchors),yes,yes (same table)
+"hERG engine τ_m anchors, V ≥ −40 mV",S1.1f (9.8–0.29 s),Beattie nine cells,slow-component medians,registered,yes,yes,"yes, with τ_act ×{0.3, 0.5, 1, 2} sensitivity arm"
+hERG τ_act (+40 mV),band 131–228 ms,Beattie nine cells,envelope fits (d-τ degenerate),registration band (B6),"yes, as band","yes, as band",sensitivity arm only; sealed out of the conclusion
+"hERG population τ_rec(V), five temperatures","Q10 = 2.84 layer; 1.52 ms at 37 °C, −120 mV",Lei five-temperature panel,per-well DoE fits,sealed (Q10); population layer,no (validation only),no,no
+Nav1.5 τ_h(V),"S1.2a (1.639–0.270 ms, −30…+40 mV)","Lei Nav HEK, 35 °C",mono-exponential fits,sealed (mid-band CV ≤ 0.26; −30 mV CV 0.029),yes,no (N-arm closed; ORd Markov retained),no
+Nav1.5 τ_m(V),S1.2c (0.075–0.0216 ms),same,fits in command-voltage coordinates,"registered, restricted",limited,no,no
+Nav1.5 τ_h(−40 mV),"median 1.03 ms, CV 0.772, n = 69",Tarasov cell-attached tables,"source-study extraction, re-judged",distributed,no (arm closed),no,no
+CaV1.2 τf / τ_slow (+17 mV),"6–12 ms / 50.0 ms (Ca²⁺), 41.6 ms (Ba²⁺)",Ren FDA CaV1.2 dataset,bi-exponential inactivation fits,component-sealed,yes (inactivation block),no (not assembled),no
+IKs τ_act(V),"S1.4a (22-point table, peak 8.92 s at −10 mV)","digitised from Fedida 2024, Fig. 3B","digitisation, cross-paper anchored",sealed (Kα-2),yes,yes,yes (same table)
+IKs delay d(V),S1.4b (1.17–0.31 s),"digitised from Fedida 2024, Fig. 3C",digitisation ± 0.1 s,registered (K2-3),yes,yes,yes
+IKs τ_deact(−40 mV),2.0 s (anchored magnitude band 2–3 s),Chan 2023 dataset,"in-window decay, arms A/B",registered (apparent 0.40 s rejected),"yes, as anchored magnitude",yes: 2.0 s + sensitivity arm (or per-cell free),"yes, same 2.0 s convention with sensitivity arm"
+Kv4.3 τ_act / τ_inact,1.00 ms / 40.6 ms (vehicle); 100.4 ms (lesion),Kovacheva 2025 dataset,probe extraction (S10),registration (not sealed),no,no,no

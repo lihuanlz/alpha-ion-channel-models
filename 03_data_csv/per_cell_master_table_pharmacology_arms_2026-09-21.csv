@@ -1,0 +1,362 @@
+﻿channel,dataset,group,temp_C,cell_id,parameter,voltage_mV,value,unit,ok,note
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0006 after LS.abf,V_half_act_drug,,24.195960335258118,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0006 after LS.abf,k_act_drug,,27.041759044218622,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0020 after LS.abf,V_half_act_drug,,33.934919981376545,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0020 after LS.abf,k_act_drug,,26.831692012965547,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0029 after LS.abf,V_half_act_drug,,18.38835232875749,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0029 after LS.abf,k_act_drug,,25.55974377729255,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0043 after LS.abf,V_half_act_drug,,30.9484810786703,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_10_25_0043 after LS.abf,k_act_drug,,21.38300386220748,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0003 after LS.abf,V_half_act_drug,,-44.444948853511896,mV,1,drug-treated (Mef); G-V R2=0.988
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0003 after LS.abf,k_act_drug,,26.497165463915863,mV,1,drug-treated (Mef); G-V R2=0.988
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0016 after LS.abf,V_half_act_drug,,-75.78909795112071,mV,1,drug-treated (Mef); G-V R2=0.948
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0016 after LS.abf,k_act_drug,,13.742646976082154,mV,1,drug-treated (Mef); G-V R2=0.948
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0032 after LS.abf,V_half_act_drug,,-67.78003975316285,mV,1,drug-treated (Mef); G-V R2=0.987
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0032 after LS.abf,k_act_drug,,20.123246749873964,mV,1,drug-treated (Mef); G-V R2=0.987
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0044 after LS.abf,V_half_act_drug,,-52.94791890017763,mV,1,drug-treated (Mef); G-V R2=0.980
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0044 after LS.abf,k_act_drug,,24.97048579519736,mV,1,drug-treated (Mef); G-V R2=0.980
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0048 after LS.abf,V_half_act_drug,,-3.768845159808388,mV,1,drug-treated (Mef); G-V R2=0.975
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0048 after LS.abf,k_act_drug,,39.32881223879135,mV,1,drug-treated (Mef); G-V R2=0.975
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0054 after LS.abf,V_half_act_drug,,-70.01415201546621,mV,1,drug-treated (Mef); G-V R2=0.936
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0054 after LS.abf,k_act_drug,,18.006004053659588,mV,1,drug-treated (Mef); G-V R2=0.936
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0058 after LS.abf,V_half_act_drug,,5.500285810240248,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_11_13_0058 after LS.abf,k_act_drug,,34.248819037687674,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0005 after LS.abf,V_half_act_drug,,38.668225471437005,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0005 after LS.abf,k_act_drug,,26.605305629338083,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0018 after LS.abf,V_half_act_drug,,33.38299907779615,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0018 after LS.abf,k_act_drug,,25.493642547685702,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0032 after LS.abf,V_half_act_drug,,12.422369036044904,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0032 after LS.abf,k_act_drug,,28.557747494543012,mV,1,drug-treated (Mef); G-V R2=0.994
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0042 after LS.abf,V_half_act_drug,,34.23633081656414,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,Mef药臂,22,2020_12_10_0042 after LS.abf,k_act_drug,,23.18501775226507,mV,1,drug-treated (Mef); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831001 after LS.abf,V_half_act_drug,,14.828539841893711,mV,1,drug-treated (DIDS); G-V R2=0.992
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831001 after LS.abf,k_act_drug,,24.30097698986659,mV,1,drug-treated (DIDS); G-V R2=0.992
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831004 after LS.abf,V_half_act_drug,,33.02963578479444,mV,1,drug-treated (DIDS); G-V R2=0.993
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831004 after LS.abf,k_act_drug,,23.148401397274256,mV,1,drug-treated (DIDS); G-V R2=0.993
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831006 after LS.abf,V_half_act_drug,,1.648640616962985,mV,1,drug-treated (DIDS); G-V R2=0.981
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831006 after LS.abf,k_act_drug,,23.031043127316867,mV,1,drug-treated (DIDS); G-V R2=0.981
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831010 after LS.abf,V_half_act_drug,,19.418530465460066,mV,1,drug-treated (DIDS); G-V R2=0.997
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831010 after LS.abf,k_act_drug,,20.867518626290643,mV,1,drug-treated (DIDS); G-V R2=0.997
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831012 after LS.abf,V_half_act_drug,,-3.2551262600341344,mV,1,drug-treated (DIDS); G-V R2=0.978
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22831012 after LS.abf,k_act_drug,,17.26593433629516,mV,1,drug-treated (DIDS); G-V R2=0.978
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901000 after LS.abf,V_half_act_drug,,25.046024811145717,mV,1,drug-treated (DIDS); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901000 after LS.abf,k_act_drug,,21.68832689045198,mV,1,drug-treated (DIDS); G-V R2=0.996
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901002 after LS.abf,V_half_act_drug,,33.427787738790414,mV,1,drug-treated (DIDS); G-V R2=0.986
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901002 after LS.abf,k_act_drug,,31.493274288966923,mV,1,drug-treated (DIDS); G-V R2=0.986
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901005 after LS.abf,V_half_act_drug,,23.7551346636604,mV,1,drug-treated (DIDS); G-V R2=0.995
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901005 after LS.abf,k_act_drug,,22.57597166899889,mV,1,drug-treated (DIDS); G-V R2=0.995
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901007 after LS.abf,V_half_act_drug,,23.093150061307977,mV,1,drug-treated (DIDS); G-V R2=0.958
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22901007 after LS.abf,k_act_drug,,35.82421254466384,mV,1,drug-treated (DIDS); G-V R2=0.958
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22902003 after LS.abf,V_half_act_drug,,29.328081417328715,mV,1,drug-treated (DIDS); G-V R2=0.997
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22902003 after LS.abf,k_act_drug,,19.40462328538328,mV,1,drug-treated (DIDS); G-V R2=0.997
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22902005 after LS.abf,V_half_act_drug,,48.43504096997457,mV,1,drug-treated (DIDS); G-V R2=0.991
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22902005 after LS.abf,k_act_drug,,23.4968859267652,mV,1,drug-treated (DIDS); G-V R2=0.991
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22923001 YD LS.abf,V_half_act_drug,,16.653678867268162,mV,1,drug-treated (DIDS); G-V R2=0.997
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22923001 YD LS.abf,k_act_drug,,20.361349326254672,mV,1,drug-treated (DIDS); G-V R2=0.997
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22923003 YD LS.abf,V_half_act_drug,,7.773807586530472,mV,1,drug-treated (DIDS); G-V R2=0.993
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22923003 YD LS.abf,k_act_drug,,25.821546031934272,mV,1,drug-treated (DIDS); G-V R2=0.993
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22n09000 LS.abf,V_half_act_drug,,-5.9202228602912745,mV,1,drug-treated (DIDS); G-V R2=0.995
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22n09000 LS.abf,k_act_drug,,13.20437470005456,mV,1,drug-treated (DIDS); G-V R2=0.995
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22n09002 LS.abf,V_half_act_drug,,-10.550965493269262,mV,1,drug-treated (DIDS); G-V R2=0.989
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22n09002 LS.abf,k_act_drug,,15.236158713022167,mV,1,drug-treated (DIDS); G-V R2=0.989
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19008 ying after LS.abf,V_half_act_drug,,65.52489148043584,mV,1,drug-treated (DIDS); G-V R2=0.969
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19008 ying after LS.abf,k_act_drug,,28.74902085210461,mV,1,drug-treated (DIDS); G-V R2=0.969
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19010 ying after LS.abf,V_half_act_drug,,32.1440289043324,mV,1,drug-treated (DIDS); G-V R2=0.992
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19010 ying after LS.abf,k_act_drug,,26.818689478315186,mV,1,drug-treated (DIDS); G-V R2=0.992
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19012 ying after LS.abf,V_half_act_drug,,61.089562140644254,mV,1,drug-treated (DIDS); G-V R2=0.965
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19012 ying after LS.abf,k_act_drug,,34.331691991145334,mV,1,drug-treated (DIDS); G-V R2=0.965
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19014 ying after LS.abf,V_half_act_drug,,30.589687334118675,mV,1,drug-treated (DIDS); G-V R2=0.985
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o19014 ying after LS.abf,k_act_drug,,30.40344988641337,mV,1,drug-treated (DIDS); G-V R2=0.985
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26000 ying LS.abf,V_half_act_drug,,79.42440890390807,mV,1,drug-treated (DIDS); G-V R2=0.957
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26000 ying LS.abf,k_act_drug,,24.870387039616126,mV,1,drug-treated (DIDS); G-V R2=0.957
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26002 ying LS.abf,V_half_act_drug,,41.64368024520507,mV,1,drug-treated (DIDS); G-V R2=0.985
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26002 ying LS.abf,k_act_drug,,32.938870689828,mV,1,drug-treated (DIDS); G-V R2=0.985
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26003 ying LS.abf,V_half_act_drug,,68.95014748678038,mV,1,drug-treated (DIDS); G-V R2=0.966
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26003 ying LS.abf,k_act_drug,,28.86966649275609,mV,1,drug-treated (DIDS); G-V R2=0.966
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26006 ying LS.abf,V_half_act_drug,,77.88550166422887,mV,1,drug-treated (DIDS); G-V R2=0.977
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26006 ying LS.abf,k_act_drug,,21.79601294622795,mV,1,drug-treated (DIDS); G-V R2=0.977
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26008 ying LS.abf,V_half_act_drug,,36.99248355664532,mV,1,drug-treated (DIDS); G-V R2=0.986
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26008 ying LS.abf,k_act_drug,,29.62579541499455,mV,1,drug-treated (DIDS); G-V R2=0.986
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26009 ying LS.abf,V_half_act_drug,,72.68665767541316,mV,1,drug-treated (DIDS); G-V R2=0.933
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26009 ying LS.abf,k_act_drug,,35.307216842552045,mV,1,drug-treated (DIDS); G-V R2=0.933
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26011 ying LS.abf,V_half_act_drug,,35.22470582237483,mV,1,drug-treated (DIDS); G-V R2=0.989
+IKs,Chan2023-Zenodo8226585,DIDS药臂,22,22o26011 ying LS.abf,k_act_drug,,27.60519253991668,mV,1,drug-treated (DIDS); G-V R2=0.989
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31003 after LS and HMR subtraction.abf,V_half_act_drug,,26.498591759496698,mV,1,HMR-1556 subtraction; G-V R2=0.991
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31003 after LS and HMR subtraction.abf,k_act_drug,,23.155677578389,mV,1,HMR-1556 subtraction; G-V R2=0.991
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31006 after LS and HMR subtraction.abf,V_half_act_drug,,11.555621827335486,mV,1,HMR-1556 subtraction; G-V R2=0.992
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31006 after LS and HMR subtraction.abf,k_act_drug,,22.651442921183033,mV,1,HMR-1556 subtraction; G-V R2=0.992
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31009 after LS and HMR subtraction.abf,V_half_act_drug,,37.37646127407105,mV,1,HMR-1556 subtraction; G-V R2=0.990
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31009 after LS and HMR subtraction.abf,k_act_drug,,23.66232718458972,mV,1,HMR-1556 subtraction; G-V R2=0.990
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31011 after LS and HMR subtraction.abf,V_half_act_drug,,13.436931751136296,mV,1,HMR-1556 subtraction; G-V R2=0.986
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31011 after LS and HMR subtraction.abf,k_act_drug,,21.419562096364075,mV,1,HMR-1556 subtraction; G-V R2=0.986
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31027 after LS and HMR subtraction.abf,V_half_act_drug,,34.103870926225234,mV,1,HMR-1556 subtraction; G-V R2=0.968
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31027 after LS and HMR subtraction.abf,k_act_drug,,31.525051762250705,mV,1,HMR-1556 subtraction; G-V R2=0.968
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31029 after LS and HMR subtraction.abf,V_half_act_drug,,-3.042296931377707,mV,1,HMR-1556 subtraction; G-V R2=0.967
+IKs,Chan2023-Zenodo8226585,HMR减除臂,22,2022_03_31029 after LS and HMR subtraction.abf,k_act_drug,,25.23192893414613,mV,1,HMR-1556 subtraction; G-V R2=0.967
+CaV1.2,Ren2022-g3msb,表征对照_Ca2,31-37,2021_05_20_0004.abf,f_inact,17.0,0.5709147828487986,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ca2,31-37,2021_05_20_0008.abf,f_inact,17.0,0.632752536391707,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ca2,31-37,21318007.abf,f_inact,17.0,0.6822172054640461,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ca2,31-37,21May05_0001.abf,f_inact,17.0,0.7986434325423423,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ca2,31-37,21May05_0005.abf,f_inact,17.0,0.8657925271633533,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ca2,31-37,21may12_0007.abf,f_inact,17.0,0.7784499281264974,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ba2,31-37,2021_07_07_0008.abf,f_inact,17.0,0.41769643014944596,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ba2,31-37,2021_07_07_0015.abf,f_inact,17.0,0.3867134241812672,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ba2,31-37,2021_09_01_0005.abf,f_inact,17.0,0.5054880143321627,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,表征对照_Ba2,31-37,2021_09_01_0007.abf,f_inact,17.0,0.45663544668587897,frac,1,characterization-batch control (Cα1b)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,18821006.abf,f_inact,17.0,0.6193004932456907,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,18821006.abf,f_inact_drug,17.0,0.6499707255161963,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19807002.abf,f_inact,17.0,0.6795686299965403,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19807002.abf,f_inact_drug,17.0,0.8471967344250295,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19816003.abf,f_inact,17.0,0.8349559005237763,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19816003.abf,f_inact_drug,17.0,0.9693883807265524,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19816004.abf,f_inact,17.0,0.6067868742701258,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19816004.abf,f_inact_drug,17.0,0.8351693352803724,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19816005.abf,f_inact,17.0,0.5034210361741481,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19816005.abf,f_inact_drug,17.0,0.7932676006433077,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19820002.abf,f_inact,17.0,0.5622213505532216,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19820002.abf,f_inact_drug,17.0,0.8067696450392918,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19820003.abf,f_inact,17.0,0.5430638534723278,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19820003.abf,f_inact_drug,17.0,0.9037552969686827,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19821000.abf,f_inact,17.0,0.5244809675211297,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,19821000.abf,f_inact_drug,17.0,0.8778340054817482,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,19821003.abf,f_inact,17.0,0.5581144203883407,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,19821003.abf,f_inact_drug,17.0,0.6752143717508432,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19322000.abf,f_inact,17.0,0.38516259409159725,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19322000.abf,f_inact_drug,17.0,0.38678892459379904,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,38,ALR_19322001.abf,f_inact,17.0,0.614568591462997,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,38,ALR_19322001.abf,f_inact_drug,17.0,0.4736695289171595,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,38,ALR_19322002.abf,f_inact,17.0,0.46353879257006775,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,38,ALR_19322002.abf,f_inact_drug,17.0,0.4299430082757545,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326000.abf,f_inact,17.0,0.4142879874466355,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326000.abf,f_inact_drug,17.0,0.4458714234937789,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326001.abf,f_inact,17.0,0.42032898098336624,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326001.abf,f_inact_drug,17.0,0.7938417992986596,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326002.abf,f_inact,17.0,0.4612342518074296,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326002.abf,f_inact_drug,17.0,0.441649810163225,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326003.abf,f_inact,17.0,0.43790106994058925,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,ALR_19326003.abf,f_inact_drug,17.0,0.6322355400225373,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,ALR_19326005.abf,f_inact,17.0,0.44139554443569023,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,36,ALR_19326005.abf,f_inact_drug,17.0,0.6805320253371655,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_18430001.abf,f_inact,17.0,0.7887550379901054,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_18430001.abf,f_inact_drug,17.0,0.8586266640293035,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_18430004.abf,f_inact,17.0,0.8532832483100204,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_18430004.abf,f_inact_drug,17.0,0.8846801196161966,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_18821004.abf,f_inact,17.0,0.7721428204218749,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_18821004.abf,f_inact_drug,17.0,0.8822244425806671,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19321004_005.abf,f_inact,17.0,0.8918722926719893,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19321004_005.abf,f_inact_drug,17.0,0.9534829700061671,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19321007_008.abf,f_inact,17.0,0.6411004651401004,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19321007_008.abf,f_inact_drug,17.0,0.8917160533659062,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19321009.abf,f_inact,17.0,0.9233437048174765,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19321009.abf,f_inact_drug,17.0,0.9711230571147207,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19326010.abf,f_inact,17.0,0.5108351843894331,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19326010.abf,f_inact_drug,17.0,0.6957945393749003,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19327003_004.abf,f_inact,17.0,0.49512488545520567,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_PT,37,PT_19327003_004.abf,f_inact_drug,17.0,0.7091909861821206,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,19d31003.abf,f_inact,17.0,0.32042386034695824,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,19d31003.abf,f_inact_drug,17.0,0.8978218871422481,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102002.abf,f_inact,17.0,0.7550334212309036,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102002.abf,f_inact_drug,17.0,0.9630403279286137,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102003.abf,f_inact,17.0,0.9355708292685498,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102003.abf,f_inact_drug,17.0,0.9938002759257757,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102004.abf,f_inact,17.0,0.7964137614422193,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102004.abf,f_inact_drug,17.0,0.9994447988312856,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102006.abf,f_inact,17.0,0.8749101094818272,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,20102006.abf,f_inact_drug,17.0,0.9885736718427205,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,PT_18501005.abf,f_inact,17.0,0.9106402915854832,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,PT_18501005.abf,f_inact_drug,17.0,0.9452584586234041,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,23,PT_18501008.abf,f_inact,17.0,0.8605810013458248,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,23,PT_18501008.abf,f_inact_drug,17.0,0.9206700743848728,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,PT_18501009.abf,f_inact,17.0,0.939931217563765,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Verapamil_Ca2+_RT,24,PT_18501009.abf,f_inact_drug,17.0,0.9661913027387563,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18607000.abf,f_inact,17.0,0.46710083896811744,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18607000.abf,f_inact_drug,17.0,0.9305183815562788,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18607006.abf,f_inact,17.0,0.5261064248182195,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18607006.abf,f_inact_drug,17.0,0.5189431024393059,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,39,18607012.abf,f_inact,17.0,0.71984785359011,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,39,18607012.abf,f_inact_drug,17.0,0.9478615521071039,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,18608000.abf,f_inact,17.0,0.7301988236774902,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,18608000.abf,f_inact_drug,17.0,1.4899466710278453,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,18608004.abf,f_inact,17.0,0.7263631477271156,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,18608004.abf,f_inact_drug,17.0,0.6234176487650215,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18613000.abf,f_inact,17.0,0.4065412891061478,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18613000.abf,f_inact_drug,17.0,0.7555068752404182,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,18613001.abf,f_inact,17.0,0.47617783739231995,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,18613001.abf,f_inact_drug,17.0,0.5140033928090619,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18613002.abf,f_inact,17.0,0.5459559860557011,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,18613002.abf,f_inact_drug,17.0,0.4805121662671877,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19508007.abf,f_inact,17.0,0.6931930824575635,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19508007.abf,f_inact_drug,17.0,0.9900337530792158,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19621004.abf,f_inact,17.0,0.525045133536619,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19621004.abf,f_inact_drug,17.0,0.5841940816150456,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19621012.abf,f_inact,17.0,0.6030719271763472,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19621012.abf,f_inact_drug,17.0,0.9801345227750995,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19903000.abf,f_inact,17.0,0.8748160604827633,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,19903000.abf,f_inact_drug,17.0,0.9907519699997758,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,38,19903002.abf,f_inact,17.0,0.8054660811340008,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,38,19903002.abf,f_inact_drug,17.0,1.0008238049572127,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_08_29_0003.abf,f_inact,17.0,0.5041394229422048,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_08_29_0003.abf,f_inact_drug,17.0,0.9548917422873977,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_08_29_0005.abf,f_inact,17.0,0.6793439593511529,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_08_29_0005.abf,f_inact_drug,17.0,0.8055999663719999,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,2019_08_29_0009.abf,f_inact,17.0,0.8151842542770937,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,2019_08_29_0009.abf,f_inact_drug,17.0,0.9063470476354463,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,2019_09_03_0004.abf,f_inact,17.0,0.8405875020470217,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,37,2019_09_03_0004.abf,f_inact_drug,17.0,0.9875630525407739,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_06_0000.abf,f_inact,17.0,0.5246262461207792,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_06_0000.abf,f_inact_drug,17.0,1.005623021923246,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_06_0004.abf,f_inact,17.0,0.8376865688803683,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_06_0004.abf,f_inact_drug,17.0,0.9271550778446944,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,2019_09_06_0010.abf,f_inact,17.0,0.5498583019488906,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,2019_09_06_0010.abf,f_inact_drug,17.0,1.0033207201389298,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_10_0002.abf,f_inact,17.0,0.5582277884558677,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_10_0002.abf,f_inact_drug,17.0,0.8513974392176509,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,2019_09_12_0009.abf,f_inact,17.0,0.8166212639737598,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,36,2019_09_12_0009.abf,f_inact_drug,17.0,0.9582002361344242,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_13_0000.abf,f_inact,17.0,0.41756170608979293,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Methadone_Ca2+_PT,35,2019_09_13_0000.abf,f_inact_drug,17.0,0.6506794797729578,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,38,2021_06_23_0020.abf,f_inact,17.0,0.4002936224862358,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,38,2021_06_23_0020.abf,f_inact_drug,17.0,0.9793951177287219,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,36,2021_07_07_0002.abf,f_inact,17.0,0.6987060773011594,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,36,2021_07_07_0002.abf,f_inact_drug,17.0,0.6096531699080483,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,35,2021_07_21_0004.abf,f_inact,17.0,0.13989054419014985,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,35,2021_07_21_0004.abf,f_inact_drug,17.0,0.18525447063976574,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,39,2021_07_21_0010.abf,f_inact,17.0,0.343154321174793,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,39,2021_07_21_0010.abf,f_inact_drug,17.0,0.9493291711462895,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,37,21617003-004.abf,f_inact,17.0,0.15270725443943373,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,37,21617003-004.abf,f_inact_drug,17.0,0.8347965793511829,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,37,21617012.abf,f_inact,17.0,0.26554873656831,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,37,21617012.abf,f_inact_drug,17.0,0.889902009513881,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,36,21623006.abf,f_inact,17.0,0.4529241292263913,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,36,21623006.abf,f_inact_drug,17.0,0.7673779185959054,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,35,21625006.abf,f_inact,17.0,0.11304273360245909,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,35,21625006.abf,f_inact_drug,17.0,0.6181201692764082,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,36,21July21_0012.abf,f_inact,17.0,0.6815293763882387,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,36,21July21_0012.abf,f_inact_drug,17.0,0.9366249552296357,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,37,Concatenate000_0623013.abf,f_inact,17.0,0.25088074959307743,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Diltiazem_Ba2+_PT,37,Concatenate000_0623013.abf,f_inact_drug,17.0,0.2034940830727121,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,37,19503003.abf,f_inact,17.0,0.5194353408232939,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,37,19503003.abf,f_inact_drug,17.0,0.5739499217527809,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,36,19507002.abf,f_inact,17.0,0.5169272050613588,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,36,19507002.abf,f_inact_drug,17.0,0.4895600342087108,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,38,19822000.abf,f_inact,17.0,0.8667331996824321,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,38,19822000.abf,f_inact_drug,17.0,0.8925644351454536,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,38,19823002.abf,f_inact,17.0,0.5298469108699632,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,38,19823002.abf,f_inact_drug,17.0,0.9921941497335229,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,38,19827008.abf,f_inact,17.0,0.4339906847550019,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,38,19827008.abf,f_inact_drug,17.0,0.4158280895720037,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,37,19828007.abf,f_inact,17.0,0.7237025569239113,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,37,19828007.abf,f_inact_drug,17.0,0.8433250548985607,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,36,2019_08_23_0004.abf,f_inact,17.0,0.4458820673897685,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,36,2019_08_23_0004.abf,f_inact_drug,17.0,0.43501159603022804,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,36,2019_08_27_0005.abf,f_inact,17.0,0.7108556447296859,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,36,2019_08_27_0005.abf,f_inact_drug,17.0,0.711872678011529,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,37,2019_08_28_0009.abf,f_inact,17.0,0.5068486542506202,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Buprenorphine_Ca2+_PT,37,2019_08_28_0009.abf,f_inact_drug,17.0,0.9104737397761107,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18223002.abf,f_inact,17.0,0.4686260224893727,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18223002.abf,f_inact_drug,17.0,0.3599896330109316,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,18223004.abf,f_inact,17.0,0.5165080603692075,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,18223004.abf,f_inact_drug,17.0,0.38459714958662,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18226003.abf,f_inact,17.0,0.4963631535133656,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18226003.abf,f_inact_drug,17.0,0.3992637105568971,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18226004.abf,f_inact,17.0,0.5647561945420805,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18226004.abf,f_inact_drug,17.0,0.40071743419489225,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18227004.abf,f_inact,17.0,0.49778623777536896,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18227004.abf,f_inact_drug,17.0,0.9593768804296667,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18306005.abf,f_inact,17.0,0.46423077494340126,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18306005.abf,f_inact_drug,17.0,0.4250626461110889,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18307002.abf,f_inact,17.0,0.5429342643678193,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18307002.abf,f_inact_drug,17.0,0.38933417990689484,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18307003.abf,f_inact,17.0,0.47984215844776384,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18307003.abf,f_inact_drug,17.0,0.307637294518728,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18320005.abf,f_inact,17.0,0.45310729324065596,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,36,18320005.abf,f_inact_drug,17.0,1.068506418847627,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,PT19425006-007.abf,f_inact,17.0,0.8201148396743065,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,PT19425006-007.abf,f_inact_drug,17.0,0.7633970508999649,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,PT_18320005 p.abf,f_inact,17.0,0.6179532803670432,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,PT_18320005 p.abf,f_inact_drug,17.0,0.5385862165772402,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,PT_18320006 p.abf,f_inact,17.0,0.7127096959299893,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ca2+_PT,37,PT_18320006 p.abf,f_inact_drug,17.0,0.8757262989233972,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19913001.abf,f_inact,17.0,0.1767767041622294,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19913001.abf,f_inact_drug,17.0,0.590832107349398,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19913003.abf,f_inact,17.0,0.16230226356538074,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19913003.abf,f_inact_drug,17.0,1.0384305132542748,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19913008.abf,f_inact,17.0,0.22788776770959313,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19913008.abf,f_inact_drug,17.0,0.28795226778411176,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19917000.abf,f_inact,17.0,0.18037732149773106,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19917000.abf,f_inact_drug,17.0,0.8028610185534645,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19917008.abf,f_inact,17.0,0.2396696093806886,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,19917008.abf,f_inact_drug,17.0,0.6123049434307319,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,PT_18510004.abf,f_inact,17.0,0.28566867677677205,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Norbuprenorphine_Ba2+_PT,37,PT_18510004.abf,f_inact_drug,17.0,0.511798997298509,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,36,18711002.abf,f_inact,17.0,0.8130243831930266,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,36,18711002.abf,f_inact_drug,17.0,0.8949383048122511,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,36,18724002.abf,f_inact,17.0,0.16066645194595724,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,36,18724002.abf,f_inact_drug,17.0,0.2882513599810508,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,38,19628005.abf,f_inact,17.0,0.34530429337971535,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,38,19628005.abf,f_inact_drug,17.0,0.47323216104074695,frac,1,drug segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,38,19628006.abf,f_inact,17.0,0.30076836928350226,frac,1,pre-drug control segment (Cα5)
+CaV1.2,Ren2022-g3msb,Naloxone_Ba2+_PT,38,19628006.abf,f_inact_drug,17.0,0.35114779504025745,frac,1,drug segment (Cα5)
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_04_10_0008.abf & 2018_04_10_000,f_block_step,,0.254361667689076,frac,1,drug-treated; conc 3.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_04_10_0008.abf & 2018_04_10_000,f_block_step,,0.3758752232910223,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_04_11_0006.abf,f_block_step,,0.8050810869678194,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18605000.abf,f_block_step,,-0.0152790339973691,frac,1,drug-treated; conc 1.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18605000.abf,f_block_step,,0.1353645752493327,frac,1,drug-treated; conc 10.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18605002.abf,f_block_step,,0.3445579065095817,frac,1,drug-treated; conc 10.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18605002.abf,f_block_step,,0.7581108818820017,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18605004.abf,f_block_step,,0.0997546222271982,frac,1,drug-treated; conc 10.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18605004.abf,f_block_step,,0.8222026931597679,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606000.abf,f_block_step,,0.4502946095790158,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606000.abf,f_block_step,,0.9867798214597996,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606001.abf,f_block_step,,0.4008354527391664,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606001.abf,f_block_step,,0.979247559518412,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606004.abf,f_block_step,,0.4029951075603304,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606004.abf,f_block_step,,0.9748126616410012,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606005.abf,f_block_step,,0.2685972805653439,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18606005.abf,f_block_step,,0.9516638904224856,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18818004.abf,f_block_step,,-0.0003152653884785,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18818004.abf,f_block_step,,0.396707885206421,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18825007.abf,f_block_step,,0.0497612134025632,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18825007.abf,f_block_step,,0.4583207478237667,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18825008.abf,f_block_step,,0.0281158171207813,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18825008.abf,f_block_step,,0.3705250618650743,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830001.abf,f_block_step,,0.1905074253324123,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830001.abf,f_block_step,,0.6095968988883554,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830002.abf,f_block_step,,0.218422042399044,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830002.abf,f_block_step,,0.6294178003255297,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830003.abf,f_block_step,,0.2614970574011254,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830003.abf,f_block_step,,0.7172011452479192,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830005.abf,f_block_step,,0.3713332995927246,frac,1,drug-treated; conc 30.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18830005.abf,f_block_step,,0.7136627702106064,frac,1,drug-treated; conc 300.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831000.abf,f_block_step,,0.4069296276582828,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831000.abf,f_block_step,,0.8756784847078418,frac,1,drug-treated; conc 1000.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831001.abf,f_block_step,,0.3855961032305528,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831001.abf,f_block_step,,0.8287653404276614,frac,1,drug-treated; conc 1000.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831005.abf,f_block_step,,0.3658166357896854,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831005.abf,f_block_step,,0.8398980306513474,frac,1,drug-treated; conc 1000.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831007.abf,f_block_step,,0.3296761812410957,frac,1,drug-treated; conc 100.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18831007.abf,f_block_step,,0.8327517670419173,frac,1,drug-treated; conc 1000.0 uM; group INa_P
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_05_01_0006.abf,f_block_step,,0.0691009869780021,frac,1,drug-treated; conc 3.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_05_01_0006.abf,f_block_step,,0.3216799742551156,frac,1,drug-treated; conc 30.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_05_01_0008.abf,f_block_step,,0.1532528172433124,frac,1,drug-treated; conc 3.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Buprenorphine药臂,,2018_05_01_0008.abf,f_block_step,,0.3536542226796209,frac,1,drug-treated; conc 30.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Norbuprenorphine药臂,,2018_03_09_0003.abf & 2018_03_09_000,f_block_step,,0.0903607427267237,frac,1,drug-treated; conc 1.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Norbuprenorphine药臂,,2018_03_09_0003.abf & 2018_03_09_000,f_block_step,,0.5531357832735511,frac,1,drug-treated; conc 10.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18531007.abf,f_block_step,,0.3755703236984791,frac,1,drug-treated; conc 0.3 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18531016.abf,f_block_step,,0.0871324458369294,frac,1,drug-treated; conc 1.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18601004.abf,f_block_step,,0.1867497136495667,frac,1,drug-treated; conc 1.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18602006.abf,f_block_step,,0.2228335718930775,frac,1,drug-treated; conc 3.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Methadone药臂,,18525003.abf,f_block_step,,0.1725544579096106,frac,1,drug-treated; conc 10.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18829003.abf,f_block_step,,0.0546934254451422,frac,1,drug-treated; conc 30.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naloxone药臂,,18829003.abf,f_block_step,,0.703520786467932,frac,1,drug-treated; conc 1000.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18612005.abf,f_block_step,,-0.1062876989362131,frac,1,drug-treated; conc 10.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18612005.abf,f_block_step,,0.0242907422765141,frac,1,drug-treated; conc 100.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18612009.abf,f_block_step,,0.068070484867921,frac,1,drug-treated; conc 10.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18612009.abf,f_block_step,,0.2995543718614787,frac,1,drug-treated; conc 100.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18612002.abf,f_block_step,,0.2677080247216468,frac,1,drug-treated; conc 100.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18613010.abf,f_block_step,,0.1455996859365282,frac,1,drug-treated; conc 30.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18613010.abf,f_block_step,,0.4500047089706254,frac,1,drug-treated; conc 300.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18613014.abf,f_block_step,,0.2327791709002789,frac,1,drug-treated; conc 30.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18613014.abf,f_block_step,,0.2214125039625508,frac,1,drug-treated; conc 300.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18614003.abf,f_block_step,,0.0001793886136102,frac,1,drug-treated; conc 30.0 uM; group INa_L
+Nav1.5,Tarasov2026-Dryad,Naltrexone药臂,,18614003.abf,f_block_step,,0.2529287819101067,frac,1,drug-treated; conc 300.0 uM; group INa_L

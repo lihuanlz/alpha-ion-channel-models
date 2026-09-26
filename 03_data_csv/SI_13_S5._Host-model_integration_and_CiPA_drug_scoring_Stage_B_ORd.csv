@@ -1,0 +1,10 @@
+﻿# source section: S5. Host-model integration and CiPA drug scoring (Stage B; ORd assembly)
+check,content,measured,band
+J1 steady state,last-10-beat APD90 range,0.005 ms,< 0.5 ms
+J2 morphology,APD90 / APA / RMP / qNet,251.206 ms (Δ 0.36%) / 128.51 mV / −87.99 mV / 0.056,"APD90 ±2%; APA ∈ [124.4, 130]; RMP ∈ [−95, −85]; qNet ∈ [0.05, 0.12]"
+J3a IKr-only swap,retrospective trace agreement,1.1 × 10⁻⁵,≤ 1%
+J3b IKs-only swap,four J1+J2 items,APD90 255.77 / APA 127.94 / RMP −88.00 / qNet 0.0717,all in band
+J3c N-arm registration,expected-failure signature,APA saturated ≈ 40 mV; ΔAPA = 3.1 × 10⁻⁵ mV under G × 16,pre-registered expected failure (APA < 90 and ΔAPA < 5 mV)
+J4 upstroke,dV/dt_max,240.7 vs reference 236.6 V/s (ratio 1.017),"∈ [50, 500] V/s"
+J5 rate dependence,APD90 monotonicity and capture,monotonic shortening in both arms; 1:1 capture throughout; max difference 2.5 ms,monotone + capture
+J6 current magnitudes,peak-current ratios vs reference,"IKr 2.06, IKs 1.52; sanity INa 0.997, ICaL 0.979, INaL 1.009, Ito 1.002, IK1 1.004","all ∈ [0.2, 5]"

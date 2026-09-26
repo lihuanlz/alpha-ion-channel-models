@@ -1,0 +1,6 @@
+﻿# source section: S1.1 hERG (IKr). Sealed 2026-09-14
+V (mV),τ_f,τ_m (staircase middle mode),τ_late (staircase slow mode),single-gate engine τ_m anchor
+−70,0.191,0.813,2.055,0.813 (TM)
+−60,0.276,1.205,4.418,1.205 (TM)
+−50,0.600 (ceiling-flagged),1.800,10.14,10.14 (TAU_L)
+−40,0.600 (ceiling-flagged),0.800,24.05,24.05 (TAU_L)

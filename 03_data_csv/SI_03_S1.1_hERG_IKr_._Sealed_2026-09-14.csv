@@ -1,0 +1,15 @@
+﻿# source section: S1.1 hERG (IKr). Sealed 2026-09-14
+V (mV),h_ss median,CV,n,verdict
+−80,0.798,0.21,3,"data-limited (median registered, P2)"
+−70,0.425,0.26,6,sealed
+−60,0.310,0.31,8,registered
+−50,0.255,0.21,7,sealed
+−40,0.208,0.24,7,sealed
+−30,0.170,0.29,7,sealed
+−20,0.137,0.32,7,registered
+−10,0.114,0.37,7,registered
+0,0.090,0.44,7,registered
++10,0.072,0.38,6,registered
++20,0.053,0.46,6,registered
++30,0.039,0.55,6,registered
++40,0.029,n/a,n/a,"registered (QC3 vs R3-chain median 0.015, ratio 2.0 ∈ [0.3, 3]; engine +40 end uses R3 per-cell anchor)"
