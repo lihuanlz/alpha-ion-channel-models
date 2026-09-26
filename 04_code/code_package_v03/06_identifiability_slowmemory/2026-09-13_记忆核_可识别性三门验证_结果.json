@@ -1,0 +1,47 @@
+{
+ "sigma_nA": 0.036,
+ "seed": 20260913,
+ "gate1": {
+  "stretch_1σ": {
+   "error": "valid inversions 133/200"
+  },
+  "stretch_3σ": {
+   "error": "valid inversions 70/200"
+  },
+  "power_1σ": {
+   "error": "valid inversions 59/200"
+  },
+  "power_3σ": {
+   "error": "valid inversions 16/200"
+  }
+ },
+ "gate1_pass": false,
+ "gate2": {
+  "free_beta_iqr": 0.10120951341752071,
+  "free_cost_med": 0.0012944435975277145,
+  "degeneracy_reproduced": true,
+  "anch_relerr_med": [
+   0.14013373775288818,
+   0.0768618499120897,
+   0.3788435013189666
+  ],
+  "anch_cost_med": 0.0013163897126897085,
+  "anchored_ok": false
+ },
+ "gate2_pass": false,
+ "gate2_verdict": "锚也不救 —— 当前锚形式不可识别，建模失败",
+ "gate3": {
+  "true=stretched beta0.5 -> fit power-law": {
+   "rms_med": 0.036088130065981355,
+   "noise": 0.036,
+   "distinguishable": false
+  },
+  "true=power-law alpha1.0 -> fit stretched": {
+   "rms_med": 0.035877842941814696,
+   "noise": 0.036,
+   "distinguishable": false
+  }
+ },
+ "gate3_pass": false,
+ "final": "建模有硬关：锚无效。锚救不了简并。"
+}

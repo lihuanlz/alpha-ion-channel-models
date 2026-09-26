@@ -1,0 +1,574 @@
+{
+ "conv_tol": 0.3,
+ "drift_tol": 0.15,
+ "mask_nA": 0.072,
+ "min_pts": 15,
+ "cells": [
+  {
+   "cell": "16704007",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.6887756772168832,
+     "baseline_nA": 0.6266067361579422,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 1.7930063125815188,
+     "baseline_nA": 1.647757356038062,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 14,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 2.219189676217882,
+     "baseline_nA": 2.018559379015085,
+     "lam_mid_per_s": -0.9035667623318249,
+     "lam_late_per_s": null,
+     "n_pts_mid": 129,
+     "n_pts_late": 11,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 2.2947001697243756,
+     "baseline_nA": 2.106731259134965,
+     "lam_mid_per_s": -0.7122760701649342,
+     "lam_late_per_s": -0.36593452571271146,
+     "n_pts_mid": 141,
+     "n_pts_late": 20,
+     "usable": true,
+     "drift": 0.9464576860509992
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 2.290781399494605,
+     "baseline_nA": 2.100305202191908,
+     "lam_mid_per_s": -0.4355638395496906,
+     "lam_late_per_s": -0.9154963404989591,
+     "n_pts_mid": 149,
+     "n_pts_late": 28,
+     "usable": true,
+     "drift": 0.524232025534584
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 2 条）"
+  },
+  {
+   "cell": "16704047",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.26727694975428573,
+     "baseline_nA": 0.2163716007746939,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.7494607742440816,
+     "baseline_nA": 0.6544576160808164,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 5,
+     "n_pts_late": 3,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 1.1345225987338776,
+     "baseline_nA": 1.0038186181216329,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 14,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 1.381975027305306,
+     "baseline_nA": 1.149645100774694,
+     "lam_mid_per_s": -0.12388456800548218,
+     "lam_late_per_s": null,
+     "n_pts_mid": 63,
+     "n_pts_late": 11,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 1.4367367477134694,
+     "baseline_nA": 1.2327913093461225,
+     "lam_mid_per_s": -0.42276919409666813,
+     "lam_late_per_s": null,
+     "n_pts_mid": 58,
+     "n_pts_late": 6,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16707014",
+   "tails": [
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.372074968433333,
+     "baseline_nA": 0.3312884201,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 0.5494295817666671,
+     "baseline_nA": 0.4704386851,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 0.560716248433333,
+     "baseline_nA": 0.48745834843333347,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 0.561381548433333,
+     "baseline_nA": 0.4841188351,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16708016",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.3001563275607142,
+     "baseline_nA": 0.2450012591083333,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.6952038739892856,
+     "baseline_nA": 0.5920924412511903,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 5,
+     "n_pts_late": 1,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 0.7510113954178571,
+     "baseline_nA": 0.6541246227988096,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 5,
+     "n_pts_late": 3,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 0.749645457322619,
+     "baseline_nA": 0.6566686620845237,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 3,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 0.7460107597035714,
+     "baseline_nA": 0.6628970757749999,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 1,
+     "n_pts_late": 1,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16708060",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.2981784846333331,
+     "baseline_nA": 0.23679423939523792,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.6630088751095238,
+     "baseline_nA": 0.5923888655857141,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 0.7767665655857141,
+     "baseline_nA": 0.6767412608238094,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 5,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 0.7929121084428571,
+     "baseline_nA": 0.6909251751095238,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 7,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 0.7901798179666665,
+     "baseline_nA": 0.6985681370142856,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 2,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16708118",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.18621234531514286,
+     "baseline_nA": 0.141487002458,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.3702032453151429,
+     "baseline_nA": 0.3314868524580001,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 0.43079794531514287,
+     "baseline_nA": 0.4011891524580001,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 0.45288355960085713,
+     "baseline_nA": 0.38297693817228573,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 0.4429919310294286,
+     "baseline_nA": 0.39825765960085724,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16713003",
+   "tails": [
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.6820173666959999,
+     "baseline_nA": 0.6130512400293333,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 1.1913412666960004,
+     "baseline_nA": 1.0358656100293333,
+     "lam_mid_per_s": 0.11001518412492811,
+     "lam_late_per_s": null,
+     "n_pts_mid": 40,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 1.3063907666960002,
+     "baseline_nA": 1.1373242700293336,
+     "lam_mid_per_s": -1.392266032174062,
+     "lam_late_per_s": null,
+     "n_pts_mid": 70,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 1.3580012000293333,
+     "baseline_nA": 1.1814280666960002,
+     "lam_mid_per_s": -1.5049093318256235,
+     "lam_late_per_s": null,
+     "n_pts_mid": 102,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16713110",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.23737463417814283,
+     "baseline_nA": 0.2185077245352857,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 1.2020146070352857,
+     "baseline_nA": 1.1303992498924287,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 1.6149240927495714,
+     "baseline_nA": 1.507353135606714,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 12,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 1.629094964178143,
+     "baseline_nA": 1.539337864178143,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 1.6472851877495713,
+     "baseline_nA": 1.553365576678143,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  },
+  {
+   "cell": "16715049",
+   "tails": [
+    {
+     "hist_mV": -20.0,
+     "amp_nA": 0.15380474122394872,
+     "baseline_nA": 0.11517499276241025,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 0.0,
+     "amp_nA": 0.5859181942495898,
+     "baseline_nA": 0.528549478531641,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 20.0,
+     "amp_nA": 0.7537395289162563,
+     "baseline_nA": 0.6820656223777949,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 40.0,
+     "amp_nA": 0.7827518499418974,
+     "baseline_nA": 0.7081473601983077,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    },
+    {
+     "hist_mV": 60.0,
+     "amp_nA": 0.811436514557282,
+     "baseline_nA": 0.7333255312239488,
+     "lam_mid_per_s": null,
+     "lam_late_per_s": null,
+     "n_pts_mid": 0,
+     "n_pts_late": 0,
+     "usable": false,
+     "drift": NaN
+    }
+   ],
+   "conv_spread": NaN,
+   "drift_median": NaN,
+   "A_pass": null,
+   "B_pass": null,
+   "verdict": "数据不足（可用尾巴 0 条）"
+  }
+ ],
+ "n_memory": 0,
+ "n_flat": 0,
+ "n_valid": 0
+}
