@@ -2,3 +2,7 @@
 __pycache__/
 *.pyc
 _tmp*/
+
+# rerun artifacts (regenerated outputs next to scripts)
+04_code/**/*_结果.json
+04_code/**/*.png
