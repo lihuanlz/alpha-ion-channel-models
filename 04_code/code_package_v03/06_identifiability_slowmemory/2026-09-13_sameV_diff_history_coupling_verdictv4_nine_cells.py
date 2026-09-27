@@ -191,7 +191,7 @@ def main():
         } for r in allres],
         "n_memory": n_mem, "n_flat": n_flat, "n_valid": len(valid),
     }
-    fjson = os.path.join(HERE, "2026-09-13_同压异史_耦合判决v4_九细胞_结果.json")
+    fjson = os.path.join(HERE, "2026-09-13_sameV_diff_history_coupling_verdictv4_nine_cells_results.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     print(f"\n  figure saved: {fpng}")
     print(f"  results saved: {fjson}")

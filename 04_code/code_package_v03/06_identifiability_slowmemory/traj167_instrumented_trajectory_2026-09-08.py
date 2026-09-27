@@ -1,8 +1,8 @@
-# traj167_轨迹仪器化_2026-09-08.py — 167 判决点全内部态轨迹 dump
+# traj167_instrumented_trajectory_2026-09-08.py — 167 判决点全内部态轨迹 dump
 # sim47_trace：逐字复制 runner_v148 v1.49b 的 model 47 块算法（初态/s更新/Thomas链/失活/Ic/r1r2/输出），
 # 仅多返回内部态轨迹（s、o7、Ic、I层Σ、r1、r2、wr4）。u 轨迹由 u_dyn 精确弛豫复刻。
 # 用途：整机运行轨迹的机制叙述与病灶定位（用户令：叙述整个运行轨迹+指出问题）。
-# 跑法：PYTHONPATH=/mnt/agents/output/.pydeps python3 traj167_轨迹仪器化_2026-09-08.py
+# 跑法：PYTHONPATH=/mnt/agents/output/.pydeps python3 traj167_instrumented_trajectory_2026-09-08.py
 import json, os, sys
 import numpy as np
 from numba import njit

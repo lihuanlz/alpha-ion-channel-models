@@ -67,7 +67,7 @@ def step_h(x16, j):
 def main():
     t0 = time.time()
     diffs = []
-    x16v = json.load(open(os.path.join(HERE, "counter_181_model62_判官复核件.json"), encoding='utf-8'))
+    x16v = json.load(open(os.path.join(HERE, "counter_181_model62_judge_review.json"), encoding='utf-8'))
     x16 = np.asarray(x16v["x16"], float)
     data2, keep = load174()
     base = {pr: sim_judge(data2[pr][0], x16) for pr in PROTOS}
@@ -160,7 +160,7 @@ def main():
               "16708118", "16704007", "16704047", "16707014"]
     n9 = 0
     for c in cells9:
-        fp = "counter_181_model62_判官复核件.json" if c == "16713003" else f"counter_A_model62_{c}.json"
+        fp = "counter_181_model62_judge_review.json" if c == "16713003" else f"counter_A_model62_{c}.json"
         blk = json.load(open(os.path.join(HERE, fp), encoding='utf-8'))
         ja = blk.get("judgeA", blk)
         r40, r60 = ja["r40"], ja["r60"]

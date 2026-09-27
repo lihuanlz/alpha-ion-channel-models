@@ -23,7 +23,7 @@ def _num(x):
         return float(x)
     except (TypeError, ValueError):
         return None
-with open(RES / "对拍_Kα5_VCF物理锚_2026-09-26.csv", encoding="utf-8-sig") as f:
+with open(RES / "compare_Ka5_VCF_anchors_2026-09-26.csv", encoding="utf-8-sig") as f:
     for r in csv.reader(f):
         if r and _num(r[0]) is not None:
             tau2_v.append(_num(r[0])); tau2_m.append(float(r[1])); tau2_s.append(float(r[2]))
@@ -31,7 +31,7 @@ with open(RES / "对拍_Kα5_VCF物理锚_2026-09-26.csv", encoding="utf-8-sig")
                 dt_v.append(_num(r[0])); dt_m.append(float(r[3]))
 # gold-standard extractions from the Kα-6 CSV
 g6 = {"V": [], "d": [], "tau": [], "rms": [], "tau_expt": [], "dt_expt": []}
-with open(RES / "金标准_Kα6_SchemeV管线测试_2026-09-26.csv", encoding="utf-8-sig") as f:
+with open(RES / "goldstandard_Ka6_SchemeV_pipeline_test_2026-09-26.csv", encoding="utf-8-sig") as f:
     for r in csv.reader(f):
         if r and _num(r[0]) is not None:
             g6["V"].append(_num(r[0])); g6["d"].append(float(r[1])); g6["tau"].append(float(r[2]))

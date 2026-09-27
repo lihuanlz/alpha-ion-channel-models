@@ -370,7 +370,7 @@ def main():
     out = dict(sigma_nA=SIG, seed=SEED, gate1=g1_out, gate1_pass=bool(g1_pass),
                gate2=g2_out, gate2_pass=bool(g2_pass), gate2_verdict=v2,
                gate3=g3, gate3_pass=bool(g3_pass), final=final)
-    fjson = os.path.join(HERE, "2026-09-13_记忆核_可识别性三门验证_结果.json")
+    fjson = os.path.join(HERE, "2026-09-13_memory_kernel_three_gate_validation_results.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     print(f"\n  figure saved: {fpng}")
     print(f"  results saved: {fjson}")

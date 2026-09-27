@@ -425,7 +425,7 @@ def main():
                controls={k: dict(fit=v["fit"], tau_late=v["tau_late"]) for k, v in cc.items()},
                n_white=n_white, n_tot=n_tot, med_rms_ratio=med_ratio, edge_hits=edge_hits,
                table=table, gear_pass=gear_pass, gear_tot=gear_tot, tl40_cv=tl40_cv, final=final)
-    fjson = os.path.join(HERE, "2026-09-13_慢层离散常数判决v5_结果.json")
+    fjson = os.path.join(HERE, "2026-09-13_slow_layer_discrete_const_verdictv5_results.json")
     json.dump(out, open(fjson, "w", encoding="utf-8"), indent=1, ensure_ascii=False, default=str)
     print(f"\n  figure saved: {fpng}")
     print(f"  results saved: {fjson}")

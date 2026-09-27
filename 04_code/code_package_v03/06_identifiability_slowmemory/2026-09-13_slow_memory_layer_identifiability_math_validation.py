@@ -25,7 +25,7 @@ matplotlib.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_JSON = os.path.join(HERE, "2026-09-13_慢记忆层_可识别性数学验证_结果.json")
+OUT_JSON = os.path.join(HERE, "2026-09-13_slow_memory_layer_identifiability_math_validation_results.json")
 OUT_PNG = os.path.join(HERE, "2026-09-13_慢记忆层_可识别性数学验证.png")
 
 TAUS5 = np.logspace(1.0, np.log10(300.0), 5)   # fixed slow-kernel grid of the 193 campaign (seconds)

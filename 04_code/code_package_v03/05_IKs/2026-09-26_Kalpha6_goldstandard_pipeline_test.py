@@ -142,11 +142,11 @@ axc.legend(fontsize=6.8)
 fig.suptitle("Kα-6 gold-standard pipeline test: α-extraction on Scheme-V allosteric model currents",
              fontsize=10.5)
 fig.tight_layout(rect=[0, 0, 1, 0.94])
-out = RES / "金标准_Kα6_SchemeV管线测试_2026-09-26.png"
+out = RES / "goldstandard_Ka6_SchemeV_pipeline_test_2026-09-26.png"
 fig.savefig(out, bbox_inches="tight")
 fig.savefig(str(out).replace(".png", ".svg"), bbox_inches="tight")
 
-with open(RES / "金标准_Kα6_SchemeV管线测试_2026-09-26.csv", "w", newline="", encoding="utf-8-sig") as f:
+with open(RES / "goldstandard_Ka6_SchemeV_pipeline_test_2026-09-26.csv", "w", newline="", encoding="utf-8-sig") as f:
     w = csv.writer(f)
     w.writerow(["V_mV", "d_ms_extracted", "tau_ms_extracted", "relRMS", "tau_s_expt", "dt_s_expt"])
     for v in ev:

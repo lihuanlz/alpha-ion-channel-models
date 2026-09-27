@@ -85,7 +85,7 @@ lit = {"Fedida psQ+E1 (Table 1, 5 s isochronal)": (4.2, None),
 
 # ---- 4. write CSV ----
 import csv
-out_csv = RES / "对拍_Kα4_Zenodo10421153_真值表_2026-09-26.csv"
+out_csv = RES / "compare_Ka4_Zenodo10421153_truth_2026-09-26.csv"
 with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
     w = csv.writer(f)
     w.writerow(["quantity", "V_mV", "ours_digitised", "author_truth", "err_%_or_ms"])
@@ -130,7 +130,7 @@ axc.set_title("c  G-V: our pool vs author constructs", fontsize=9)
 axc.legend(fontsize=6.5, loc="center right")
 fig.suptitle("Kα-4: digitised Fedida-2024 tables vs author ground truth (Zenodo 10421153)", fontsize=10.5)
 fig.tight_layout(rect=[0, 0, 1, 0.94])
-out_png = RES / "对拍_Kα4_Zenodo10421153_真值表_2026-09-26.png"
+out_png = RES / "compare_Ka4_Zenodo10421153_truth_2026-09-26.png"
 fig.savefig(out_png, bbox_inches="tight")
 fig.savefig(str(out_png).replace(".png", ".svg"), bbox_inches="tight")
 

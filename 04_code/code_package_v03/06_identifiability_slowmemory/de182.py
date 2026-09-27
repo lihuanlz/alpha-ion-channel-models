@@ -33,7 +33,7 @@ def arr6(a):
 
 
 def load_x16():
-    v = json.load(open(os.path.join(HERE, "counter_181_model62_判官复核件.json"), encoding='utf-8'))
+    v = json.load(open(os.path.join(HERE, "counter_181_model62_judge_review.json"), encoding='utf-8'))
     assert v.get('tag') == '181' and v.get('stage') == 'final' and v.get('cell') == '16713003'
     return np.asarray(v['x16'], float), v
 
@@ -319,7 +319,7 @@ def do_dirs():
               "16708118", "16704007", "16704047", "16707014"]
     nine = {}
     for c in cells9:
-        fp = "counter_181_model62_判官复核件.json" if c == "16713003" else f"counter_A_model62_{c}.json"
+        fp = "counter_181_model62_judge_review.json" if c == "16713003" else f"counter_A_model62_{c}.json"
         blk = json.load(open(os.path.join(HERE, fp), encoding='utf-8'))
         ja = blk.get("judgeA", blk)
         r40, r60 = ja["r40"], ja["r60"]

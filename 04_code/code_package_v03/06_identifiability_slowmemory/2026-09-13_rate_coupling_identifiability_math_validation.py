@@ -28,7 +28,7 @@ matplotlib.rcParams["font.sans-serif"] = ["Microsoft YaHei"]
 matplotlib.rcParams["axes.unicode_minus"] = False
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_JSON = os.path.join(HERE, "2026-09-13_率耦合_可识别性数学验证_结果.json")
+OUT_JSON = os.path.join(HERE, "2026-09-13_rate_coupling_identifiability_math_validation_results.json")
 OUT_PNG = os.path.join(HERE, "2026-09-13_率耦合_可识别性数学验证.png")
 
 V_TEST = [-40, -50, -60, -70, -80, -90, -100, -110]

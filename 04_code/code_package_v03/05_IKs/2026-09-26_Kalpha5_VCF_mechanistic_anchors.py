@@ -108,11 +108,11 @@ axb.set_title("b  True charge vs α apparent charge → validity window", fontsi
 axb.legend(fontsize=7.5)
 fig.suptitle("Kα-5: mechanistic anchors for the IKs α-model from Fedida-2024 VCF & limiting slope", fontsize=10.5)
 fig.tight_layout(rect=[0, 0, 1, 0.94])
-out = RES / "对拍_Kα5_VCF物理锚_2026-09-26.png"
+out = RES / "compare_Ka5_VCF_anchors_2026-09-26.png"
 fig.savefig(out, bbox_inches="tight")
 fig.savefig(str(out).replace(".png", ".svg"), bbox_inches="tight")
 
-with open(RES / "对拍_Kα5_VCF物理锚_2026-09-26.csv", "w", newline="", encoding="utf-8-sig") as f:
+with open(RES / "compare_Ka5_VCF_anchors_2026-09-26.csv", "w", newline="", encoding="utf-8-sig") as f:
     w = csv.writer(f)
     w.writerow(["V_mV", "tau2_F2_mean_s", "tau2_F2_sd_s", "Delta_t_current_s", "diff_s"])
     for r in cmp_rows:

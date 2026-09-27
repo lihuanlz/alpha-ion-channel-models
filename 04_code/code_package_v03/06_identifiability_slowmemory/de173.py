@@ -49,7 +49,7 @@ LG53_EXTRA = [33, 35]                                                        # �
 assert len(FREE53) == 30
 
 # ---- 冻结内核 sim53_trace：traj167 源码 + 臂3 补丁（s≡1/kap≡1/ve_a≡v）----
-_src53 = open(os.path.join(HERE173, 'traj167_轨迹仪器化_2026-09-08.py'), encoding='utf-8') \
+_src53 = open(os.path.join(HERE173, 'traj167_instrumented_trajectory_2026-09-08.py'), encoding='utf-8') \
     .read().replace('cache=True', 'cache=False')
 assert _src53.count('(0.6 / 25.693)') == 4, '价数硬编码点应为 4 处（fi7/bi7/fic/bic）'
 _src53 = _src53.replace('(0.6 / 25.693)', '(p[32])')
@@ -93,7 +93,7 @@ _src53 = _src53.replace(_ANCHOR53, _INJECT53)
 _HARD167_53 = "'/mnt/agents/output/04_细胞线4/结果/代码167_垂直时标卡_2026-09-08/work/counter_167_K6a9Jub.json'"
 assert _src53.count(_HARD167_53) == 1, 'traj167 顶层 167 判决点硬路径未找到'
 _src53 = _src53.replace(_HARD167_53, "os.path.join(HERE, 'counter_167_K6a9Jub.json')")
-_ns53 = {'__name__': 'traj53', '__file__': os.path.join(HERE173, 'traj167_轨迹仪器化_2026-09-08.py')}
+_ns53 = {'__name__': 'traj53', '__file__': os.path.join(HERE173, 'traj167_instrumented_trajectory_2026-09-08.py')}
 with _cl.redirect_stdout(_io.StringIO()):
     exec(compile(_src53, 'traj53_src', 'exec'), _ns53)
 sim53_trace = _ns53['sim47_trace']      # out(n,7)：[I, s≡1, o7, Ic, Isum, r1, r2]

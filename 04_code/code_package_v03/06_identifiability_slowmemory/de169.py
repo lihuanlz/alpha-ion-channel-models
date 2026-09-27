@@ -7,7 +7,7 @@
 # 物理向量 p 长度 37（内核 len(p)>35 守卫触发直边；p[36]=g_L 不进内核、在 sim50 整机装配层加）。
 # 判线与目标函数分离（老规矩）；判官全件在 _dump_verdict50 独立全量复算。
 # 依赖（同包浅层文件夹）：runner_v148.py / run_all165.py / gate165.py / gatepar.py /
-#   gatepar47.py / runner166_m46.py / runner166b_m46.py / traj167_轨迹仪器化_2026-09-08.py /
+#   gatepar47.py / runner166_m46.py / runner166b_m46.py / traj167_instrumented_trajectory_2026-09-08.py /
 #   counter_167_K6a9Jub.json / counter_168_K6a9JubX.json / data/cipa/007.npz / job_169 卡 json。
 import json, math, os, sys, time
 import io as _io
@@ -100,7 +100,7 @@ assert len(P6X) == 6
 #   补丁2：失活价数硬编码 (0.6 / 25.693)×4 处（fi7/bi7/fic/bic）→ (p[32])（S2）
 #   补丁3：C4⇌Ic 弛豫块后锚点注入 Ic⇌O4 直边精确弛豫子步（S3′；scan169b 模板逐字）
 #   补丁4：traj167 顶层读 167 判决点的 /mnt 沙箱硬路径 → HERE 相对（Windows 本地机兼容）
-_src = open(os.path.join(HERE169, 'traj167_轨迹仪器化_2026-09-08.py'), encoding='utf-8') \
+_src = open(os.path.join(HERE169, 'traj167_instrumented_trajectory_2026-09-08.py'), encoding='utf-8') \
     .read().replace('cache=True', 'cache=False')
 assert _src.count('(0.6 / 25.693)') == 4, '价数硬编码点应为 4 处（fi7/bi7/fic/bic）'
 _src = _src.replace('(0.6 / 25.693)', '(p[32])')
@@ -122,7 +122,7 @@ _src = _src.replace(_ANCHOR, _INJECT)
 _HARD167 = "'/mnt/agents/output/04_细胞线4/结果/代码167_垂直时标卡_2026-09-08/work/counter_167_K6a9Jub.json'"
 assert _src.count(_HARD167) == 1, 'traj167 顶层 167 判决点硬路径未找到'
 _src = _src.replace(_HARD167, "os.path.join(HERE, 'counter_167_K6a9Jub.json')")
-_ns = {'__name__': 'traj50', '__file__': os.path.join(HERE169, 'traj167_轨迹仪器化_2026-09-08.py')}
+_ns = {'__name__': 'traj50', '__file__': os.path.join(HERE169, 'traj167_instrumented_trajectory_2026-09-08.py')}
 with _cl.redirect_stdout(_io.StringIO()):
     exec(compile(_src, 'traj50_src', 'exec'), _ns)
 sim50_trace = _ns['sim47_trace']      # out(n,7)：[I, s, o7, Ic, Isum, r1, r2]
