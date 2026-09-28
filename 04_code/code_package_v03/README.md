@@ -5,7 +5,7 @@
 **Companion manuscript**: `Nature_main_v02_2026-09-21.md` + `Nature_SI_v02_2026-09-21.md`.
 **Runtime**: Windows + Anaconda Python (numpy / scipy / pandas / matplotlib / pyabf / neo). Data roots are hard-coded as `D:\data` and workspace-relative paths; adjust them to your machine before recomputation.
 
-Note: file names and JSON keys that reference archived result files are kept verbatim in Chinese so that every reference resolves one-to-one to the authors' archive.
+Note (updated 2026-09-28): all file names in this package have been anglicised; the one-to-one mapping from the original Chinese archive names is recorded in `REPRODUCIBILITY.md` and the rename commit. JSON keys inside sealed result files are unchanged.
 
 ---
 
@@ -23,15 +23,15 @@ Manuscript: Fig. 2a–d, Extended Data Fig. 1; SI S1.1, S2, S6.
 | 2026-09-13_alpha_act_kinetics_envelope_const_verdict.py | activation delay 50–150 ms | main-text hERG section |
 | 2026-09-13_alpha_act_timecourse_ss_act_rise_verdict.py | m_ss anchors | S1.1f |
 | 2026-09-13_alpha_pure_hssV_strip_verdict.py | B1 (h=1 simplification) rejection | main text "0.42 at −70 mV" |
-| 2026-09-13_alpha_hssmeasured_table_rerun_AP_forwardverdict.py | AP forward 8/9 | Fig. 2d; S2 |
+| 2026-09-13_alpha_hssmeasured_table_rerun_APforward_verdict.py | AP forward 8/9 | Fig. 2d; S2 |
 | 2026-09-13_alpha_hssmeasured_table_rerun_sineforward_verdict.py | sine forward 7/9 | Fig. 2c; S2 |
-| 2026-09-13_alpha_AP_forwardverdict.py | earlier version of the above | archive |
+| 2026-09-13_alpha_APforward_verdict.py | earlier version of the above | archive |
 | 2026-09-13_alpha_assembly_smoke_sineforward_verdict.py | assembly smoke | archive |
 | 2026-09-13_alpha_rebound_hook_inact_recovery_const_verdict.py | tau_rec hook anchor | S1.1e G table anchor |
 | 2026-09-13_alpha_forward_validation_tail_and_sine.py | tail whitening 28/33 | S2 |
 | 2026-09-13_minus40_step_drift_assay.py | −40 mV level data-defect identification | S6 D registry |
 | 2026-09-13_longtail_flatness_verdict_v5_nine_cells.py | long-tail verdict | S6 |
-| 2026-09-14_alpha_tauobs_reanchor_AP_forwardverdict.py | re-anchoring sensitivity AP | S2 |
+| 2026-09-14_alpha_tauobs_reanchor_APforward_verdict.py | re-anchoring sensitivity AP | S2 |
 | 2026-09-14_alpha_tauobs_reanchor_sineforward_verdict.py | re-anchoring sensitivity sine | S2 |
 | 2026-09-14_alpha_data_side_spike_baseline_recheck.py | 060/016 baseline shift >3x MAD | S6 data-side closure |
 | 2026-09-14_alpha_B6_H1_highV_act_verdict.py | B6 candidate H1 verdict | S1.1 B6 section |
@@ -66,7 +66,7 @@ Manuscript: Fig. 3a–b, ED3; SI S1.2, S2, S6.
 | 2026-09-15_Nalpha2_Nav15whole_channel_oneshot_validation.py | whole-trace forward 3/3 (<=3.4% RMS) | main-text Nav section; S2 |
 | 2026-09-16_Nalpha3_Nav15act_foot_portability_verdict.py | foot spread CV 0.184 is real biology | main text; S6 Nα-3 |
 | 2026-09-16_Nalpha4_single_channel_minus40_anchor_verdict.py | tau_h(−40) distribution (n=69, CV 0.772) -> N-arm closure | Fig. 3b; S1.2f |
-| 2026-09-15_Nalpha_drug_Nav15drug_shape_modulation_verdict.py | two-component drug action (|kappa*|=0.20) | Fig. 4; S4 |
+| 2026-09-15_Nalpha_drug_Nav15_drug_shape_modulation_verdict.py | two-component drug action (|kappa*|=0.20) | Fig. 4; S4 |
 | 2026-09-15_Nalpha_drug_supplement_pack.py | external benchmarks 7/7 within the ±50% band | S4 |
 
 ## 04_CaV1.2 (6)
@@ -82,7 +82,7 @@ Manuscript: Fig. 3c, ED4; SI S1.3, S4, S6.
 | 2026-09-15_Calpha4_ramp_IV_temperature_law.py | Q10 not constant -> used as covariate | S1.3c |
 | 2026-09-15_Calpha5_CaV12drug_shape_modulation_verdict.py | pure block rejected p=7.2e−16; two-pool opposing effects | Fig. 4; S4 |
 
-## 05_IKs (6)
+## 05_IKs (9)
 
 Manuscript: Fig. 3d, ED5; SI S1.4, S4.
 
@@ -94,8 +94,11 @@ Manuscript: Fig. 3d, ED5; SI S1.4, S4.
 | 2026-09-15_Kalpha2_Fedida2024_Fig3C_Deltatdigitised.py | delay table d(V) | S1.4b |
 | 2026-09-15_Kalpha3_IKsforward_validation.py | activation forward 7/8 | S2 |
 | 2026-09-15_Kalpha_drug_IKsdrug_table_decomposition_verdict.py | multi-table modulation; DIDS pool confound registered | Fig. 4; S4 |
+| 2026-09-26_Kalpha4_Zenodo10421153_truth_audit.py | ground-truth cross-check of Kalpha2 digitised tables against Fedida 2024 original-author workbooks (Zenodo 10421153) | S1.4; ED10 |
+| 2026-09-26_Kalpha5_VCF_mechanistic_anchors.py | VCF fluorescence / limiting-slope anchors: physical identity of the IKs alpha-model time scales; gating-charge window registry | S1.4; ED10 |
+| 2026-09-26_Kalpha6_goldstandard_pipeline_test.py | gold-standard pipeline test: synthetic I(V,t) generated from author allosteric rates (Scheme 4/5, D=1.357) fed through the extraction pipeline for recovery validation | S1.4; ED10 |
 
-## 06_identifiability_slowmemory (8) — Fisher audit + slow-memory spectrum
+## 06_identifiability_slowmemory (8 verdicts + 16 helper modules) — Fisher audit + slow-memory spectrum
 
 Manuscript: main-text Fisher section, Extended Data Fig. 2; SI S3.
 
@@ -108,6 +111,25 @@ Manuscript: main-text Fisher section, Extended Data Fig. 2; SI S3.
 | 2026-09-13_sameV_diff_history_coupling_verdictv4_nine_cells.py | same-voltage different-history 17–112x (9/9) | S3 slow-memory audit |
 | 2026-09-13_slow_layer_discrete_const_verdictv5_noise_envelope_gate.py | memory spectrum 4.8 s–2000 s+ | S3 |
 | 2026-09-13_slow_layer_master_curve_verdictP1.py | slow-layer master curve | S3 |
+
+Helper modules in the same folder (imported by the verdict chain above; not standalone verdicts):
+
+| Script | Role |
+|---|---|
+| runner_v148.py | central model runner engine (model 29-62 lineage; K6a/K6a9Ji gate families, CN stepping, job execution) |
+| traj167_instrumented_trajectory_2026-09-08.py | instrumented verbatim replica of the model-47 block; returns per-step [I, s, o7, Ic, Isum, r1, r2] trajectories |
+| gate165.py | single implementation source of gating-side metrics for code 165 (shared by mk165/run_all165/judge165 to prevent convention drift) |
+| gatepar.py / gatepar47.py | process-pool parallel back ends for gate-envelope fitting (18-start fits mirroring gate165 exactly; model-47 variant) |
+| run_all165.py | integrated driver for code 165 (runner v148): K6a9Ji (model 44) dual-card joint fit + verdict |
+| runner166_m46.py / runner166b_m46.py | model-46 runners with exact relaxation sub-steps; 166b variant widens the k_u wall to [4, 40] |
+| de169.py | code 169 model-50 structure rebuild card (38-dim fitter; 167 kernel + leak + released inactivation valence + Ic<->O4 sub-step) |
+| de173.py | code 173 model-53 frozen four-arm re-anchoring card (30-dim fitter; protocol voltage shifted one sample point per official convention) |
+| de174.py | code 174 model-53 reduced 7-slot refit card at cell 16713003 (slots p7-p11/p19/p21; objective identical to de173) |
+| de176.py | official HH-loop CN stepping (expm acceptance 1.34e-4 nA) |
+| de177.py | protocol equal-weight denominators: per-protocol keep-convention data power, computed on site and anchor-registered |
+| de178.py | model-61 kernel: k43/k12 double exponential (+ pf1*exp(pf2*v)); CN stepping as in de176 |
+| de179.py | model62 fitter: 16-dim coordinate vector x16 (log10 P1..P8, GKr, Pf1, Pf2, alpha_amp, alpha_tau, GX_MID, VH, KX) |
+| judge179.py | code 179 model62 anchor-closure judge (independent recomputation; dual channel fitter-CN vs judge-expm) |
 
 ## 07_drug_grammar_CiPA (8) — drug grammar + CiPA 65/68
 
@@ -138,7 +160,7 @@ Manuscript: Fig. 5; SI S5.
 | 2026-09-16_alpha_StageB_B3_dual_alpha_host_recheck_24drugs.py | dual-alpha recheck; tau_act sensitivity-arm range 0.016 | S5 robustness |
 | 2026-09-16_B3_figure_redraw.py | Fig. 5 figure | Fig. 5 |
 
-## 09_figures (7) — manuscript figure generation
+## 09_figures (19) — manuscript figure generation
 
 | Script | Output |
 |---|---|
@@ -150,6 +172,23 @@ Manuscript: Fig. 5; SI S5.
 | make_percell_violin_v04_2026-09-21.py | **ED8 v04 (current)**: unified box+strip style (median/IQR/10–90% whiskers + all scatter), per-row width by group count (f/i widened), wrapped annotations fixing the right-side blank; also idempotently generates `结果\per_cell_master_table_pharmacology_arms_2026-09-21.csv` (361 rows) |
 | make_EDFig345_channel_cards_2026-09-21.py | **ED3/ED4/ED5 channel cards (current)**: Nav1.5/CaV1.2/IKs each 2x2, box+strip same style as ED8 v04; all numbers read directly from sealed JSONs / the master table (s_ref pool CV 0.184, w_fast 0.289 vs delta-f 0.293, forward 7/8, etc.); ED5d registers the convention difference between the per-file re-extraction (n=8) and the sealed J2 (n=5) |
 
+v05 submission-suite re-renders (English, unified Nature style, SVG+PDF output; supersede the v01-v04 drafts where overlapping):
+
+| Script | Output |
+|---|---|
+| figstyle_v05.py | shared Nature-style rc for the v05 suite (Arial fallback DejaVu Sans; SVG editable text, no CJK font injection) |
+| make_fig1_v05.py | Fig. 1 v05: extract-judge-assemble pipeline + five-channel membrane topology (realistic subunit composition; Kv4.3 registration grade) |
+| make_fig1_v06.py | **Fig. 1 v06 (current)**: tighter layout, faithful subunit architecture (tetramers hERG/IKs/Kv4.3 etc.) |
+| make_fig3_v05.py | Fig. 3 v05: portability verdict matrix (five channels) + channel verdict panels; Kv4.3 registration row |
+| make_mainfigs_v05.py | re-renders Fig. 2 / Fig. 4 / Fig. 5 from make_figures_v01 with the unified v05 style + SVG |
+| make_EDFig1_v05.py | ED Fig. 1 v05: hERG per-cell forward-prediction panels, all nine cells (held-out sine and AP clamp), sealed numbers |
+| make_EDFig2_v05.py | ED Fig. 2 v05: identifiability + history dependence, three data-driven panels (Fisher eigenspectrum chi=7.4e12, eigenvector loadings, slow-memory) |
+| make_EDFig345_v05.py | ED3/ED4/ED5 channel cards in v05 style (rendering twin of make_EDFig345_channel_cards_2026-09-21.py) |
+| make_EDFig7_v05.py | ED Fig. 7 v05: 211-cell automated-patch population validation (25 C), English re-render with identical sealed numbers |
+| make_EDFig8_v05.py | ED8 v04 in v05 style (rendering twin of make_percell_violin_v04_2026-09-21.py) |
+| make_EDFig9_v05.py | ED Fig. 9: group-array probe card with published mean/SEM anchors |
+| make_EDFig10_2026-09-26.py | ED Fig. 10: IKs mechanistic anchoring + gold-standard pipeline test (merged Kalpha-5/Kalpha-6 four-panel figure) |
+
 ## 10_verification_tau_rec (3) — tau_rec grid-quantization robustness checks (2026-09-21, post-seal verification layer)
 
 | Script | Output |
@@ -159,6 +198,23 @@ Manuscript: Fig. 5; SI S5.
 | verify_tauh_modelfree_2026-09-21.py | model-free clocks (t_half/t_ext/t10–90): Q10 2.1–3.8 (R²>=0.985) + grid-edge piling audit (37 °C −140 mV 55% censored) |
 
 Conclusion in `结果\验证卡_taurec网格量化_连续精修复核_2026-09-21.md`: the sealed Q10=2.84 lies inside the refined/model-free bands and is not grid flattery.
+
+## 11_Kv43_probe (10) — Kv4.3 (+HCN) probe layer, registry tier (not sealed)
+
+Manuscript: Fig. 1/Fig. 3 registration-grade row; SI S1.5. Data: Dryad 10.5061/dryad.76hdr7t6z (6-OHDA lesioned / vehicle).
+
+| Script | Output | Manuscript anchor |
+|---|---|---|
+| kv43_extract.py | per-cell voltage-clamp extraction (act/inact protocols) to CSV | S1.5 |
+| kv43_tau_act.py | activation time constant at -20 mV (same-voltage control vs inactivation) | S1.5 |
+| kv43_biexp_check.py | double-exponential refit: is the slower tau a component artefact; Imax between-group comparison | S1.5 |
+| kv43_t50_check.py | model-free half-time recheck of the tau_inact between-group difference | S1.5 |
+| kv43_amp30_check.py | peak current at -30 mV between-group comparison (paper anchor 3.8 -> 1.7 nA) | S1.5 |
+| kv43_amp30_dump.py | per-cell I(-30 mV) dump to amp30.csv (CSV twin of kv43_amp30_check) | S1.5 |
+| kv43_pure_subtraction.py | pure-subtraction trace isolation for the -20 mV test segment | S1.5 |
+| kv43_judge.py | Kv4.3 probe judgement and figure (registry tier, not sealed) | S1.5; Fig. 3 |
+| kv43_figure_v2.py | Kv4.3+HCN single-dataset triangulation final figure (2x3) | S1.5 |
+| hcn_extract.py | HCN (Ih) per-cell extraction: amplitude and activation tau at -80/-100/-120 mV | S1.5 |
 
 ---
 
