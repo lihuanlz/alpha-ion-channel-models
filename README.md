@@ -1,13 +1,16 @@
 # α-Ion-Channel Models
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23008848.svg)](https://doi.org/10.5281/zenodo.23008848)
+[![Manuscript](https://zenodo.org/badge/DOI/10.5281/zenodo.23042211.svg)](https://doi.org/10.5281/zenodo.23042211)
 
 Mechanism-anchored, data-extracted kinetic parameters for five cardiac ion channels
 (hERG/I_Kr, Nav1.5/I_Na, CaV1.2/I_CaL, I_Ks/KCNQ1+KCNE1, Kv4.3/I_to), with
 cross-laboratory validation and ORd host-model integration / CiPA drug scoring.
 
 This repository is the code-and-data companion of the manuscript
-*Nature_main_v05* (see `01_manuscript/`).
+*Data-extracted gating kinetics yield parameter-efficient, audit-ready models of four
+cardiac ion channels* (see `01_manuscript/`; preprint archived at Zenodo,
+doi:10.5281/zenodo.23042211).
 
 ## Layout
 
