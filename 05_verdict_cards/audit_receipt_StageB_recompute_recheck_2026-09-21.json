@@ -1,0 +1,45 @@
+{
+ "audit_date": "2026-09-21",
+ "method": "independent recompute from per-arm result JSONs: Spearman(qNet ratio vs CiPA class), AUC high-vs-low on qNet ratio",
+ "arms": {
+  "B1_official_static": {
+   "n": 24,
+   "rho": -0.523177,
+   "p": 0.008706502464620661,
+   "AUC_hi_vs_lo": 0.166667
+  },
+  "B2_dynamic": {
+   "n": 24,
+   "rho": -0.547022,
+   "p": 0.005670074826331758,
+   "AUC_hi_vs_lo": 0.142857
+  },
+  "B2s_static": {
+   "n": 24,
+   "rho": -0.506346,
+   "p": 0.011577941150321997,
+   "AUC_hi_vs_lo": 0.166667
+  }
+ },
+ "tauA_sensitivity_rhos": {
+  "tauA0.3": -0.555437,
+  "tauA0.5": -0.539074,
+  "tauA1": -0.547022,
+  "tauA2": -0.547022
+ },
+ "tauA_sensitivity_range": 0.016363,
+ "card_values": {
+  "rho": [
+   -0.5232,
+   -0.5063,
+   -0.547
+  ],
+  "AUC": [
+   0.833,
+   0.833,
+   0.857
+  ],
+  "tauA_range": 0.016
+ },
+ "verdict": "REPRODUCED EXACTLY: rho -0.5232/-0.5063/-0.5470; AUC 0.833/0.833/0.857; tauA range 0.016"
+}
