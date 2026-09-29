@@ -1,6 +1,6 @@
 # α-Ion-Channel Models
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23008849.svg)](https://doi.org/10.5281/zenodo.23008849)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23008848.svg)](https://doi.org/10.5281/zenodo.23008848)
 
 Mechanism-anchored, data-extracted kinetic parameters for five cardiac ion channels
 (hERG/I_Kr, Nav1.5/I_Na, CaV1.2/I_CaL, I_Ks/KCNQ1+KCNE1, Kv4.3/I_to), with
