@@ -164,9 +164,9 @@ More broadly, the extract--judge--assemble discipline is not specific to cardiac
 
 16. Kovacheva, L., Shin, J., Zaldivar-Diez, J., Mankel, J., Farassat, N., Machado Costa, K., Thakur, P., Obeso, J. A. & Roeper, J. Recovery of the full in vivo firing range in post-lesion surviving DA SN neurons associated with $K_{\mathrm{v}}4.3$-mediated pacemaker plasticity. *eLife* **14**, e104037 (2025), doi:10.7554/eLife.104037; data: Dryad doi:10.5061/dryad.76hdr7t6z.
 
-17. Lei, C. L., Clerx, M., Gavaghan, D. J., Polonchuk, L., Mirams, G. R. & Wang, K. Rapid characterisation of hERG channel kinetics I: using an automated high-throughput system. *Biophys. J.* **117**, 2438--2454 (2019); data and code: github.com/CardiacModelling/hERGRapidCharacterisation.
+17. Lei, C. L., Clerx, M., Gavaghan, D. J., Polonchuk, L., Mirams, G. R. & Wang, K. Rapid characterization of hERG channel kinetics I: using an automated high-throughput system. *Biophys. J.* **117**, 2438--2454 (2019); data and code: github.com/CardiacModelling/hERGRapidCharacterisation.
 
-18. Lei, C. L. et al. Rapid characterisation of hERG channel kinetics II: temperature dependence. *Biophys. J.* **117**, 2455--2470 (2019).
+18. Lei, C. L. et al. Rapid characterization of hERG channel kinetics II: temperature dependence. *Biophys. J.* **117**, 2455--2470 (2019).
 
 19. Montnach, J., Lorenzini, M., Lesage, A., Simon, I., Nicolas, S., Moreau, E., Marionneau, C., Baró, I., De Waard, M. & Loussouarn, G. Computer modeling of whole-cell voltage-clamp analyses to delineate guidelines for good practice of manual and automated patch-clamp. *Sci. Rep.* **11**, 3282 (2021).
 
