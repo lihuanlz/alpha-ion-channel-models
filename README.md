@@ -1,7 +1,7 @@
 # α-Ion-Channel Models
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23008848.svg)](https://doi.org/10.5281/zenodo.23008848)
-[![Deposit](https://zenodo.org/badge/DOI/10.5281/zenodo.23042212.svg)](https://doi.org/10.5281/zenodo.23042212)
+[![Deposit](https://zenodo.org/badge/DOI/10.5281/zenodo.23042211.svg)](https://doi.org/10.5281/zenodo.23042211)
 
 Mechanism-anchored, data-extracted kinetic parameters for cardiac ion
 channels, with cross-laboratory validation and ORd host-model integration /
