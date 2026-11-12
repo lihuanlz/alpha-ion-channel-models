@@ -5,7 +5,8 @@ reproduce_check.py — 第三方一键核对入口（2026-11-12）
 只读本目录下的三个产物文件，重算论文全部头条数字并打印 PASS/FAIL：
   1. master_unified_v1.csv                     (统一总表, 487,940 行)
   2. cipa2_cells.csv                           (CiPA 细胞级 τ 比, ss 最高浓度块口径)
-  3. ../features/robust_verdict_all_profile_2026-11-08.csv  (四口径判决冻结表)
+  3. robust_verdict_all_profile_2026-11-08.csv  (四口径判决冻结表)
+     扁平目录直接放同层; 本机仓库布局在 ../features/ 下, 脚本自动回退查找
 
 用法:
   python reproduce_check.py                # 默认从脚本所在目录读
@@ -56,7 +57,11 @@ def main():
         ok &= check(f"rows[{k}]", int(got_rows.get(k, -1)), v)
 
     # ---- 4. 判决冻结表( headline D 口径 ) ----
-    v = pd.read_csv(HERE.parent / "features" / "robust_verdict_all_profile_2026-11-08.csv")
+    # 扁平存缴包(Zenodo)与本机仓库目录两种布局都支持
+    _vf = root / "robust_verdict_all_profile_2026-11-08.csv"
+    if not _vf.exists():
+        _vf = HERE.parent / "features" / "robust_verdict_all_profile_2026-11-08.csv"
+    v = pd.read_csv(_vf)
     ok &= check("verdict rows", len(v), 212)
     want_verdict = {"kv_main": (64, 63, 2.47), "tau_deact": (48, 43, 2.82),
                     "tau_inact": (35, 28, 1.33), "rec": (42, 39, 2.15),
