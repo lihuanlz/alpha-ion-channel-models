@@ -7,7 +7,14 @@ Mechanism-anchored, data-extracted kinetic parameters for cardiac ion
 channels, with cross-laboratory validation and ORd host-model integration /
 CiPA drug scoring.
 
-## v2.0.0 — Unified reanalysis (2026-11-12)
+## v2.0.1 — Unified reanalysis, reference-verified (2026-11-12)
+
+**v2.0.1 = v2.0.0 + full reference verification** (all 18 entries checked
+against Crossref/PubMed, seven corrected, DOIs added; no data, figure, code or
+reported number changed). Companion data deposit: Zenodo manuscript bundle
+v2.0.1, doi:10.5281/zenodo.23042211 (concept DOI, always the latest version;
+v1.0.0 = September preprint snapshot, v2.0.0 = unified reanalysis, v2.0.1 =
+reference-verified).
 
 The repository now carries the **unified reanalysis**: all corpora were
 re-extracted from raw waveforms by one profile-likelihood pipeline and merged
